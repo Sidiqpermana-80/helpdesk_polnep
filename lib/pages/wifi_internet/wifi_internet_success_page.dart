@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 
-class AplikasiSuccessPage extends StatelessWidget {
-  const AplikasiSuccessPage({
+class WifiInternetSuccessPage extends StatelessWidget {
+  const WifiInternetSuccessPage({
     required this.requestNumber,
     required this.fullName,
     required this.identifierValue,
-    required this.applicationName,
-    required this.issueType,
+    required this.buildingName,
+    required this.roomName,
+    required this.status,
+    required this.estimatedResponse,
     required this.submittedAt,
     super.key,
   });
@@ -14,43 +16,18 @@ class AplikasiSuccessPage extends StatelessWidget {
   final String requestNumber;
   final String fullName;
   final String identifierValue;
-  final String applicationName;
-  final String issueType;
+  final String buildingName;
+  final String roomName;
+  final String status;
+  final String estimatedResponse;
   final DateTime submittedAt;
-
-  // =========================================================
-  // FORMAT JENIS KENDALA
-  // =========================================================
-
-  String get formattedIssueType {
-    switch (issueType) {
-      case 'tidak_bisa_login':
-      case 'Tidak Bisa Login':
-        return 'Tidak Bisa Login';
-
-      case 'data_tidak_sesuai':
-      case 'Data Tidak Sesuai':
-        return 'Data Tidak Sesuai';
-
-      case 'error_sistem':
-      case 'Error Sistem':
-        return 'Error Sistem';
-
-      case 'permintaan_akses':
-      case 'Permintaan Akses':
-        return 'Permintaan Akses';
-
-      default:
-        return issueType;
-    }
-  }
 
   // =========================================================
   // FORMAT TANGGAL INDONESIA
   // =========================================================
 
   String get formattedDate {
-    const List<String> monthNames = [
+    const List<String> months = [
       'Januari',
       'Februari',
       'Maret',
@@ -65,115 +42,9 @@ class AplikasiSuccessPage extends StatelessWidget {
       'Desember',
     ];
 
-    final String day = submittedAt.day.toString().padLeft(2, '0');
-
-    final String month = monthNames[submittedAt.month - 1];
-
-    final String year = submittedAt.year.toString();
-
-    return '$day $month $year';
-  }
-
-  // =========================================================
-  // LOGO APLIKASI
-  //
-  // Logo otomatis berubah berdasarkan aplikasi yang dipilih.
-  // =========================================================
-
-  String get applicationAsset {
-    switch (applicationName) {
-      case 'SIAKAD Polnep':
-        return 'assets/images/toga.png';
-
-      case 'SIHADIR':
-        return 'assets/images/sihadir.png';
-
-      case 'SIHADIR Web':
-        return 'assets/images/logopolnep-BESAR.png';
-
-      case 'SIAKAD SEMIVA Polnep':
-        return 'assets/images/semiva.png';
-
-      case 'Sistem Admin Jurusan Polnep':
-        return 'assets/images/bank.png';
-
-      case 'Sistem Reservasi Polnep':
-        return 'assets/images/date.png';
-
-      case 'HELPDESK Polnep':
-        return 'assets/images/helpdesk.png';
-
-      case 'Polnep Link':
-        return 'assets/images/weblink.png';
-
-      case 'SPMB Polnep':
-        return 'assets/images/spmb.png';
-
-      case 'Sihadir Kepegawaian':
-        return 'assets/images/sihadirmap.png';
-
-      case 'SIHADIR Android':
-        return 'assets/images/logopolnep-BESAR.png';
-
-      default:
-        return 'assets/images/app.jpeg';
-    }
-  }
-
-  // =========================================================
-  // LOGO JENIS KENDALA
-  //
-  // Logo otomatis berubah berdasarkan jenis kendala.
-  // =========================================================
-
-  String get issueAsset {
-    switch (issueType) {
-      case 'tidak_bisa_login':
-      case 'Tidak Bisa Login':
-        return 'assets/images/lock.png';
-
-      case 'data_tidak_sesuai':
-      case 'Data Tidak Sesuai':
-        return 'assets/images/doc.png';
-
-      case 'error_sistem':
-      case 'Error Sistem':
-        return 'assets/images/error.png';
-
-      case 'permintaan_akses':
-      case 'Permintaan Akses':
-        return 'assets/images/key.png';
-
-      default:
-        return 'assets/images/error.png';
-    }
-  }
-
-  // =========================================================
-  // WARNA BACKGROUND LOGO JENIS KENDALA
-  // =========================================================
-
-  Color get issueBackgroundColor {
-    switch (issueType) {
-      case 'tidak_bisa_login':
-      case 'Tidak Bisa Login':
-        return const Color(0xFF5A5CEB);
-
-      case 'data_tidak_sesuai':
-      case 'Data Tidak Sesuai':
-        return const Color(0xFFC99700);
-
-      case 'error_sistem':
-      case 'Error Sistem':
-        return const Color(0xFFFFC967);
-
-      case 'permintaan_akses':
-      case 'Permintaan Akses':
-        return const Color(0xFF58C761);
-
-      default:
-        return const Color(0xFFE7F3FF);
-    }
+    return '${submittedAt.day} '
+        '${months[submittedAt.month - 1]} '
+        '${submittedAt.year}';
   }
 
   // =========================================================
@@ -193,7 +64,9 @@ class AplikasiSuccessPage extends StatelessWidget {
         elevation: 0,
         scrolledUnderElevation: 0,
         surfaceTintColor: Colors.transparent,
+
         leadingWidth: 45,
+
         leading: IconButton(
           tooltip: 'Kembali',
           onPressed: () {
@@ -205,12 +78,14 @@ class AplikasiSuccessPage extends StatelessWidget {
             size: 20,
           ),
         ),
+
         titleSpacing: 0,
+
         title: const Text(
-          'Permintaan Berhasil',
+          'Laporan Berhasil',
           style: TextStyle(
             color: Color(0xFF202020),
-            fontSize: 15,
+            fontSize: 15.5,
             fontWeight: FontWeight.w500,
           ),
         ),
@@ -223,34 +98,32 @@ class AplikasiSuccessPage extends StatelessWidget {
         width: double.infinity,
         height: double.infinity,
 
+        // =====================================================
+        // BACKGROUND SAMA DENGAN HOME PAGE
+        // =====================================================
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFFF0F9FF),
-              Color(0xFFD7EEFF),
-              Color(0xFFB9E1FF),
-              Color(0xFFB9E1FF),
-            ],
-            stops: [0.00, 0.25, 0.55, 1.00],
+            colors: [Color(0xFFF0F9FF), Color(0xFFD7EEFF), Color(0xFFB9E1FF)],
+            stops: [0.00, 0.48, 1.00],
           ),
         ),
 
         child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(7, 5, 7, 28),
+          padding: const EdgeInsets.fromLTRB(7, 5, 7, 30),
 
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
 
             children: [
               // =================================================
-              // JUDUL HALAMAN
+              // JUDUL BAGIAN
               // =================================================
               const Padding(
                 padding: EdgeInsets.only(left: 2),
                 child: Text(
-                  'Pilihan Aplikasi',
+                  'Keluhan WIFI / Internet',
                   style: TextStyle(
                     color: Color(0xFF202020),
                     fontSize: 12.5,
@@ -264,7 +137,7 @@ class AplikasiSuccessPage extends StatelessWidget {
               const Padding(
                 padding: EdgeInsets.only(left: 2),
                 child: Text(
-                  'Home / Aplikasi',
+                  'Home / WIFI / Internet',
                   style: TextStyle(
                     color: Color(0xFF168DE2),
                     fontSize: 9.5,
@@ -276,12 +149,12 @@ class AplikasiSuccessPage extends StatelessWidget {
               const SizedBox(height: 10),
 
               // =================================================
-              // CARD SUCCESS
+              // CARD UTAMA
               // =================================================
               Container(
                 width: double.infinity,
 
-                padding: const EdgeInsets.fromLTRB(8, 15, 8, 17),
+                padding: const EdgeInsets.fromLTRB(8, 14, 8, 15),
 
                 decoration: BoxDecoration(
                   color: Colors.white,
@@ -290,7 +163,7 @@ class AplikasiSuccessPage extends StatelessWidget {
 
                   boxShadow: const [
                     BoxShadow(
-                      color: Color(0x12000000),
+                      color: Color(0x10000000),
                       blurRadius: 5,
                       offset: Offset(0, 2),
                     ),
@@ -305,7 +178,7 @@ class AplikasiSuccessPage extends StatelessWidget {
                     const Icon(
                       Icons.verified_rounded,
                       color: Color(0xFF00D51D),
-                      size: 82,
+                      size: 80,
                     ),
 
                     const SizedBox(height: 5),
@@ -314,37 +187,40 @@ class AplikasiSuccessPage extends StatelessWidget {
                     // JUDUL SUKSES
                     // =============================================
                     const Text(
-                      'Permintaan Berhasil Dikirim',
+                      'Laporan Berhasil Dikirim',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         color: Color(0xFF202020),
-                        fontSize: 17,
+                        fontSize: 16.5,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
 
                     const SizedBox(height: 7),
 
-                    const Text(
-                      'Laporan kendala Aplikasi anda telah kami terima\n'
-                      'dan akan diproses oleh Admin',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: Color(0xFF444444),
-                        fontSize: 9.5,
-                        height: 1.25,
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 17),
+                      child: Text(
+                        'Laporan Kendala WIFI / Internet anda telah kami '
+                        'terima dan akan ditindaklanjuti oleh tim Helpdesk',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Color(0xFF444444),
+                          fontSize: 9,
+                          height: 1.3,
+                        ),
                       ),
                     ),
 
-                    const SizedBox(height: 14),
+                    const SizedBox(height: 13),
 
                     // =============================================
-                    // DETAIL PENGAJUAN
+                    // DETAIL LAPORAN
                     // =============================================
                     Container(
                       width: double.infinity,
 
-                      padding: const EdgeInsets.fromLTRB(8, 11, 8, 12),
+                      padding: const EdgeInsets.fromLTRB(8, 9, 8, 10),
 
                       decoration: BoxDecoration(
                         color: const Color(0xFFDCDCDC),
@@ -356,8 +232,11 @@ class AplikasiSuccessPage extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
 
                         children: [
+                          // =========================================
+                          // JUDUL DETAIL
+                          // =========================================
                           const Text(
-                            'Detail Pengajuan',
+                            'Detail Laporan',
                             style: TextStyle(
                               color: Color(0xFF202020),
                               fontSize: 10.5,
@@ -365,89 +244,86 @@ class AplikasiSuccessPage extends StatelessWidget {
                             ),
                           ),
 
-                          const SizedBox(height: 8),
+                          const SizedBox(height: 7),
 
                           const Divider(
                             height: 1,
-                            thickness: 1,
+                            thickness: 0.8,
                             color: Color(0xFF707070),
                           ),
 
-                          const SizedBox(height: 10),
+                          const SizedBox(height: 9),
 
                           // =========================================
                           // NAMA PENGGUNA
                           // =========================================
                           _buildDetailCard(
-                            asset: 'assets/images/pp.png',
+                            asset: 'assets/images/wifi_pp.png',
                             label: 'Nama Pengguna',
                             value: fullName,
                             iconBackground: const Color(0xFFD6EBF8),
                           ),
 
-                          const SizedBox(height: 5),
+                          const SizedBox(height: 4),
 
                           // =========================================
                           // NIM / NIP
                           // =========================================
                           _buildDetailCard(
-                            asset: 'assets/images/book.png',
+                            asset: 'assets/images/wifi_book.png',
                             label: 'NIM / NIP',
                             value: identifierValue,
                             iconBackground: const Color(0xFFD6EBF8),
                           ),
 
-                          const SizedBox(height: 5),
+                          const SizedBox(height: 4),
 
                           // =========================================
-                          // APLIKASI
-                          //
-                          // LOGO BERUBAH OTOMATIS
+                          // GEDUNG
                           // =========================================
                           _buildDetailCard(
-                            asset: applicationAsset,
-                            label: 'Aplikasi',
-                            value: applicationName,
+                            asset: 'assets/images/wifi_gedung.png',
+                            label: 'Nama Gedung',
+                            value: buildingName,
                             iconBackground: const Color(0xFFD6EBF8),
                           ),
 
-                          const SizedBox(height: 5),
+                          const SizedBox(height: 4),
 
                           // =========================================
-                          // JENIS KENDALA
-                          //
-                          // LOGO BERUBAH OTOMATIS
+                          // RUANGAN
                           // =========================================
                           _buildDetailCard(
-                            asset: issueAsset,
-                            label: 'Jenis Kendala',
-                            value: formattedIssueType,
-                            iconBackground: issueBackgroundColor,
-                            issueIcon: true,
+                            asset: 'assets/images/wifi_door.png',
+                            label: 'Ruangan',
+                            value: roomName,
+                            iconBackground: const Color(0xFFD6EBF8),
                           ),
 
-                          const SizedBox(height: 5),
+                          const SizedBox(height: 4),
 
                           // =========================================
                           // TANGGAL
                           // =========================================
                           _buildDetailCard(
-                            asset: 'assets/images/kalender.png',
+                            asset: 'assets/images/wifi_tanggal.png',
                             label: 'Tanggal',
                             value: formattedDate,
-                            iconBackground: const Color(0xFF3E64C7),
+                            iconBackground: const Color(0xFF3C69C9),
+                            imagePadding: 8,
                           ),
 
-                          const SizedBox(height: 5),
+                          const SizedBox(height: 4),
 
                           // =========================================
                           // NO TIKET
                           // =========================================
                           _buildDetailCard(
-                            asset: 'assets/images/ticket.png',
+                            asset: 'assets/images/wifi_ticket.png',
                             label: 'No. Tiket',
                             value: requestNumber,
-                            iconBackground: const Color(0xFF41B64E),
+                            iconBackground: const Color(0xFF39AD4A),
+                            imagePadding: 7,
                           ),
                         ],
                       ),
@@ -456,10 +332,10 @@ class AplikasiSuccessPage extends StatelessWidget {
                 ),
               ),
 
-              const SizedBox(height: 25),
+              const SizedBox(height: 21),
 
               // =================================================
-              // BUTTON
+              // TOMBOL BAWAH
               // =================================================
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -469,8 +345,8 @@ class AplikasiSuccessPage extends StatelessWidget {
                   // KEMBALI KE BERANDA
                   // ===============================================
                   SizedBox(
-                    width: 115,
-                    height: 40,
+                    width: 105,
+                    height: 38,
 
                     child: ElevatedButton(
                       onPressed: () {
@@ -497,7 +373,7 @@ class AplikasiSuccessPage extends StatelessWidget {
                         'Kembali Ke Beranda',
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                          fontSize: 9.5,
+                          fontSize: 8.5,
                           fontWeight: FontWeight.w400,
                         ),
                       ),
@@ -511,7 +387,7 @@ class AplikasiSuccessPage extends StatelessWidget {
                   // ===============================================
                   SizedBox(
                     width: 125,
-                    height: 40,
+                    height: 38,
 
                     child: ElevatedButton(
                       onPressed: () {
@@ -536,7 +412,7 @@ class AplikasiSuccessPage extends StatelessWidget {
                         'Buat Pertanyaan Lagi',
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                          fontSize: 9.5,
+                          fontSize: 8.5,
                           fontWeight: FontWeight.w400,
                         ),
                       ),
@@ -544,6 +420,8 @@ class AplikasiSuccessPage extends StatelessWidget {
                   ),
                 ],
               ),
+
+              const SizedBox(height: 15),
             ],
           ),
         ),
@@ -552,7 +430,7 @@ class AplikasiSuccessPage extends StatelessWidget {
   }
 
   // =========================================================
-  // DETAIL CARD
+  // CARD DETAIL
   // =========================================================
 
   Widget _buildDetailCard({
@@ -560,19 +438,19 @@ class AplikasiSuccessPage extends StatelessWidget {
     required String label,
     required String value,
     required Color iconBackground,
-    bool issueIcon = false,
+    double imagePadding = 5,
   }) {
     return Container(
       width: double.infinity,
 
       constraints: const BoxConstraints(minHeight: 54),
 
-      padding: const EdgeInsets.fromLTRB(8, 6, 8, 6),
+      padding: const EdgeInsets.fromLTRB(7, 5, 8, 5),
 
       decoration: BoxDecoration(
-        color: const Color(0xFFE5E5E5),
+        color: const Color(0xFFE2E2E2),
 
-        borderRadius: BorderRadius.circular(9),
+        borderRadius: BorderRadius.circular(8),
 
         border: Border.all(color: const Color(0xFF969696), width: 0.7),
       ),
@@ -580,7 +458,7 @@ class AplikasiSuccessPage extends StatelessWidget {
       child: Row(
         children: [
           // ===============================================
-          // LOGO
+          // ICON / LOGO
           // ===============================================
           Container(
             width: 44,
@@ -588,7 +466,7 @@ class AplikasiSuccessPage extends StatelessWidget {
 
             alignment: Alignment.center,
 
-            padding: EdgeInsets.all(issueIcon ? 9 : 5),
+            padding: EdgeInsets.all(imagePadding),
 
             decoration: BoxDecoration(
               color: iconBackground,
@@ -607,12 +485,11 @@ class AplikasiSuccessPage extends StatelessWidget {
           const SizedBox(width: 11),
 
           // ===============================================
-          // LABEL DAN VALUE
+          // LABEL + VALUE
           // ===============================================
           Expanded(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
-
               crossAxisAlignment: CrossAxisAlignment.start,
 
               children: [

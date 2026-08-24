@@ -1,11 +1,7 @@
 class ApiConfig {
   ApiConfig._();
 
-  static const String baseUrl = 'http://192.168.201.20:8000/api';
-
-  // =========================================================
-  // MASTER DATA
-  // =========================================================
+  static const String baseUrl = 'http://10.10.10.97:8000/api';
 
   static String get units => '$baseUrl/units';
 
@@ -13,21 +9,9 @@ class ApiConfig {
 
   static String get announcements => '$baseUrl/announcements';
 
-  // =========================================================
-  // PERMINTAAN DATA
-  // =========================================================
-
   static String get createPermintaanData => '$baseUrl/requests';
 
-  // =========================================================
-  // KEPEGAWAIAN
-  // =========================================================
-
   static String get createKepegawaian => '$baseUrl/kepegawaian';
-
-  // =========================================================
-  // REMUNERASI
-  // =========================================================
 
   static String get createRemunerasi => '$baseUrl/remunerasi';
 
@@ -35,9 +19,7 @@ class ApiConfig {
 
   static String get createWebsite => '$baseUrl/website';
 
-  // =========================================================
-  // CEK STATUS
-  // =========================================================
+  static String get createWifiInternet => '$baseUrl/wifi-internet';
 
   static String get statusPermintaanData => '$baseUrl/status/requests';
 

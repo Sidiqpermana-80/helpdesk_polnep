@@ -1,5 +1,12 @@
+import 'dart:async';
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:http/http.dart' as http;
+
+import '../../config/api_config.dart';
+import 'wifi_internet_success_page.dart';
 
 class WifiInternetPage extends StatefulWidget {
   const WifiInternetPage({super.key});
@@ -20,6 +27,8 @@ class _WifiInternetPageState extends State<WifiInternetPage> {
   final TextEditingController _descriptionController = TextEditingController();
 
   String? _selectedBuilding;
+
+  bool _isSubmitting = false;
 
   int _formVersion = 0;
 
@@ -49,19 +58,14 @@ class _WifiInternetPageState extends State<WifiInternetPage> {
   }
 
   // =========================================================
-  // INPUT DECORATION
+  // INPUT DESIGN
   // =========================================================
 
   InputDecoration _fieldDecoration({String? hintText, Widget? prefixIcon}) {
     return InputDecoration(
       hintText: hintText,
 
-      hintStyle: const TextStyle(
-        color: Color(0xFF8A8A8A),
-
-        // SEBELUMNYA 9
-        fontSize: 10,
-      ),
+      hintStyle: const TextStyle(color: Color(0xFF8A8A8A), fontSize: 10),
 
       prefixIcon: prefixIcon,
 
@@ -100,10 +104,7 @@ class _WifiInternetPageState extends State<WifiInternetPage> {
         borderSide: const BorderSide(color: Colors.red, width: 1),
       ),
 
-      errorStyle: const TextStyle(
-        // SEBELUMNYA 7.5
-        fontSize: 8.5,
-      ),
+      errorStyle: const TextStyle(fontSize: 8.5),
     );
   }
 
@@ -146,10 +147,11 @@ class _WifiInternetPageState extends State<WifiInternetPage> {
                     IconButton(
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(),
-                      tooltip: 'Kembali',
+
                       onPressed: () {
                         Navigator.of(context).pop();
                       },
+
                       icon: const Icon(
                         Icons.arrow_back_ios_new_rounded,
                         size: 20,
@@ -163,10 +165,7 @@ class _WifiInternetPageState extends State<WifiInternetPage> {
                       'Keluhan Wifi / Internet',
                       style: TextStyle(
                         color: Color(0xFF111111),
-
-                        // SEBELUMNYA 15
                         fontSize: 16,
-
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -197,10 +196,7 @@ class _WifiInternetPageState extends State<WifiInternetPage> {
                             'ruangan di POLNEP',
                             style: TextStyle(
                               color: Color(0xFF111111),
-
-                              // SEBELUMNYA 19
                               fontSize: 20.5,
-
                               height: 1.08,
                               fontWeight: FontWeight.w700,
                             ),
@@ -211,6 +207,7 @@ class _WifiInternetPageState extends State<WifiInternetPage> {
                       SizedBox(
                         width: 135,
                         height: 100,
+
                         child: Image.asset(
                           'assets/images/pc.png',
                           fit: BoxFit.contain,
@@ -223,7 +220,7 @@ class _WifiInternetPageState extends State<WifiInternetPage> {
                 const SizedBox(height: 8),
 
                 // =================================================
-                // CARD FORM
+                // FORM
                 // =================================================
                 Container(
                   width: double.infinity,
@@ -232,7 +229,9 @@ class _WifiInternetPageState extends State<WifiInternetPage> {
 
                   decoration: BoxDecoration(
                     color: Colors.white,
+
                     borderRadius: BorderRadius.circular(9),
+
                     border: Border.all(
                       color: const Color(0xFFD6E9F7),
                       width: 0.6,
@@ -246,17 +245,11 @@ class _WifiInternetPageState extends State<WifiInternetPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
 
                       children: [
-                        // =========================================
-                        // DATA PELAPOR
-                        // =========================================
                         const Text(
                           'Data Pelapor',
                           style: TextStyle(
                             color: Color(0xFF24477C),
-
-                            // SEBELUMNYA 11.5
                             fontSize: 12.5,
-
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -271,10 +264,7 @@ class _WifiInternetPageState extends State<WifiInternetPage> {
                         TextFormField(
                           controller: _nameController,
 
-                          style: const TextStyle(
-                            // SEBELUMNYA 9.5
-                            fontSize: 10.5,
-                          ),
+                          style: const TextStyle(fontSize: 10.5),
 
                           textCapitalization: TextCapitalization.words,
 
@@ -308,7 +298,7 @@ class _WifiInternetPageState extends State<WifiInternetPage> {
                         const SizedBox(height: 8),
 
                         // =========================================
-                        // NIM / NIP
+                        // NIM/NIP
                         // =========================================
                         _fieldTitle('NIM / NIP'),
 
@@ -338,14 +328,8 @@ class _WifiInternetPageState extends State<WifiInternetPage> {
                           ),
 
                           validator: (String? value) {
-                            final String identifier = value?.trim() ?? '';
-
-                            if (identifier.isEmpty) {
+                            if (value == null || value.trim().isEmpty) {
                               return 'NIM/NIP wajib diisi';
-                            }
-
-                            if (identifier.length < 5) {
-                              return 'NIM/NIP belum sesuai';
                             }
 
                             return null;
@@ -369,10 +353,7 @@ class _WifiInternetPageState extends State<WifiInternetPage> {
                           'Detail Lokasi',
                           style: TextStyle(
                             color: Color(0xFF24477C),
-
-                            // SEBELUMNYA 11.5
                             fontSize: 12.5,
-
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -410,13 +391,10 @@ class _WifiInternetPageState extends State<WifiInternetPage> {
                           icon: const Icon(
                             Icons.keyboard_arrow_down_rounded,
                             size: 17,
-                            color: Color(0xFF333333),
                           ),
 
                           style: const TextStyle(
                             color: Color(0xFF202020),
-
-                            // SEBELUMNYA 9.5
                             fontSize: 10.5,
                           ),
 
@@ -427,10 +405,7 @@ class _WifiInternetPageState extends State<WifiInternetPage> {
                               child: Text(
                                 building,
                                 overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  // SEBELUMNYA 9.5
-                                  fontSize: 10.5,
-                                ),
+                                style: const TextStyle(fontSize: 10.5),
                               ),
                             );
                           }).toList(),
@@ -556,12 +531,11 @@ class _WifiInternetPageState extends State<WifiInternetPage> {
                   ),
 
                   child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-
                     children: [
                       SizedBox(
                         width: 31,
                         height: 31,
+
                         child: Image.asset(
                           'assets/images/seru.png',
                           fit: BoxFit.contain,
@@ -576,10 +550,7 @@ class _WifiInternetPageState extends State<WifiInternetPage> {
                           'Tim Helpdesk akan menindaklanjuti laporan Anda.',
                           style: TextStyle(
                             color: Color(0xFF303030),
-
-                            // SEBELUMNYA 8
                             fontSize: 9,
-
                             height: 1.35,
                           ),
                         ),
@@ -602,10 +573,12 @@ class _WifiInternetPageState extends State<WifiInternetPage> {
                       height: 34,
 
                       child: ElevatedButton(
-                        onPressed: _submitForm,
+                        onPressed: _isSubmitting ? null : _submitForm,
 
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF4D4BFF),
+
+                          disabledBackgroundColor: const Color(0xFFAAA9FF),
 
                           foregroundColor: Colors.white,
 
@@ -618,15 +591,20 @@ class _WifiInternetPageState extends State<WifiInternetPage> {
                           ),
                         ),
 
-                        child: const Text(
-                          'Kirim Data',
-                          style: TextStyle(
-                            // SEBELUMNYA 8
-                            fontSize: 9,
+                        child: _isSubmitting
+                            ? const SizedBox(
+                                width: 15,
+                                height: 15,
 
-                            fontWeight: FontWeight.w400,
-                          ),
-                        ),
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 1.8,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : const Text(
+                                'Kirim Data',
+                                style: TextStyle(fontSize: 9),
+                              ),
                       ),
                     ),
 
@@ -637,7 +615,7 @@ class _WifiInternetPageState extends State<WifiInternetPage> {
                       height: 34,
 
                       child: ElevatedButton(
-                        onPressed: _resetForm,
+                        onPressed: _isSubmitting ? null : _resetForm,
 
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF59C467),
@@ -655,17 +633,12 @@ class _WifiInternetPageState extends State<WifiInternetPage> {
 
                         child: const Text(
                           'Reset',
-                          style: TextStyle(
-                            fontSize: 9,
-                            fontWeight: FontWeight.w400,
-                          ),
+                          style: TextStyle(fontSize: 9),
                         ),
                       ),
                     ),
                   ],
                 ),
-
-                const SizedBox(height: 10),
               ],
             ),
           ),
@@ -675,7 +648,7 @@ class _WifiInternetPageState extends State<WifiInternetPage> {
   }
 
   // =========================================================
-  // LABEL FIELD
+  // LABEL
   // =========================================================
 
   Widget _fieldTitle(String title) {
@@ -685,23 +658,16 @@ class _WifiInternetPageState extends State<WifiInternetPage> {
       child: Text(
         title,
 
-        style: const TextStyle(
-          color: Color(0xFF303030),
-
-          // SEBELUMNYA 8
-          fontSize: 9,
-
-          fontWeight: FontWeight.w400,
-        ),
+        style: const TextStyle(color: Color(0xFF303030), fontSize: 9),
       ),
     );
   }
 
   // =========================================================
-  // SUBMIT
+  // SUBMIT KE LARAVEL
   // =========================================================
 
-  void _submitForm() {
+  Future<void> _submitForm() async {
     FocusScope.of(context).unfocus();
 
     final bool valid = _formKey.currentState?.validate() ?? false;
@@ -712,16 +678,198 @@ class _WifiInternetPageState extends State<WifiInternetPage> {
       return;
     }
 
-    _showMessage('Data keluhan Wifi / Internet sudah lengkap.');
+    if (_isSubmitting) {
+      return;
+    }
+
+    setState(() {
+      _isSubmitting = true;
+    });
+
+    // Simpan dahulu sebelum form di-clear.
+
+    final String fullName = _nameController.text.trim();
+
+    final String identifierValue = _identifierController.text.trim();
+
+    final String buildingName = _selectedBuilding!;
+
+    final String roomName = _roomController.text.trim();
+
+    final String description = _descriptionController.text.trim();
+
+    try {
+      final http.Response response = await http
+          .post(
+            Uri.parse(ApiConfig.createWifiInternet),
+
+            body: {
+              'full_name': fullName,
+
+              'identifier_value': identifierValue,
+
+              'building_name': buildingName,
+
+              'room_name': roomName,
+
+              'description': description,
+            },
+          )
+          .timeout(const Duration(seconds: 30));
+
+      debugPrint('WIFI STATUS: ${response.statusCode}');
+
+      debugPrint('WIFI RESPONSE: ${response.body}');
+
+      final dynamic decoded = jsonDecode(response.body);
+
+      if (decoded is! Map<String, dynamic>) {
+        throw const FormatException('Response API tidak valid.');
+      }
+
+      // =====================================================
+      // BERHASIL
+      // =====================================================
+
+      if ((response.statusCode == 200 || response.statusCode == 201) &&
+          decoded['success'] == true) {
+        final dynamic rawData = decoded['data'];
+
+        if (rawData is! Map<String, dynamic>) {
+          throw const FormatException('Data API tidak valid.');
+        }
+
+        final String requestNumber =
+            rawData['request_number']?.toString() ?? '';
+
+        final String status =
+            rawData['status']?.toString() ?? 'menunggu_verifikasi';
+
+        final String estimatedResponse =
+            rawData['estimated_response']?.toString() ?? '1-2 Hari Kerja';
+
+        if (requestNumber.isEmpty) {
+          throw const FormatException('Nomor tiket tidak ditemukan.');
+        }
+
+        // ===================================================
+        // TANGGAL DARI SERVER
+        // ===================================================
+
+        DateTime submittedAt = DateTime.now();
+
+        final String? serverDate = rawData['submitted_at']?.toString();
+
+        if (serverDate != null && serverDate.isNotEmpty) {
+          submittedAt = DateTime.tryParse(serverDate) ?? submittedAt;
+        }
+
+        if (!mounted) {
+          return;
+        }
+
+        // ===================================================
+        // CLEAR SETELAH SERVER BERHASIL
+        // ===================================================
+
+        _clearForm();
+
+        // ===================================================
+        // SUCCESS PAGE
+        // ===================================================
+
+        Navigator.of(context).push(
+          MaterialPageRoute<void>(
+            builder: (BuildContext context) {
+              return WifiInternetSuccessPage(
+                requestNumber: requestNumber,
+
+                fullName: fullName,
+
+                identifierValue: identifierValue,
+
+                buildingName: buildingName,
+
+                roomName: roomName,
+
+                status: status,
+
+                estimatedResponse: estimatedResponse,
+
+                submittedAt: submittedAt,
+              );
+            },
+          ),
+        );
+
+        return;
+      }
+
+      // =====================================================
+      // API MENOLAK
+      // =====================================================
+
+      final String message =
+          decoded['message']?.toString() ??
+          'Keluhan Wifi / Internet gagal dikirim.';
+
+      if (!mounted) {
+        return;
+      }
+
+      _showMessage(message);
+    }
+    // =======================================================
+    // TIMEOUT
+    // =======================================================
+    on TimeoutException {
+      if (!mounted) {
+        return;
+      }
+
+      _showMessage('Server tidak merespon. Periksa koneksi jaringan.');
+    }
+    // =======================================================
+    // JSON INVALID
+    // =======================================================
+    on FormatException catch (e) {
+      debugPrint('WIFI FORMAT ERROR: $e');
+
+      if (!mounted) {
+        return;
+      }
+
+      _showMessage('Response dari server tidak valid.');
+    }
+    // =======================================================
+    // ERROR LAIN
+    // =======================================================
+    catch (e) {
+      debugPrint('WIFI ERROR: $e');
+
+      if (!mounted) {
+        return;
+      }
+
+      _showMessage('Tidak dapat terhubung ke server.');
+    }
+    // =======================================================
+    // SELESAI
+    // =======================================================
+    finally {
+      if (mounted) {
+        setState(() {
+          _isSubmitting = false;
+        });
+      }
+    }
   }
 
   // =========================================================
-  // RESET
+  // CLEAR
   // =========================================================
 
-  void _resetForm() {
-    FocusScope.of(context).unfocus();
-
+  void _clearForm() {
     _nameController.clear();
     _identifierController.clear();
     _roomController.clear();
@@ -733,6 +881,16 @@ class _WifiInternetPageState extends State<WifiInternetPage> {
     });
 
     _formKey.currentState?.reset();
+  }
+
+  // =========================================================
+  // RESET
+  // =========================================================
+
+  void _resetForm() {
+    FocusScope.of(context).unfocus();
+
+    _clearForm();
 
     _showMessage('Form berhasil dikosongkan.');
   }
