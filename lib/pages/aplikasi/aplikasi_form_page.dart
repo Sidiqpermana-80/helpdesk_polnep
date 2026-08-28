@@ -36,6 +36,8 @@ class _AplikasiFormPageState extends State<AplikasiFormPage> {
 
   final TextEditingController _descriptionController = TextEditingController();
 
+  final TextEditingController _emailController = TextEditingController();
+
   // =========================================================
   // FILE
   // =========================================================
@@ -57,6 +59,7 @@ class _AplikasiFormPageState extends State<AplikasiFormPage> {
     _nameController.dispose();
     _identifierController.dispose();
     _descriptionController.dispose();
+    _emailController.dispose();
 
     super.dispose();
   }
@@ -377,6 +380,34 @@ class _AplikasiFormPageState extends State<AplikasiFormPage> {
                         ),
 
                         const SizedBox(height: 13),
+
+                        _fieldTitle('Email'),
+
+                        TextFormField(
+                          controller: _emailController,
+                          keyboardType: TextInputType.emailAddress,
+                          textInputAction: TextInputAction.next,
+                          decoration: _fieldDecoration(
+                            hintText: 'Masukkan email aktif',
+                          ),
+                          validator: (String? value) {
+                            final String email = value?.trim() ?? '';
+
+                            if (email.isEmpty) {
+                              return 'Email wajib diisi';
+                            }
+
+                            final RegExp emailRegex = RegExp(
+                              r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
+                            );
+
+                            if (!emailRegex.hasMatch(email)) {
+                              return 'Format email tidak valid';
+                            }
+
+                            return null;
+                          },
+                        ),
 
                         // =========================================
                         // APLIKASI
@@ -816,6 +847,8 @@ class _AplikasiFormPageState extends State<AplikasiFormPage> {
 
         'identifier_value': identifierValue,
 
+        'email': _emailController.text.trim(),
+
         'application_name': applicationName,
 
         'issue_type': issueType,
@@ -1006,6 +1039,7 @@ class _AplikasiFormPageState extends State<AplikasiFormPage> {
     _nameController.clear();
     _identifierController.clear();
     _descriptionController.clear();
+    _emailController.clear();
 
     setState(() {
       _supportFile = null;

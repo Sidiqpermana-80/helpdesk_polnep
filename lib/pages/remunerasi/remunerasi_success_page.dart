@@ -134,13 +134,8 @@ class RemunerasiSuccessPage extends StatelessWidget {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFFF0F9FF),
-              Color(0xFFD7EEFF),
-              Color(0xFFB9E1FF),
-              Color(0xFF39A8F4),
-            ],
-            stops: [0.00, 0.25, 0.55, 1.00],
+            colors: [Color(0xFFF0F9FF), Color(0xFFD7EEFF), Color(0xFFB9E1FF)],
+            stops: [0.00, 0.48, 1.00],
           ),
         ),
         child: SingleChildScrollView(

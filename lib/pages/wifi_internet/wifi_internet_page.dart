@@ -22,6 +22,8 @@ class _WifiInternetPageState extends State<WifiInternetPage> {
 
   final TextEditingController _identifierController = TextEditingController();
 
+  final TextEditingController _emailController = TextEditingController();
+
   final TextEditingController _roomController = TextEditingController();
 
   final TextEditingController _descriptionController = TextEditingController();
@@ -51,6 +53,7 @@ class _WifiInternetPageState extends State<WifiInternetPage> {
   void dispose() {
     _nameController.dispose();
     _identifierController.dispose();
+    _emailController.dispose();
     _roomController.dispose();
     _descriptionController.dispose();
 
@@ -345,6 +348,41 @@ class _WifiInternetPageState extends State<WifiInternetPage> {
                         ),
 
                         const SizedBox(height: 13),
+
+                        //Email
+                        _fieldTitle('Email'),
+
+                        TextFormField(
+                          controller: _emailController,
+                          keyboardType: TextInputType.emailAddress,
+                          textInputAction: TextInputAction.next,
+                          style: const TextStyle(fontSize: 10.5),
+                          decoration: _fieldDecoration(
+                            hintText: 'Masukkan email aktif',
+                            prefixIcon: const Icon(
+                              Icons.email_outlined,
+                              size: 18,
+                              color: Color(0xFF168DE2),
+                            ),
+                          ),
+                          validator: (String? value) {
+                            final String email = value?.trim() ?? '';
+
+                            if (email.isEmpty) {
+                              return 'Email wajib diisi';
+                            }
+
+                            final RegExp emailRegex = RegExp(
+                              r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
+                            );
+
+                            if (!emailRegex.hasMatch(email)) {
+                              return 'Format email tidak valid';
+                            }
+
+                            return null;
+                          },
+                        ),
 
                         // =========================================
                         // DETAIL LOKASI
@@ -708,6 +746,8 @@ class _WifiInternetPageState extends State<WifiInternetPage> {
 
               'identifier_value': identifierValue,
 
+              'email': _emailController.text.trim(),
+
               'building_name': buildingName,
 
               'room_name': roomName,
@@ -872,6 +912,7 @@ class _WifiInternetPageState extends State<WifiInternetPage> {
   void _clearForm() {
     _nameController.clear();
     _identifierController.clear();
+    _emailController.clear();
     _roomController.clear();
     _descriptionController.clear();
 

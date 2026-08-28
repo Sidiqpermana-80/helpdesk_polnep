@@ -98,9 +98,7 @@ class WifiInternetSuccessPage extends StatelessWidget {
         width: double.infinity,
         height: double.infinity,
 
-        // =====================================================
-        // BACKGROUND SAMA DENGAN HOME PAGE
-        // =====================================================
+        // BACKGROUND
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
@@ -258,7 +256,7 @@ class WifiInternetSuccessPage extends StatelessWidget {
                           // NAMA PENGGUNA
                           // =========================================
                           _buildDetailCard(
-                            asset: 'assets/images/wifi_pp.png',
+                            asset: 'assets/images/pp.png',
                             label: 'Nama Pengguna',
                             value: fullName,
                             iconBackground: const Color(0xFFD6EBF8),
@@ -270,7 +268,7 @@ class WifiInternetSuccessPage extends StatelessWidget {
                           // NIM / NIP
                           // =========================================
                           _buildDetailCard(
-                            asset: 'assets/images/wifi_book.png',
+                            asset: 'assets/images/book.png',
                             label: 'NIM / NIP',
                             value: identifierValue,
                             iconBackground: const Color(0xFFD6EBF8),
@@ -282,7 +280,7 @@ class WifiInternetSuccessPage extends StatelessWidget {
                           // GEDUNG
                           // =========================================
                           _buildDetailCard(
-                            asset: 'assets/images/wifi_gedung.png',
+                            asset: 'assets/images/gedung.png',
                             label: 'Nama Gedung',
                             value: buildingName,
                             iconBackground: const Color(0xFFD6EBF8),
@@ -294,7 +292,7 @@ class WifiInternetSuccessPage extends StatelessWidget {
                           // RUANGAN
                           // =========================================
                           _buildDetailCard(
-                            asset: 'assets/images/wifi_door.png',
+                            asset: 'assets/images/door.png',
                             label: 'Ruangan',
                             value: roomName,
                             iconBackground: const Color(0xFFD6EBF8),
@@ -306,7 +304,7 @@ class WifiInternetSuccessPage extends StatelessWidget {
                           // TANGGAL
                           // =========================================
                           _buildDetailCard(
-                            asset: 'assets/images/wifi_tanggal.png',
+                            asset: 'assets/images/tanggal.png',
                             label: 'Tanggal',
                             value: formattedDate,
                             iconBackground: const Color(0xFF3C69C9),
@@ -319,7 +317,7 @@ class WifiInternetSuccessPage extends StatelessWidget {
                           // NO TIKET
                           // =========================================
                           _buildDetailCard(
-                            asset: 'assets/images/wifi_ticket.png',
+                            asset: 'assets/images/ticket.png',
                             label: 'No. Tiket',
                             value: requestNumber,
                             iconBackground: const Color(0xFF39AD4A),

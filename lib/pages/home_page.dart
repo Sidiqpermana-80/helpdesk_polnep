@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'kepegawaian/kepegawaian_page.dart';
 import 'permintaan_data/permintaan_data_page.dart';
-import 'remunerasi/remunerasi_page.dart';
 import 'aplikasi/aplikasi_page.dart';
 import 'website/website_page.dart';
 import 'wifi_internet/wifi_internet_page.dart';
@@ -15,14 +13,6 @@ class HomePage extends StatelessWidget {
       ServiceData(
         title: 'Permintaan\nData',
         imagePath: 'assets/images/file.jpeg',
-      ),
-      ServiceData(
-        title: 'Remunerasi',
-        imagePath: 'assets/images/remunerasi.png',
-      ),
-      ServiceData(
-        title: 'Kepegawaian',
-        imagePath: 'assets/images/kepegawaian.png',
       ),
       ServiceData(title: 'Wifi/Internet', imagePath: 'assets/images/wifi.jpeg'),
       ServiceData(title: 'Aplikasi', imagePath: 'assets/images/app.jpeg'),
@@ -372,70 +362,11 @@ class HomePage extends StatelessWidget {
                     },
                   ),
                 );
-
                 return;
               }
 
-              // REMUNERASI
-              if (index == 1) {
-                Navigator.of(context).push(
-                  MaterialPageRoute<void>(
-                    builder: (BuildContext context) {
-                      return const RemunerasiPage();
-                    },
-                  ),
-                );
-
-                return;
-              }
-
-              // KEPEGAWAIAN
-              if (index == 2) {
-                Navigator.of(context).push(
-                  MaterialPageRoute<void>(
-                    builder: (BuildContext context) {
-                      return const KepegawaianPage();
-                    },
-                  ),
-                );
-
-                return;
-              }
-
-              // =====================================================
-              // WEBSITE
-              // =====================================================
-
-              if (index == 5) {
-                Navigator.of(context).push(
-                  MaterialPageRoute<void>(
-                    builder: (BuildContext context) {
-                      return const WebsitePage();
-                    },
-                  ),
-                );
-
-                return;
-              }
-
-              // APLIKASI
-              if (index == 4) {
-                Navigator.of(context).push(
-                  MaterialPageRoute<void>(
-                    builder: (BuildContext context) {
-                      return const AplikasiPage();
-                    },
-                  ),
-                );
-
-                return;
-              }
-
-              // =====================================================
               // WIFI / INTERNET
-              // =====================================================
-
-              if (index == 3) {
+              if (index == 1) {
                 Navigator.of(context).push(
                   MaterialPageRoute<void>(
                     builder: (BuildContext context) {
@@ -443,14 +374,38 @@ class HomePage extends StatelessWidget {
                     },
                   ),
                 );
-
                 return;
               }
 
-              _showMessage(
-                context,
-                'Menu ${service.title.replaceAll('\n', ' ')} belum dibuat.',
-              );
+              // APLIKASI
+              if (index == 2) {
+                Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (BuildContext context) {
+                      return const AplikasiPage();
+                    },
+                  ),
+                );
+                return;
+              }
+
+              // WEBSITE
+              if (index == 3) {
+                Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (BuildContext context) {
+                      return const WebsitePage();
+                    },
+                  ),
+                );
+                return;
+              }
+
+              // FASILITAS RUANGAN
+              if (index == 4) {
+                _showMessage(context, 'Menu Fasilitas Ruangan belum dibuat.');
+                return;
+              }
             },
           );
         },

@@ -25,6 +25,8 @@ class _WebsiteFormPageState extends State<WebsiteFormPage> {
 
   final TextEditingController _identifierController = TextEditingController();
 
+  final TextEditingController _emailController = TextEditingController();
+
   final TextEditingController _descriptionController = TextEditingController();
 
   String? _selectedIssue;
@@ -46,6 +48,7 @@ class _WebsiteFormPageState extends State<WebsiteFormPage> {
     _nameController.dispose();
     _identifierController.dispose();
     _descriptionController.dispose();
+    _emailController.dispose();
 
     super.dispose();
   }
@@ -362,6 +365,36 @@ class _WebsiteFormPageState extends State<WebsiteFormPage> {
                         ),
 
                         const SizedBox(height: 8),
+
+                        //Email
+                        _title('Email'),
+
+                        TextFormField(
+                          controller: _emailController,
+                          keyboardType: TextInputType.emailAddress,
+                          textInputAction: TextInputAction.next,
+                          style: const TextStyle(fontSize: 9.5),
+                          decoration: _decoration(
+                            hintText: 'Masukkan email aktif',
+                          ),
+                          validator: (String? value) {
+                            final String email = value?.trim() ?? '';
+
+                            if (email.isEmpty) {
+                              return 'Email wajib diisi';
+                            }
+
+                            final RegExp emailRegex = RegExp(
+                              r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
+                            );
+
+                            if (!emailRegex.hasMatch(email)) {
+                              return 'Format email tidak valid';
+                            }
+
+                            return null;
+                          },
+                        ),
 
                         // =========================================
                         // PILIHAN WEBSITE
@@ -814,6 +847,8 @@ class _WebsiteFormPageState extends State<WebsiteFormPage> {
 
         'identifier_value': identifier,
 
+        'email': _emailController.text.trim(),
+
         'website_name': widget.websiteName,
 
         'issue_type': issue,
@@ -939,6 +974,7 @@ class _WebsiteFormPageState extends State<WebsiteFormPage> {
     _nameController.clear();
     _identifierController.clear();
     _descriptionController.clear();
+    _emailController.clear();
 
     setState(() {
       _selectedIssue = null;

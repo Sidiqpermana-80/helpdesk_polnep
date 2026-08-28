@@ -36,6 +36,8 @@ class _RequestFormWidgetState extends State<RequestFormWidget> {
 
   final TextEditingController _identifierController = TextEditingController();
 
+  final TextEditingController _emailController = TextEditingController();
+
   final TextEditingController _phoneController = TextEditingController();
 
   final TextEditingController _informationController = TextEditingController();
@@ -114,6 +116,7 @@ class _RequestFormWidgetState extends State<RequestFormWidget> {
   void dispose() {
     _nameController.dispose();
     _identifierController.dispose();
+    _emailController.dispose();
     _phoneController.dispose();
     _informationController.dispose();
     _reasonController.dispose();
@@ -437,6 +440,35 @@ class _RequestFormWidgetState extends State<RequestFormWidget> {
 
                           if (identifier.length < 5) {
                             return '${widget.identifierLabel} belum sesuai';
+                          }
+
+                          return null;
+                        },
+                      ),
+                    ),
+
+                    _buildLabeledField(
+                      label: 'Email',
+                      child: TextFormField(
+                        controller: _emailController,
+                        keyboardType: TextInputType.emailAddress,
+                        textInputAction: TextInputAction.next,
+                        decoration: _fieldDecoration(
+                          hintText: 'Masukkan email aktif',
+                        ),
+                        validator: (String? value) {
+                          final String email = value?.trim() ?? '';
+
+                          if (email.isEmpty) {
+                            return 'Email wajib diisi';
+                          }
+
+                          final RegExp emailRegex = RegExp(
+                            r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
+                          );
+
+                          if (!emailRegex.hasMatch(email)) {
+                            return 'Format email tidak valid';
                           }
 
                           return null;
@@ -964,6 +996,7 @@ class _RequestFormWidgetState extends State<RequestFormWidget> {
         'requester_type': requesterType,
         'full_name': fullName,
         'identifier_value': identifierValue,
+        'email': _emailController.text.trim(),
         'phone': phone,
         'request_category': requestCategory,
         'information_needed': informationNeeded,
@@ -1121,6 +1154,7 @@ class _RequestFormWidgetState extends State<RequestFormWidget> {
   void _clearForm() {
     _nameController.clear();
     _identifierController.clear();
+    _emailController.clear();
     _phoneController.clear();
     _informationController.clear();
     _reasonController.clear();
