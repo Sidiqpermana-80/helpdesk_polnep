@@ -26,10 +26,6 @@ class RequestFormWidget extends StatefulWidget {
 }
 
 class _RequestFormWidgetState extends State<RequestFormWidget> {
-  // =========================================================
-  // FORM
-  // =========================================================
-
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
   final TextEditingController _nameController = TextEditingController();
@@ -44,28 +40,21 @@ class _RequestFormWidgetState extends State<RequestFormWidget> {
 
   final TextEditingController _reasonController = TextEditingController();
 
-  // =========================================================
-  // STATE
-  // =========================================================
-
   String _selectedUnitKerja = 'BAK';
+
   String _selectedRequestCategory = 'SIAKAD';
+
   String _selectedPriority = 'Tidak Mendesak';
 
   bool _isSubmitting = false;
 
   int _formVersion = 0;
 
-  // =========================================================
-  // FILE
-  // =========================================================
+  final List<XFile> _supportFiles = <XFile>[];
 
-  XFile? _identityFile;
-  XFile? _supportFile;
+  static const int _maximumSupportFiles = 5;
 
-  // =========================================================
-  // UNIT KERJA
-  // =========================================================
+  static const int _maximumFileSize = 5 * 1024 * 1024;
 
   static const List<String> _unitKerjaOptions = [
     'BAK',
@@ -83,14 +72,8 @@ class _RequestFormWidgetState extends State<RequestFormWidget> {
     'Unit Lainnya',
   ];
 
-  // =========================================================
-  // KATEGORI PERMINTAAN
-  // =========================================================
-
   static const List<String> _requestCategories = [
     'SIAKAD',
-    'Kepegawaian',
-    'Remunerasi',
     'Aplikasi',
     'Website',
     'Access Point',
@@ -98,35 +81,28 @@ class _RequestFormWidgetState extends State<RequestFormWidget> {
     'Lainnya',
   ];
 
-  // =========================================================
-  // PRIORITAS
-  // =========================================================
-
   static const List<String> _priorities = [
     'Tidak Mendesak',
     'Normal',
     'Mendesak',
   ];
 
-  // =========================================================
-  // DISPOSE
-  // =========================================================
-
   @override
   void dispose() {
     _nameController.dispose();
+
     _identifierController.dispose();
+
     _emailController.dispose();
+
     _phoneController.dispose();
+
     _informationController.dispose();
+
     _reasonController.dispose();
 
     super.dispose();
   }
-
-  // =========================================================
-  // JENIS PEMOHON
-  // =========================================================
 
   String _getRequesterType() {
     switch (widget.categoryName) {
@@ -144,10 +120,6 @@ class _RequestFormWidgetState extends State<RequestFormWidget> {
     }
   }
 
-  // =========================================================
-  // FORMAT NOMOR TELEPON
-  // =========================================================
-
   String _getFormattedPhone() {
     String phone = _phoneController.text.trim();
 
@@ -158,64 +130,7 @@ class _RequestFormWidgetState extends State<RequestFormWidget> {
     return '+62$phone';
   }
 
-  // =========================================================
-  // PILIH FILE IDENTITAS
-  // =========================================================
-
-  Future<void> _pickIdentityFile() async {
-    try {
-      const XTypeGroup typeGroup = XTypeGroup(
-        label: 'File Identitas',
-        extensions: <String>['jpg', 'jpeg', 'png', 'pdf'],
-      );
-
-      final XFile? file = await openFile(
-        acceptedTypeGroups: <XTypeGroup>[typeGroup],
-      );
-
-      if (file == null) {
-        return;
-      }
-
-      final int fileSize = await file.length();
-
-      const int maximumSize = 5 * 1024 * 1024;
-
-      if (fileSize > maximumSize) {
-        if (!mounted) {
-          return;
-        }
-
-        _showMessage('Ukuran file identitas maksimal 5 MB.');
-
-        return;
-      }
-
-      if (!mounted) {
-        return;
-      }
-
-      setState(() {
-        _identityFile = file;
-      });
-
-      _showMessage('File identitas berhasil dipilih.');
-    } catch (e) {
-      debugPrint('ERROR PILIH IDENTITAS: $e');
-
-      if (!mounted) {
-        return;
-      }
-
-      _showMessage('Gagal memilih file identitas.');
-    }
-  }
-
-  // =========================================================
-  // PILIH FILE PENDUKUNG
-  // =========================================================
-
-  Future<void> _pickSupportFile() async {
+  Future<void> _pickSupportFiles() async {
     try {
       const XTypeGroup typeGroup = XTypeGroup(
         label: 'File Pendukung',
@@ -231,26 +146,36 @@ class _RequestFormWidgetState extends State<RequestFormWidget> {
         ],
       );
 
-      final XFile? file = await openFile(
+      final List<XFile> files = await openFiles(
         acceptedTypeGroups: <XTypeGroup>[typeGroup],
       );
 
-      if (file == null) {
+      if (files.isEmpty) {
         return;
       }
 
-      final int fileSize = await file.length();
-
-      const int maximumSize = 5 * 1024 * 1024;
-
-      if (fileSize > maximumSize) {
+      if (_supportFiles.length + files.length > _maximumSupportFiles) {
         if (!mounted) {
           return;
         }
 
-        _showMessage('Ukuran file pendukung maksimal 5 MB.');
+        _showMessage('File pendukung maksimal $_maximumSupportFiles file.');
 
         return;
+      }
+
+      for (final XFile file in files) {
+        final int fileSize = await file.length();
+
+        if (fileSize > _maximumFileSize) {
+          if (!mounted) {
+            return;
+          }
+
+          _showMessage('File ${file.name} melebihi batas maksimal 5 MB.');
+
+          return;
+        }
       }
 
       if (!mounted) {
@@ -258,10 +183,10 @@ class _RequestFormWidgetState extends State<RequestFormWidget> {
       }
 
       setState(() {
-        _supportFile = file;
+        _supportFiles.addAll(files);
       });
 
-      _showMessage('File pendukung berhasil dipilih.');
+      _showMessage('${files.length} file berhasil dipilih.');
     } catch (e) {
       debugPrint('ERROR PILIH FILE PENDUKUNG: $e');
 
@@ -273,33 +198,48 @@ class _RequestFormWidgetState extends State<RequestFormWidget> {
     }
   }
 
-  // =========================================================
-  // DESIGN INPUT
-  // =========================================================
+  void _removeSupportFile(int index) {
+    if (index < 0 || index >= _supportFiles.length) {
+      return;
+    }
+
+    setState(() {
+      _supportFiles.removeAt(index);
+    });
+  }
 
   InputDecoration _fieldDecoration({String? hintText}) {
     return InputDecoration(
       hintText: hintText,
+
       hintStyle: const TextStyle(color: Color(0xFF888888), fontSize: 10.5),
+
       filled: true,
+
       fillColor: const Color(0xFFE3E3E3),
+
       contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(5),
         borderSide: BorderSide.none,
       ),
+
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(5),
         borderSide: BorderSide.none,
       ),
+
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(5),
         borderSide: const BorderSide(color: Color(0xFF3AA7F5), width: 1.5),
       ),
+
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(5),
         borderSide: const BorderSide(color: Colors.red, width: 1),
       ),
+
       focusedErrorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(5),
         borderSide: const BorderSide(color: Colors.red, width: 1.3),
@@ -307,15 +247,12 @@ class _RequestFormWidgetState extends State<RequestFormWidget> {
     );
   }
 
-  // =========================================================
-  // BUILD
-  // =========================================================
-
   @override
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
       height: double.infinity,
+
       decoration: const BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topCenter,
@@ -323,12 +260,19 @@ class _RequestFormWidgetState extends State<RequestFormWidget> {
           colors: [Color(0xFFF0F9FF), Color(0xFFD7EEFF), Color(0xFFB9E1FF)],
         ),
       ),
+
       child: SingleChildScrollView(
         keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+
         padding: const EdgeInsets.fromLTRB(8, 4, 8, 24),
+
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+
           children: [
+            // =================================================
+            // JUDUL
+            // =================================================
             Text(
               'Permintaan Data ${widget.categoryName}',
               style: const TextStyle(
@@ -340,6 +284,9 @@ class _RequestFormWidgetState extends State<RequestFormWidget> {
 
             const SizedBox(height: 6),
 
+            // =================================================
+            // BREADCRUMB
+            // =================================================
             Text(
               'Home / Permintaan Data / ${widget.categoryName}',
               style: const TextStyle(
@@ -351,13 +298,21 @@ class _RequestFormWidgetState extends State<RequestFormWidget> {
 
             const SizedBox(height: 16),
 
+            // =================================================
+            // FORM CONTAINER
+            // =================================================
             Container(
               width: double.infinity,
+
               padding: const EdgeInsets.fromLTRB(10, 14, 10, 19),
+
               decoration: BoxDecoration(
                 color: Colors.white,
+
                 borderRadius: BorderRadius.circular(10),
+
                 border: Border.all(color: const Color(0xFFD6E9F7), width: 0.7),
+
                 boxShadow: const [
                   BoxShadow(
                     color: Color(0x14000000),
@@ -366,11 +321,17 @@ class _RequestFormWidgetState extends State<RequestFormWidget> {
                   ),
                 ],
               ),
+
               child: Form(
                 key: _formKey,
+
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+
                   children: [
+                    // =========================================
+                    // HEADER FORM
+                    // =========================================
                     const Text(
                       'INPUT PERMINTAAN DATA',
                       style: TextStyle(
@@ -392,16 +353,23 @@ class _RequestFormWidgetState extends State<RequestFormWidget> {
 
                     const SizedBox(height: 27),
 
+                    // =========================================
                     // NAMA LENGKAP
+                    // =========================================
                     _buildLabeledField(
                       label: 'Nama Lengkap',
+
                       child: TextFormField(
                         controller: _nameController,
+
                         textCapitalization: TextCapitalization.words,
+
                         textInputAction: TextInputAction.next,
+
                         decoration: _fieldDecoration(
                           hintText: 'Masukkan nama lengkap',
                         ),
+
                         validator: (String? value) {
                           final String name = value?.trim() ?? '';
 
@@ -418,19 +386,27 @@ class _RequestFormWidgetState extends State<RequestFormWidget> {
                       ),
                     ),
 
-                    // NIP / NIM
+                    // =========================================
+                    // NIM / NIP
+                    // =========================================
                     _buildLabeledField(
                       label: widget.identifierLabel,
+
                       child: TextFormField(
                         controller: _identifierController,
+
                         keyboardType: TextInputType.number,
+
                         textInputAction: TextInputAction.next,
+
                         inputFormatters: [
                           FilteringTextInputFormatter.digitsOnly,
                         ],
+
                         decoration: _fieldDecoration(
                           hintText: 'Masukkan ${widget.identifierLabel}',
                         ),
+
                         validator: (String? value) {
                           final String identifier = value?.trim() ?? '';
 
@@ -447,15 +423,23 @@ class _RequestFormWidgetState extends State<RequestFormWidget> {
                       ),
                     ),
 
+                    // =========================================
+                    // EMAIL
+                    // =========================================
                     _buildLabeledField(
                       label: 'Email',
+
                       child: TextFormField(
                         controller: _emailController,
+
                         keyboardType: TextInputType.emailAddress,
+
                         textInputAction: TextInputAction.next,
+
                         decoration: _fieldDecoration(
                           hintText: 'Masukkan email aktif',
                         ),
+
                         validator: (String? value) {
                           final String email = value?.trim() ?? '';
 
@@ -476,32 +460,44 @@ class _RequestFormWidgetState extends State<RequestFormWidget> {
                       ),
                     ),
 
+                    // =========================================
                     // UNIT KERJA
+                    // HANYA JIKA DIPERLUKAN
+                    // =========================================
                     if (widget.showUnitKerjaField)
                       _buildLabeledField(
                         label: 'Nama Unit\nKerja',
+
                         child: DropdownButtonFormField<String>(
                           key: ValueKey('unit-kerja-$_formVersion'),
+
                           initialValue: _selectedUnitKerja,
+
                           isExpanded: true,
+
                           decoration: _fieldDecoration(),
+
                           icon: const Icon(
                             Icons.keyboard_arrow_down_rounded,
                             size: 19,
                           ),
+
                           style: const TextStyle(
                             color: Color(0xFF202020),
                             fontSize: 11.5,
                           ),
+
                           items: _unitKerjaOptions.map((String unit) {
                             return DropdownMenuItem<String>(
                               value: unit,
+
                               child: Text(
                                 unit,
                                 overflow: TextOverflow.ellipsis,
                               ),
                             );
                           }).toList(),
+
                           onChanged: (String? value) {
                             if (value == null) {
                               return;
@@ -514,20 +510,28 @@ class _RequestFormWidgetState extends State<RequestFormWidget> {
                         ),
                       ),
 
-                    // TELEPON
+                    // =========================================
+                    // NO TELEPON
+                    // =========================================
                     _buildLabeledField(
                       label: 'No Telepon',
+
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
+
                         children: [
                           Container(
                             height: 42,
+
                             padding: const EdgeInsets.symmetric(horizontal: 8),
+
                             alignment: Alignment.center,
+
                             decoration: BoxDecoration(
                               color: const Color(0xFFE3E3E3),
                               borderRadius: BorderRadius.circular(5),
                             ),
+
                             child: const Text(
                               '+62',
                               style: TextStyle(
@@ -542,15 +546,21 @@ class _RequestFormWidgetState extends State<RequestFormWidget> {
                           Expanded(
                             child: TextFormField(
                               controller: _phoneController,
+
                               keyboardType: TextInputType.phone,
+
                               textInputAction: TextInputAction.next,
+
                               inputFormatters: [
                                 FilteringTextInputFormatter.digitsOnly,
+
                                 LengthLimitingTextInputFormatter(13),
                               ],
+
                               decoration: _fieldDecoration(
                                 hintText: '81234567890',
                               ),
+
                               validator: (String? value) {
                                 final String phone = value?.trim() ?? '';
 
@@ -570,31 +580,42 @@ class _RequestFormWidgetState extends State<RequestFormWidget> {
                       ),
                     ),
 
+                    // =========================================
                     // KATEGORI PERMINTAAN
+                    // =========================================
                     _buildLabeledField(
                       label: 'Kategori\nPermintaan',
+
                       child: DropdownButtonFormField<String>(
                         key: ValueKey('kategori-$_formVersion'),
+
                         initialValue: _selectedRequestCategory,
+
                         isExpanded: true,
+
                         decoration: _fieldDecoration(),
+
                         icon: const Icon(
                           Icons.keyboard_arrow_down_rounded,
                           size: 19,
                         ),
+
                         style: const TextStyle(
                           color: Color(0xFF202020),
                           fontSize: 11.5,
                         ),
+
                         items: _requestCategories.map((String category) {
                           return DropdownMenuItem<String>(
                             value: category,
+
                             child: Text(
                               category,
                               overflow: TextOverflow.ellipsis,
                             ),
                           );
                         }).toList(),
+
                         onChanged: (String? value) {
                           if (value == null) {
                             return;
@@ -607,21 +628,29 @@ class _RequestFormWidgetState extends State<RequestFormWidget> {
                       ),
                     ),
 
-                    // INFORMASI
                     _buildLabeledField(
                       label: 'Informasi yang\nDibutuhkan',
+
                       child: SizedBox(
                         height: 135,
+
                         child: TextFormField(
                           controller: _informationController,
+
                           expands: true,
+
                           minLines: null,
+
                           maxLines: null,
+
                           keyboardType: TextInputType.multiline,
+
                           textAlignVertical: TextAlignVertical.top,
+
                           decoration: _fieldDecoration(
                             hintText: 'Tuliskan informasi yang dibutuhkan',
                           ),
+
                           validator: (String? value) {
                             if (value == null || value.trim().isEmpty) {
                               return 'Informasi yang dibutuhkan wajib diisi';
@@ -633,21 +662,29 @@ class _RequestFormWidgetState extends State<RequestFormWidget> {
                       ),
                     ),
 
-                    // ALASAN
                     _buildLabeledField(
                       label: 'Alasan\nPermintaan',
+
                       child: SizedBox(
                         height: 135,
+
                         child: TextFormField(
                           controller: _reasonController,
+
                           expands: true,
+
                           minLines: null,
+
                           maxLines: null,
+
                           keyboardType: TextInputType.multiline,
+
                           textAlignVertical: TextAlignVertical.top,
+
                           decoration: _fieldDecoration(
                             hintText: 'Tuliskan alasan permintaan',
                           ),
+
                           validator: (String? value) {
                             if (value == null || value.trim().isEmpty) {
                               return 'Alasan permintaan wajib diisi';
@@ -659,28 +696,39 @@ class _RequestFormWidgetState extends State<RequestFormWidget> {
                       ),
                     ),
 
+                    // =========================================
                     // PRIORITAS
+                    // =========================================
                     _buildLabeledField(
                       label: 'Prioritas',
+
                       child: DropdownButtonFormField<String>(
                         key: ValueKey('prioritas-$_formVersion'),
+
                         initialValue: _selectedPriority,
+
                         isExpanded: true,
+
                         decoration: _fieldDecoration(),
+
                         icon: const Icon(
                           Icons.keyboard_arrow_down_rounded,
                           size: 19,
                         ),
+
                         style: const TextStyle(
                           color: Color(0xFF202020),
                           fontSize: 11,
                         ),
+
                         items: _priorities.map((String priority) {
                           return DropdownMenuItem<String>(
                             value: priority,
+
                             child: Text(priority),
                           );
                         }).toList(),
+
                         onChanged: (String? value) {
                           if (value == null) {
                             return;
@@ -693,46 +741,22 @@ class _RequestFormWidgetState extends State<RequestFormWidget> {
                       ),
                     ),
 
-                    // IDENTITAS
-                    _buildLabeledField(
-                      label: 'Upload Identitas\nAnda',
-                      child: _buildFileInput(
-                        selectedFile: _identityFile,
-                        onChooseFile: _pickIdentityFile,
-                        onClear: () {
-                          setState(() {
-                            _identityFile = null;
-                          });
-                        },
-                      ),
-                    ),
-
-                    const Padding(
-                      padding: EdgeInsets.only(left: 80, bottom: 12),
-                      child: Text(
-                        'Format: JPG, JPEG, PNG atau PDF. Maksimal 5 MB.',
-                        style: TextStyle(color: Color(0xFF777777), fontSize: 8),
-                      ),
-                    ),
-
-                    // FILE PENDUKUNG
+                    // =========================================
+                    // UPLOAD FILE PENDUKUNG
+                    // MULTI FILE
+                    // =========================================
                     _buildLabeledField(
                       label: 'Upload File\nPendukung',
-                      child: _buildFileInput(
-                        selectedFile: _supportFile,
-                        onChooseFile: _pickSupportFile,
-                        onClear: () {
-                          setState(() {
-                            _supportFile = null;
-                          });
-                        },
-                      ),
+
+                      child: _buildMultiFileInput(),
                     ),
 
                     const Padding(
                       padding: EdgeInsets.only(left: 80),
+
                       child: Text(
-                        'Format: JPG, PNG, PDF, DOC, DOCX, XLS atau XLSX. Maksimal 5 MB.',
+                        'Format: JPG, JPEG, PNG, PDF, DOC, DOCX, XLS atau XLSX. '
+                        'Maksimal 5 file, masing-masing 5 MB.',
                         style: TextStyle(color: Color(0xFF777777), fontSize: 8),
                       ),
                     ),
@@ -743,24 +767,39 @@ class _RequestFormWidgetState extends State<RequestFormWidget> {
 
                     const SizedBox(height: 17),
 
+                    // =========================================
+                    // BUTTON
+                    // =========================================
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
+
                       children: [
+                        // =====================================
+                        // KIRIM
+                        // =====================================
                         SizedBox(
                           width: 100,
                           height: 40,
+
                           child: ElevatedButton(
                             onPressed: _isSubmitting ? null : _submitForm,
+
                             style: ElevatedButton.styleFrom(
                               backgroundColor: const Color(0xFF7C8CF5),
+
                               disabledBackgroundColor: const Color(0xFFABB4ED),
+
                               foregroundColor: Colors.white,
+
                               elevation: 0,
+
                               padding: EdgeInsets.zero,
+
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(6),
                               ),
                             ),
+
                             child: _isSubmitting
                                 ? const SizedBox(
                                     width: 18,
@@ -782,20 +821,30 @@ class _RequestFormWidgetState extends State<RequestFormWidget> {
 
                         const SizedBox(width: 20),
 
+                        // =====================================
+                        // RESET
+                        // =====================================
                         SizedBox(
                           width: 70,
                           height: 40,
+
                           child: ElevatedButton(
                             onPressed: _isSubmitting ? null : _resetForm,
+
                             style: ElevatedButton.styleFrom(
                               backgroundColor: const Color(0xFF58C761),
+
                               foregroundColor: Colors.white,
+
                               elevation: 0,
+
                               padding: EdgeInsets.zero,
+
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(6),
                               ),
                             ),
+
                             child: const Text(
                               'Reset',
                               style: TextStyle(
@@ -820,22 +869,28 @@ class _RequestFormWidgetState extends State<RequestFormWidget> {
   }
 
   // =========================================================
-  // LABEL + FIELD
+  // FIELD DENGAN LABEL
   // =========================================================
 
   Widget _buildLabeledField({required String label, required Widget child}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
+
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
+
         children: [
           SizedBox(
             width: 70,
+
             child: Padding(
               padding: const EdgeInsets.only(top: 11),
+
               child: Text(
                 label,
+
                 textAlign: TextAlign.right,
+
                 style: const TextStyle(
                   color: Color(0xFF202020),
                   fontSize: 10.5,
@@ -854,94 +909,189 @@ class _RequestFormWidgetState extends State<RequestFormWidget> {
   }
 
   // =========================================================
-  // FILE INPUT
+  // MULTI FILE INPUT
   // =========================================================
 
-  Widget _buildFileInput({
-    required XFile? selectedFile,
-    required VoidCallback onChooseFile,
-    required VoidCallback onClear,
-  }) {
-    final bool hasFile = selectedFile != null;
+  Widget _buildMultiFileInput() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
 
-    return SizedBox(
-      height: 42,
-      child: Row(
-        children: [
-          Expanded(
-            child: Container(
-              height: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              decoration: const BoxDecoration(
-                color: Color(0xFFE3E3E3),
-                borderRadius: BorderRadius.horizontal(left: Radius.circular(5)),
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      hasFile ? selectedFile.name : 'Belum ada file',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: hasFile
-                            ? const Color(0xFF202020)
-                            : const Color(0xFF777777),
-                        fontSize: 9,
-                        fontWeight: hasFile ? FontWeight.w500 : FontWeight.w400,
-                      ),
+      children: [
+        // =====================================================
+        // PILIH FILE
+        // =====================================================
+        SizedBox(
+          height: 42,
+
+          child: Row(
+            children: [
+              Expanded(
+                child: Container(
+                  height: double.infinity,
+
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+
+                  alignment: Alignment.centerLeft,
+
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFE3E3E3),
+
+                    borderRadius: BorderRadius.horizontal(
+                      left: Radius.circular(5),
                     ),
                   ),
 
-                  if (hasFile)
-                    InkWell(
-                      onTap: onClear,
-                      borderRadius: BorderRadius.circular(20),
-                      child: const Padding(
-                        padding: EdgeInsets.all(4),
-                        child: Icon(
-                          Icons.close_rounded,
-                          size: 16,
-                          color: Color(0xFF777777),
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            ),
-          ),
+                  child: Text(
+                    _supportFiles.isEmpty
+                        ? 'Belum ada file'
+                        : '${_supportFiles.length} file dipilih',
 
-          SizedBox(
-            width: 105,
-            height: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: onChooseFile,
-              icon: const Icon(
-                Icons.folder,
-                color: Color(0xFFFFB52D),
-                size: 18,
-              ),
-              label: const Text('Choose File', style: TextStyle(fontSize: 8.5)),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF58C761),
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 4),
-                elevation: 0,
-                shape: const RoundedRectangleBorder(
-                  borderRadius: BorderRadius.horizontal(
-                    right: Radius.circular(5),
+                    maxLines: 1,
+
+                    overflow: TextOverflow.ellipsis,
+
+                    style: TextStyle(
+                      color: _supportFiles.isEmpty
+                          ? const Color(0xFF777777)
+                          : const Color(0xFF202020),
+
+                      fontSize: 9,
+
+                      fontWeight: _supportFiles.isEmpty
+                          ? FontWeight.w400
+                          : FontWeight.w500,
+                    ),
                   ),
                 ),
               ),
-            ),
+
+              // =================================================
+              // BUTTON CHOOSE FILE
+              // =================================================
+              SizedBox(
+                width: 105,
+                height: double.infinity,
+
+                child: ElevatedButton.icon(
+                  onPressed: _supportFiles.length >= _maximumSupportFiles
+                      ? null
+                      : _pickSupportFiles,
+
+                  icon: const Icon(
+                    Icons.folder,
+                    color: Color(0xFFFFB52D),
+                    size: 18,
+                  ),
+
+                  label: const Text(
+                    'Choose File',
+                    style: TextStyle(fontSize: 8.5),
+                  ),
+
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF58C761),
+
+                    disabledBackgroundColor: const Color(0xFFA8D9AC),
+
+                    foregroundColor: Colors.white,
+
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+
+                    elevation: 0,
+
+                    shape: const RoundedRectangleBorder(
+                      borderRadius: BorderRadius.horizontal(
+                        right: Radius.circular(5),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
+        ),
+
+        // =====================================================
+        // DAFTAR FILE
+        // =====================================================
+        if (_supportFiles.isNotEmpty) ...[
+          const SizedBox(height: 6),
+
+          for (int index = 0; index < _supportFiles.length; index++)
+            Container(
+              margin: const EdgeInsets.only(bottom: 5),
+
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+
+              decoration: BoxDecoration(
+                color: const Color(0xFFF4F4F4),
+
+                borderRadius: BorderRadius.circular(5),
+
+                border: Border.all(color: const Color(0xFFD3D3D3), width: 0.6),
+              ),
+
+              child: Row(
+                children: [
+                  // ===========================================
+                  // ICON FILE
+                  // ===========================================
+                  const Icon(
+                    Icons.insert_drive_file_outlined,
+                    size: 15,
+                    color: Color(0xFF168DE2),
+                  ),
+
+                  const SizedBox(width: 6),
+
+                  // ===========================================
+                  // NAMA FILE
+                  // ===========================================
+                  Expanded(
+                    child: Text(
+                      _supportFiles[index].name,
+
+                      maxLines: 1,
+
+                      overflow: TextOverflow.ellipsis,
+
+                      style: const TextStyle(
+                        color: Color(0xFF303030),
+                        fontSize: 8.5,
+                      ),
+                    ),
+                  ),
+
+                  // ===========================================
+                  // HAPUS FILE
+                  // ===========================================
+                  InkWell(
+                    onTap: () {
+                      _removeSupportFile(index);
+                    },
+
+                    borderRadius: BorderRadius.circular(20),
+
+                    child: const Padding(
+                      padding: EdgeInsets.all(3),
+
+                      child: Icon(
+                        Icons.close_rounded,
+                        size: 15,
+                        color: Color(0xFF777777),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
         ],
-      ),
+      ],
     );
   }
 
   // =========================================================
-  // KIRIM KE API
+  // SUBMIT KE LARAVEL
   // =========================================================
 
   Future<void> _submitForm() async {
@@ -984,23 +1134,31 @@ class _RequestFormWidgetState extends State<RequestFormWidget> {
         : null;
 
     try {
-      // =====================================================
-      // URL SEKARANG DIAMBIL DARI api_config.dart
-      // =====================================================
-
       final Uri url = Uri.parse(ApiConfig.createPermintaanData);
 
       final http.MultipartRequest request = http.MultipartRequest('POST', url);
 
+      // =====================================================
+      // FIELD
+      // =====================================================
+
       request.fields.addAll({
         'requester_type': requesterType,
+
         'full_name': fullName,
+
         'identifier_value': identifierValue,
+
         'email': _emailController.text.trim(),
+
         'phone': phone,
+
         'request_category': requestCategory,
+
         'information_needed': informationNeeded,
+
         'request_reason': requestReason,
+
         'priority': priority,
       });
 
@@ -1009,36 +1167,25 @@ class _RequestFormWidgetState extends State<RequestFormWidget> {
       }
 
       // =====================================================
-      // IDENTITAS
+      // MULTI FILE PENDUKUNG
+      // support_files[]
       // =====================================================
 
-      if (_identityFile != null) {
-        final Uint8List bytes = await _identityFile!.readAsBytes();
+      for (final XFile file in _supportFiles) {
+        final Uint8List bytes = await file.readAsBytes();
 
         request.files.add(
           http.MultipartFile.fromBytes(
-            'identity_file',
+            'support_files[]',
             bytes,
-            filename: _identityFile!.name,
+            filename: file.name,
           ),
         );
       }
 
       // =====================================================
-      // FILE PENDUKUNG
+      // KIRIM
       // =====================================================
-
-      if (_supportFile != null) {
-        final Uint8List bytes = await _supportFile!.readAsBytes();
-
-        request.files.add(
-          http.MultipartFile.fromBytes(
-            'support_file',
-            bytes,
-            filename: _supportFile!.name,
-          ),
-        );
-      }
 
       final http.StreamedResponse streamedResponse = await request
           .send()
@@ -1048,9 +1195,15 @@ class _RequestFormWidgetState extends State<RequestFormWidget> {
         streamedResponse,
       );
 
-      debugPrint('PERMINTAAN DATA STATUS: ${response.statusCode}');
+      debugPrint(
+        'PERMINTAAN DATA STATUS: '
+        '${response.statusCode}',
+      );
 
-      debugPrint('PERMINTAAN DATA RESPONSE: ${response.body}');
+      debugPrint(
+        'PERMINTAAN DATA RESPONSE: '
+        '${response.body}',
+      );
 
       final dynamic decoded = jsonDecode(response.body);
 
@@ -1059,6 +1212,10 @@ class _RequestFormWidgetState extends State<RequestFormWidget> {
       }
 
       final Map<String, dynamic> responseData = decoded;
+
+      // =====================================================
+      // BERHASIL
+      // =====================================================
 
       if ((response.statusCode == 200 || response.statusCode == 201) &&
           responseData['success'] == true) {
@@ -1086,19 +1243,34 @@ class _RequestFormWidgetState extends State<RequestFormWidget> {
           return;
         }
 
+        // ===================================================
+        // CLEAR FORM
+        // ===================================================
+
         _clearForm();
+
+        // ===================================================
+        // SUCCESS PAGE
+        // ===================================================
 
         Navigator.of(context).push(
           MaterialPageRoute<void>(
             builder: (BuildContext context) {
               return PermintaanDataSuccessPage(
                 categoryName: widget.categoryName,
+
                 identifierLabel: widget.identifierLabel,
+
                 identifierValue: identifierValue,
+
                 requestCategory: requestCategory,
+
                 requestNumber: requestNumber,
+
                 status: status,
+
                 estimatedResponse: estimatedResponse,
+
                 unitKerja: unitKerja,
               );
             },
@@ -1108,6 +1280,10 @@ class _RequestFormWidgetState extends State<RequestFormWidget> {
         return;
       }
 
+      // =====================================================
+      // API MENOLAK
+      // =====================================================
+
       final String message =
           responseData['message']?.toString() ?? 'Permintaan gagal dikirim.';
 
@@ -1116,13 +1292,21 @@ class _RequestFormWidgetState extends State<RequestFormWidget> {
       }
 
       _showMessage(message);
-    } on TimeoutException {
+    }
+    // =======================================================
+    // TIMEOUT
+    // =======================================================
+    on TimeoutException {
       if (!mounted) {
         return;
       }
 
       _showMessage('Server tidak merespon. Periksa koneksi jaringan.');
-    } on FormatException catch (e) {
+    }
+    // =======================================================
+    // FORMAT ERROR
+    // =======================================================
+    on FormatException catch (e) {
       debugPrint('FORMAT ERROR: $e');
 
       if (!mounted) {
@@ -1130,7 +1314,11 @@ class _RequestFormWidgetState extends State<RequestFormWidget> {
       }
 
       _showMessage('Response dari server tidak valid.');
-    } catch (e) {
+    }
+    // =======================================================
+    // ERROR LAIN
+    // =======================================================
+    catch (e) {
       debugPrint('ERROR KIRIM DATA: $e');
 
       if (!mounted) {
@@ -1138,7 +1326,11 @@ class _RequestFormWidgetState extends State<RequestFormWidget> {
       }
 
       _showMessage('Tidak dapat terhubung ke server.');
-    } finally {
+    }
+    // =======================================================
+    // SELESAI
+    // =======================================================
+    finally {
       if (mounted) {
         setState(() {
           _isSubmitting = false;
@@ -1148,24 +1340,34 @@ class _RequestFormWidgetState extends State<RequestFormWidget> {
   }
 
   // =========================================================
-  // CLEAR
+  // CLEAR FORM
   // =========================================================
 
   void _clearForm() {
     _nameController.clear();
+
     _identifierController.clear();
+
     _emailController.clear();
+
     _phoneController.clear();
+
     _informationController.clear();
+
     _reasonController.clear();
 
     setState(() {
       _selectedUnitKerja = 'BAK';
+
       _selectedRequestCategory = 'SIAKAD';
+
       _selectedPriority = 'Tidak Mendesak';
 
-      _identityFile = null;
-      _supportFile = null;
+      // ===============================================
+      // HAPUS SELURUH FILE
+      // ===============================================
+
+      _supportFiles.clear();
 
       _formVersion++;
     });

@@ -22,10 +22,6 @@ class PermintaanDataSuccessPage extends StatelessWidget {
   final String estimatedResponse;
   final String? unitKerja;
 
-  // =========================================================
-  // FORMAT STATUS
-  // =========================================================
-
   String get formattedStatus {
     switch (status) {
       case 'menunggu_verifikasi':
@@ -48,10 +44,6 @@ class PermintaanDataSuccessPage extends StatelessWidget {
     }
   }
 
-  // =========================================================
-  // WARNA STATUS
-  // =========================================================
-
   Color get statusColor {
     switch (status) {
       case 'terverifikasi':
@@ -72,18 +64,11 @@ class PermintaanDataSuccessPage extends StatelessWidget {
     }
   }
 
-  // =========================================================
-  // BUILD
-  // =========================================================
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF0F9FF),
 
-      // =======================================================
-      // APP BAR
-      // =======================================================
       appBar: AppBar(
         backgroundColor: const Color(0xFFF0F9FF),
         elevation: 0,
@@ -112,9 +97,6 @@ class PermintaanDataSuccessPage extends StatelessWidget {
         ),
       ),
 
-      // =======================================================
-      // BODY
-      // =======================================================
       body: Container(
         width: double.infinity,
         height: double.infinity,
@@ -131,9 +113,6 @@ class PermintaanDataSuccessPage extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // =================================================
-              // JUDUL HALAMAN
-              // =================================================
               Text(
                 'Permintaan Data $categoryName',
                 style: const TextStyle(
@@ -156,9 +135,7 @@ class PermintaanDataSuccessPage extends StatelessWidget {
 
               const SizedBox(height: 10),
 
-              // =================================================
-              // CARD SUCCESS
-              // =================================================
+              // CARD
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.fromLTRB(7, 12, 7, 17),
@@ -175,9 +152,6 @@ class PermintaanDataSuccessPage extends StatelessWidget {
                 ),
                 child: Column(
                   children: [
-                    // =============================================
-                    // ICON
-                    // =============================================
                     const Icon(
                       Icons.verified_rounded,
                       color: Color(0xFF00D51D),
@@ -186,9 +160,6 @@ class PermintaanDataSuccessPage extends StatelessWidget {
 
                     const SizedBox(height: 5),
 
-                    // =============================================
-                    // JUDUL SUCCESS
-                    // =============================================
                     const Text(
                       'Permintaan Data Berhasil Dikirim',
                       textAlign: TextAlign.center,
@@ -213,9 +184,7 @@ class PermintaanDataSuccessPage extends StatelessWidget {
 
                     const SizedBox(height: 14),
 
-                    // =============================================
                     // DETAIL
-                    // =============================================
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.fromLTRB(10, 14, 10, 14),
@@ -267,9 +236,6 @@ class PermintaanDataSuccessPage extends StatelessWidget {
 
               const SizedBox(height: 24),
 
-              // =================================================
-              // BUTTON
-              // =================================================
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -339,10 +305,6 @@ class PermintaanDataSuccessPage extends StatelessWidget {
     );
   }
 
-  // =========================================================
-  // DETAIL ROW
-  // =========================================================
-
   Widget _buildDetailRow({
     required IconData icon,
     required String label,
@@ -385,10 +347,6 @@ class PermintaanDataSuccessPage extends StatelessWidget {
       ),
     );
   }
-
-  // =========================================================
-  // STATUS
-  // =========================================================
 
   Widget _buildStatusRow() {
     return Padding(

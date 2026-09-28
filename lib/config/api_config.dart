@@ -1,7 +1,7 @@
 class ApiConfig {
   ApiConfig._();
 
-  static const String baseUrl = 'http://192.168.101.101:8000/api';
+  static const String baseUrl = 'http://192.168.202.73:8000/api';
 
   static String get units => '$baseUrl/units';
 
@@ -11,17 +11,34 @@ class ApiConfig {
 
   static String get createPermintaanData => '$baseUrl/requests';
 
-  static String get createKepegawaian => '$baseUrl/kepegawaian';
-
-  static String get createRemunerasi => '$baseUrl/remunerasi';
-
   static String get createAplikasi => '$baseUrl/aplikasi';
 
   static String get createWebsite => '$baseUrl/website';
 
+  static String get websiteList =>
+      '$baseUrl/master-options/website/website_list';
+
+  static String get websiteIssueTypes =>
+      '$baseUrl/master-options/website/issue_type';
+
   static String get createWifiInternet => '$baseUrl/wifi-internet';
 
-  static String get statusPermintaanData => '$baseUrl/status/requests';
+  static String get wifiBuildingOptions =>
+      '$baseUrl/master-options/wifi_internet/building_name';
 
-  static String get statusKepegawaian => '$baseUrl/status/kepegawaian';
+  static String get createFasilitasRuangan => '$baseUrl/fasilitas-ruangan';
+
+  static String get fasilitasBuildingOptions =>
+      '$baseUrl/master-options/fasilitas_ruangan/building_name';
+
+  static String get fasilitasTypeOptions =>
+      '$baseUrl/master-options/fasilitas_ruangan/facility_type';
+
+  static String get createAntrianTiket => '$baseUrl/antrian-tiket';
+
+  static String get cekStatus => '$baseUrl/cek-status';
+
+  static String get requestStatus => '$baseUrl/status/requests';
+
+  static String get statusPermintaanData => '$baseUrl/status/requests';
 }

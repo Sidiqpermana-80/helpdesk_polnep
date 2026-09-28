@@ -34,20 +34,79 @@ class _WifiInternetPageState extends State<WifiInternetPage> {
 
   int _formVersion = 0;
 
-  static const List<String> _buildingOptions = [
-    'Gedung Rektorat',
-    'Gedung Jurusan Teknik Sipil',
-    'Gedung Jurusan Teknik Mesin',
-    'Gedung Jurusan Teknik Elektro',
-    'Gedung Jurusan Administrasi Bisnis',
-    'Gedung Jurusan Akuntansi',
-    'Gedung Jurusan Teknik Arsitektur',
-    'Gedung Jurusan Teknologi Pertanian',
-    'Gedung UPA TIK',
-    'Gedung Perpustakaan',
-    'Gedung Kuliah Bersama',
-    'Gedung Lainnya',
-  ];
+  List<String> _buildingOptions = <String>[];
+
+  bool _isLoadingBuildings = true;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _loadBuildingOptions();
+  }
+
+  Future<void> _loadBuildingOptions() async {
+    if (mounted) {
+      setState(() {
+        _isLoadingBuildings = true;
+      });
+    }
+
+    try {
+      final http.Response response = await http
+          .get(Uri.parse(ApiConfig.wifiBuildingOptions))
+          .timeout(const Duration(seconds: 20));
+
+      final dynamic decoded = jsonDecode(response.body);
+
+      if (response.statusCode != 200 ||
+          decoded is! Map<String, dynamic> ||
+          decoded['success'] != true) {
+        throw const FormatException('Data gedung tidak valid.');
+      }
+
+      final dynamic rawData = decoded['data'];
+
+      if (rawData is! List) {
+        throw const FormatException('Daftar gedung tidak valid.');
+      }
+
+      final List<String> buildings = rawData
+          .whereType<Map<String, dynamic>>()
+          .map(
+            (Map<String, dynamic> item) =>
+                item['option_label']?.toString().trim() ?? '',
+          )
+          .where((String value) => value.isNotEmpty)
+          .toList();
+
+      debugPrint('BUILDING STATUS: ${response.statusCode}');
+
+      debugPrint('BUILDING RESPONSE: ${response.body}');
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _buildingOptions = buildings;
+
+        _isLoadingBuildings = false;
+      });
+    } catch (e) {
+      debugPrint('LOAD WIFI BUILDINGS ERROR: $e');
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _buildingOptions = <String>[];
+
+        _isLoadingBuildings = false;
+      });
+    }
+  }
 
   @override
   void dispose() {
@@ -59,10 +118,6 @@ class _WifiInternetPageState extends State<WifiInternetPage> {
 
     super.dispose();
   }
-
-  // =========================================================
-  // INPUT DESIGN
-  // =========================================================
 
   InputDecoration _fieldDecoration({String? hintText, Widget? prefixIcon}) {
     return InputDecoration(
@@ -111,10 +166,6 @@ class _WifiInternetPageState extends State<WifiInternetPage> {
     );
   }
 
-  // =========================================================
-  // BUILD
-  // =========================================================
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -142,9 +193,7 @@ class _WifiInternetPageState extends State<WifiInternetPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
 
               children: [
-                // =================================================
                 // HEADER
-                // =================================================
                 Row(
                   children: [
                     IconButton(
@@ -177,9 +226,7 @@ class _WifiInternetPageState extends State<WifiInternetPage> {
 
                 const SizedBox(height: 24),
 
-                // =================================================
-                // HERO
-                // =================================================
+                // LOGO
                 SizedBox(
                   width: double.infinity,
                   height: 108,
@@ -222,9 +269,7 @@ class _WifiInternetPageState extends State<WifiInternetPage> {
 
                 const SizedBox(height: 8),
 
-                // =================================================
                 // FORM
-                // =================================================
                 Container(
                   width: double.infinity,
 
@@ -259,9 +304,6 @@ class _WifiInternetPageState extends State<WifiInternetPage> {
 
                         const SizedBox(height: 10),
 
-                        // =========================================
-                        // NAMA
-                        // =========================================
                         _fieldTitle('Nama'),
 
                         TextFormField(
@@ -300,9 +342,6 @@ class _WifiInternetPageState extends State<WifiInternetPage> {
 
                         const SizedBox(height: 8),
 
-                        // =========================================
-                        // NIM/NIP
-                        // =========================================
                         _fieldTitle('NIM / NIP'),
 
                         TextFormField(
@@ -349,7 +388,6 @@ class _WifiInternetPageState extends State<WifiInternetPage> {
 
                         const SizedBox(height: 13),
 
-                        //Email
                         _fieldTitle('Email'),
 
                         TextFormField(
@@ -384,9 +422,6 @@ class _WifiInternetPageState extends State<WifiInternetPage> {
                           },
                         ),
 
-                        // =========================================
-                        // DETAIL LOKASI
-                        // =========================================
                         const Text(
                           'Detail Lokasi',
                           style: TextStyle(
@@ -398,25 +433,21 @@ class _WifiInternetPageState extends State<WifiInternetPage> {
 
                         const SizedBox(height: 10),
 
-                        // =========================================
-                        // GEDUNG
-                        // =========================================
                         _fieldTitle('Nama Gedung'),
 
                         DropdownButtonFormField<String>(
                           key: ValueKey('building-$_formVersion'),
-
                           initialValue: _selectedBuilding,
-
                           isExpanded: true,
                           isDense: true,
 
                           decoration: _fieldDecoration(
-                            hintText: 'Pilih nama gedung',
+                            hintText: _isLoadingBuildings
+                                ? 'Memuat nama gedung...'
+                                : 'Pilih nama gedung',
 
                             prefixIcon: Padding(
                               padding: const EdgeInsets.all(6),
-
                               child: Image.asset(
                                 'assets/images/gedung.png',
                                 width: 18,
@@ -439,7 +470,6 @@ class _WifiInternetPageState extends State<WifiInternetPage> {
                           items: _buildingOptions.map((String building) {
                             return DropdownMenuItem<String>(
                               value: building,
-
                               child: Text(
                                 building,
                                 overflow: TextOverflow.ellipsis,
@@ -448,13 +478,23 @@ class _WifiInternetPageState extends State<WifiInternetPage> {
                             );
                           }).toList(),
 
-                          onChanged: (String? value) {
-                            setState(() {
-                              _selectedBuilding = value;
-                            });
-                          },
+                          onChanged: _isLoadingBuildings
+                              ? null
+                              : (String? value) {
+                                  setState(() {
+                                    _selectedBuilding = value;
+                                  });
+                                },
 
                           validator: (String? value) {
+                            if (_isLoadingBuildings) {
+                              return 'Daftar gedung masih dimuat';
+                            }
+
+                            if (_buildingOptions.isEmpty) {
+                              return 'Daftar gedung tidak tersedia';
+                            }
+
                             if (value == null || value.isEmpty) {
                               return 'Nama gedung wajib dipilih';
                             }
@@ -465,9 +505,6 @@ class _WifiInternetPageState extends State<WifiInternetPage> {
 
                         const SizedBox(height: 8),
 
-                        // =========================================
-                        // RUANGAN
-                        // =========================================
                         _fieldTitle('Ruangan'),
 
                         TextFormField(
@@ -505,9 +542,6 @@ class _WifiInternetPageState extends State<WifiInternetPage> {
 
                         const SizedBox(height: 8),
 
-                        // =========================================
-                        // DESKRIPSI
-                        // =========================================
                         _fieldTitle('Deskripsi Keluhan'),
 
                         SizedBox(
@@ -549,16 +583,13 @@ class _WifiInternetPageState extends State<WifiInternetPage> {
 
                 const SizedBox(height: 11),
 
-                // =================================================
-                // INFORMASI
-                // =================================================
                 Container(
                   width: double.infinity,
 
                   padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
 
                   decoration: BoxDecoration(
-                    color: const Color(0xFFD6CEFF),
+                    color: const Color(0xFFF0F7FF),
 
                     borderRadius: BorderRadius.circular(8),
 
@@ -599,9 +630,6 @@ class _WifiInternetPageState extends State<WifiInternetPage> {
 
                 const SizedBox(height: 25),
 
-                // =================================================
-                // BUTTON
-                // =================================================
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
 
@@ -685,10 +713,6 @@ class _WifiInternetPageState extends State<WifiInternetPage> {
     );
   }
 
-  // =========================================================
-  // LABEL
-  // =========================================================
-
   Widget _fieldTitle(String title) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 4),
@@ -700,10 +724,6 @@ class _WifiInternetPageState extends State<WifiInternetPage> {
       ),
     );
   }
-
-  // =========================================================
-  // SUBMIT KE LARAVEL
-  // =========================================================
 
   Future<void> _submitForm() async {
     FocusScope.of(context).unfocus();
@@ -723,8 +743,6 @@ class _WifiInternetPageState extends State<WifiInternetPage> {
     setState(() {
       _isSubmitting = true;
     });
-
-    // Simpan dahulu sebelum form di-clear.
 
     final String fullName = _nameController.text.trim();
 
@@ -767,10 +785,6 @@ class _WifiInternetPageState extends State<WifiInternetPage> {
         throw const FormatException('Response API tidak valid.');
       }
 
-      // =====================================================
-      // BERHASIL
-      // =====================================================
-
       if ((response.statusCode == 200 || response.statusCode == 201) &&
           decoded['success'] == true) {
         final dynamic rawData = decoded['data'];
@@ -792,10 +806,6 @@ class _WifiInternetPageState extends State<WifiInternetPage> {
           throw const FormatException('Nomor tiket tidak ditemukan.');
         }
 
-        // ===================================================
-        // TANGGAL DARI SERVER
-        // ===================================================
-
         DateTime submittedAt = DateTime.now();
 
         final String? serverDate = rawData['submitted_at']?.toString();
@@ -808,15 +818,7 @@ class _WifiInternetPageState extends State<WifiInternetPage> {
           return;
         }
 
-        // ===================================================
-        // CLEAR SETELAH SERVER BERHASIL
-        // ===================================================
-
         _clearForm();
-
-        // ===================================================
-        // SUCCESS PAGE
-        // ===================================================
 
         Navigator.of(context).push(
           MaterialPageRoute<void>(
@@ -845,10 +847,6 @@ class _WifiInternetPageState extends State<WifiInternetPage> {
         return;
       }
 
-      // =====================================================
-      // API MENOLAK
-      // =====================================================
-
       final String message =
           decoded['message']?.toString() ??
           'Keluhan Wifi / Internet gagal dikirim.';
@@ -858,21 +856,13 @@ class _WifiInternetPageState extends State<WifiInternetPage> {
       }
 
       _showMessage(message);
-    }
-    // =======================================================
-    // TIMEOUT
-    // =======================================================
-    on TimeoutException {
+    } on TimeoutException {
       if (!mounted) {
         return;
       }
 
       _showMessage('Server tidak merespon. Periksa koneksi jaringan.');
-    }
-    // =======================================================
-    // JSON INVALID
-    // =======================================================
-    on FormatException catch (e) {
+    } on FormatException catch (e) {
       debugPrint('WIFI FORMAT ERROR: $e');
 
       if (!mounted) {
@@ -880,11 +870,7 @@ class _WifiInternetPageState extends State<WifiInternetPage> {
       }
 
       _showMessage('Response dari server tidak valid.');
-    }
-    // =======================================================
-    // ERROR LAIN
-    // =======================================================
-    catch (e) {
+    } catch (e) {
       debugPrint('WIFI ERROR: $e');
 
       if (!mounted) {
@@ -892,11 +878,7 @@ class _WifiInternetPageState extends State<WifiInternetPage> {
       }
 
       _showMessage('Tidak dapat terhubung ke server.');
-    }
-    // =======================================================
-    // SELESAI
-    // =======================================================
-    finally {
+    } finally {
       if (mounted) {
         setState(() {
           _isSubmitting = false;
@@ -904,10 +886,6 @@ class _WifiInternetPageState extends State<WifiInternetPage> {
       }
     }
   }
-
-  // =========================================================
-  // CLEAR
-  // =========================================================
 
   void _clearForm() {
     _nameController.clear();
@@ -924,10 +902,6 @@ class _WifiInternetPageState extends State<WifiInternetPage> {
     _formKey.currentState?.reset();
   }
 
-  // =========================================================
-  // RESET
-  // =========================================================
-
   void _resetForm() {
     FocusScope.of(context).unfocus();
 
@@ -935,10 +909,6 @@ class _WifiInternetPageState extends State<WifiInternetPage> {
 
     _showMessage('Form berhasil dikosongkan.');
   }
-
-  // =========================================================
-  // MESSAGE
-  // =========================================================
 
   void _showMessage(String message) {
     ScaffoldMessenger.of(context)

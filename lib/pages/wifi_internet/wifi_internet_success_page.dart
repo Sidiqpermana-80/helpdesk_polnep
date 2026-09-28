@@ -22,10 +22,6 @@ class WifiInternetSuccessPage extends StatelessWidget {
   final String estimatedResponse;
   final DateTime submittedAt;
 
-  // =========================================================
-  // FORMAT TANGGAL INDONESIA
-  // =========================================================
-
   String get formattedDate {
     const List<String> months = [
       'Januari',
@@ -47,18 +43,11 @@ class WifiInternetSuccessPage extends StatelessWidget {
         '${submittedAt.year}';
   }
 
-  // =========================================================
-  // BUILD
-  // =========================================================
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF0F9FF),
 
-      // =======================================================
-      // APP BAR
-      // =======================================================
       appBar: AppBar(
         backgroundColor: const Color(0xFFF0F9FF),
         elevation: 0,
@@ -91,14 +80,10 @@ class WifiInternetSuccessPage extends StatelessWidget {
         ),
       ),
 
-      // =======================================================
-      // BODY
-      // =======================================================
       body: Container(
         width: double.infinity,
         height: double.infinity,
 
-        // BACKGROUND
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
@@ -115,9 +100,6 @@ class WifiInternetSuccessPage extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
 
             children: [
-              // =================================================
-              // JUDUL BAGIAN
-              // =================================================
               const Padding(
                 padding: EdgeInsets.only(left: 2),
                 child: Text(
@@ -146,9 +128,6 @@ class WifiInternetSuccessPage extends StatelessWidget {
 
               const SizedBox(height: 10),
 
-              // =================================================
-              // CARD UTAMA
-              // =================================================
               Container(
                 width: double.infinity,
 
@@ -170,9 +149,6 @@ class WifiInternetSuccessPage extends StatelessWidget {
 
                 child: Column(
                   children: [
-                    // =============================================
-                    // ICON SUKSES
-                    // =============================================
                     const Icon(
                       Icons.verified_rounded,
                       color: Color(0xFF00D51D),
@@ -181,9 +157,6 @@ class WifiInternetSuccessPage extends StatelessWidget {
 
                     const SizedBox(height: 5),
 
-                    // =============================================
-                    // JUDUL SUKSES
-                    // =============================================
                     const Text(
                       'Laporan Berhasil Dikirim',
                       textAlign: TextAlign.center,
@@ -212,9 +185,6 @@ class WifiInternetSuccessPage extends StatelessWidget {
 
                     const SizedBox(height: 13),
 
-                    // =============================================
-                    // DETAIL LAPORAN
-                    // =============================================
                     Container(
                       width: double.infinity,
 
@@ -230,9 +200,6 @@ class WifiInternetSuccessPage extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
 
                         children: [
-                          // =========================================
-                          // JUDUL DETAIL
-                          // =========================================
                           const Text(
                             'Detail Laporan',
                             style: TextStyle(
@@ -252,9 +219,6 @@ class WifiInternetSuccessPage extends StatelessWidget {
 
                           const SizedBox(height: 9),
 
-                          // =========================================
-                          // NAMA PENGGUNA
-                          // =========================================
                           _buildDetailCard(
                             asset: 'assets/images/pp.png',
                             label: 'Nama Pengguna',
@@ -264,9 +228,6 @@ class WifiInternetSuccessPage extends StatelessWidget {
 
                           const SizedBox(height: 4),
 
-                          // =========================================
-                          // NIM / NIP
-                          // =========================================
                           _buildDetailCard(
                             asset: 'assets/images/book.png',
                             label: 'NIM / NIP',
@@ -276,9 +237,6 @@ class WifiInternetSuccessPage extends StatelessWidget {
 
                           const SizedBox(height: 4),
 
-                          // =========================================
-                          // GEDUNG
-                          // =========================================
                           _buildDetailCard(
                             asset: 'assets/images/gedung.png',
                             label: 'Nama Gedung',
@@ -288,9 +246,6 @@ class WifiInternetSuccessPage extends StatelessWidget {
 
                           const SizedBox(height: 4),
 
-                          // =========================================
-                          // RUANGAN
-                          // =========================================
                           _buildDetailCard(
                             asset: 'assets/images/door.png',
                             label: 'Ruangan',
@@ -300,9 +255,6 @@ class WifiInternetSuccessPage extends StatelessWidget {
 
                           const SizedBox(height: 4),
 
-                          // =========================================
-                          // TANGGAL
-                          // =========================================
                           _buildDetailCard(
                             asset: 'assets/images/tanggal.png',
                             label: 'Tanggal',
@@ -313,9 +265,6 @@ class WifiInternetSuccessPage extends StatelessWidget {
 
                           const SizedBox(height: 4),
 
-                          // =========================================
-                          // NO TIKET
-                          // =========================================
                           _buildDetailCard(
                             asset: 'assets/images/ticket.png',
                             label: 'No. Tiket',
@@ -332,16 +281,10 @@ class WifiInternetSuccessPage extends StatelessWidget {
 
               const SizedBox(height: 21),
 
-              // =================================================
-              // TOMBOL BAWAH
-              // =================================================
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
 
                 children: [
-                  // ===============================================
-                  // KEMBALI KE BERANDA
-                  // ===============================================
                   SizedBox(
                     width: 105,
                     height: 38,
@@ -380,9 +323,6 @@ class WifiInternetSuccessPage extends StatelessWidget {
 
                   const SizedBox(width: 28),
 
-                  // ===============================================
-                  // BUAT PERTANYAAN LAGI
-                  // ===============================================
                   SizedBox(
                     width: 125,
                     height: 38,
@@ -427,10 +367,6 @@ class WifiInternetSuccessPage extends StatelessWidget {
     );
   }
 
-  // =========================================================
-  // CARD DETAIL
-  // =========================================================
-
   Widget _buildDetailCard({
     required String asset,
     required String label,
@@ -455,9 +391,6 @@ class WifiInternetSuccessPage extends StatelessWidget {
 
       child: Row(
         children: [
-          // ===============================================
-          // ICON / LOGO
-          // ===============================================
           Container(
             width: 44,
             height: 44,
@@ -482,9 +415,6 @@ class WifiInternetSuccessPage extends StatelessWidget {
 
           const SizedBox(width: 11),
 
-          // ===============================================
-          // LABEL + VALUE
-          // ===============================================
           Expanded(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,

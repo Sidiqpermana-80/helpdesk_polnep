@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 
-class WebsiteSuccessPage extends StatelessWidget {
-  const WebsiteSuccessPage({
+class FasilitasRuanganSuccessPage extends StatelessWidget {
+  const FasilitasRuanganSuccessPage({
     required this.requestNumber,
     required this.fullName,
     required this.identifierValue,
-    required this.websiteName,
-    required this.issueType,
+    required this.buildingName,
+    required this.floor,
+    required this.roomName,
+    required this.facilityType,
     required this.submittedAt,
     super.key,
   });
@@ -14,36 +16,11 @@ class WebsiteSuccessPage extends StatelessWidget {
   final String requestNumber;
   final String fullName;
   final String identifierValue;
-  final String websiteName;
-  final String issueType;
+  final String buildingName;
+  final String floor;
+  final String roomName;
+  final String facilityType;
   final DateTime submittedAt;
-
-  String get formattedIssueType {
-    switch (issueType) {
-      case 'lainnya':
-      case 'Lainnya':
-        return 'Lainnya';
-
-      case 'tidak_bisa_login':
-      case 'Tidak Bisa Login':
-        return 'Tidak Bisa Login';
-
-      case 'error_sistem':
-      case 'Error Sistem':
-        return 'Error Sistem';
-
-      case 'data_tidak_sesuai':
-      case 'Data Tidak Sesuai':
-        return 'Data Tidak Sesuai';
-
-      case 'permintaan_akses':
-      case 'Permintaan Akses':
-        return 'Permintaan Akses';
-
-      default:
-        return issueType;
-    }
-  }
 
   String get formattedDate {
     const List<String> months = [
@@ -66,54 +43,6 @@ class WebsiteSuccessPage extends StatelessWidget {
         '${submittedAt.year}';
   }
 
-  String get issueAsset {
-    switch (issueType) {
-      case 'tidak_bisa_login':
-      case 'Tidak Bisa Login':
-        return 'assets/images/lock.png';
-
-      case 'data_tidak_sesuai':
-      case 'Data Tidak Sesuai':
-        return 'assets/images/doc.png';
-
-      case 'error_sistem':
-      case 'Error Sistem':
-        return 'assets/images/error.png';
-
-      case 'permintaan_akses':
-      case 'Permintaan Akses':
-        return 'assets/images/key.png';
-
-      case 'lainnya':
-      case 'Lainnya':
-      default:
-        return 'assets/images/doc.png';
-    }
-  }
-
-  Color get issueBackground {
-    switch (issueType) {
-      case 'tidak_bisa_login':
-      case 'Tidak Bisa Login':
-        return const Color(0xFF5A5CEB);
-
-      case 'data_tidak_sesuai':
-      case 'Data Tidak Sesuai':
-        return const Color(0xFFC99700);
-
-      case 'error_sistem':
-      case 'Error Sistem':
-        return const Color(0xFFFFC967);
-
-      case 'permintaan_akses':
-      case 'Permintaan Akses':
-        return const Color(0xFF58C761);
-
-      default:
-        return const Color(0xFFD6EBF8);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -121,17 +50,18 @@ class WebsiteSuccessPage extends StatelessWidget {
 
       appBar: AppBar(
         backgroundColor: const Color(0xFFF0F9FF),
+
         elevation: 0,
         scrolledUnderElevation: 0,
         surfaceTintColor: Colors.transparent,
 
-        leadingWidth: 44,
+        leadingWidth: 45,
 
         leading: IconButton(
-          tooltip: 'Kembali',
           onPressed: () {
             Navigator.of(context).pop();
           },
+
           icon: const Icon(
             Icons.arrow_back_ios_new_rounded,
             color: Color(0xFF202020),
@@ -142,10 +72,10 @@ class WebsiteSuccessPage extends StatelessWidget {
         titleSpacing: 0,
 
         title: const Text(
-          'Permintaan Berhasil',
+          'Laporan Berhasil',
           style: TextStyle(
             color: Color(0xFF202020),
-            fontSize: 15,
+            fontSize: 15.5,
             fontWeight: FontWeight.w500,
           ),
         ),
@@ -159,22 +89,25 @@ class WebsiteSuccessPage extends StatelessWidget {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
+
             colors: [Color(0xFFF0F9FF), Color(0xFFD7EEFF), Color(0xFFB9E1FF)],
+
             stops: [0.00, 0.48, 1.00],
           ),
         ),
 
         child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(7, 7, 7, 34),
+          padding: const EdgeInsets.fromLTRB(7, 5, 7, 30),
 
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
 
             children: [
               const Padding(
-                padding: EdgeInsets.only(left: 1),
+                padding: EdgeInsets.only(left: 2),
+
                 child: Text(
-                  'Layanan Website',
+                  'Fasilitas Ruangan',
                   style: TextStyle(
                     color: Color(0xFF202020),
                     fontSize: 12.5,
@@ -183,12 +116,13 @@ class WebsiteSuccessPage extends StatelessWidget {
                 ),
               ),
 
-              const SizedBox(height: 7),
+              const SizedBox(height: 6),
 
               const Padding(
-                padding: EdgeInsets.only(left: 1),
+                padding: EdgeInsets.only(left: 2),
+
                 child: Text(
-                  'Home / Website',
+                  'Home / Fasilitas Ruangan',
                   style: TextStyle(
                     color: Color(0xFF168DE2),
                     fontSize: 9.5,
@@ -197,18 +131,17 @@ class WebsiteSuccessPage extends StatelessWidget {
                 ),
               ),
 
-              const SizedBox(height: 12),
+              const SizedBox(height: 10),
 
-              // CARD
               Container(
                 width: double.infinity,
 
-                padding: const EdgeInsets.fromLTRB(10, 18, 10, 17),
+                padding: const EdgeInsets.fromLTRB(8, 14, 8, 15),
 
                 decoration: BoxDecoration(
                   color: Colors.white,
 
-                  borderRadius: BorderRadius.circular(11),
+                  borderRadius: BorderRadius.circular(10),
 
                   boxShadow: const [
                     BoxShadow(
@@ -224,14 +157,15 @@ class WebsiteSuccessPage extends StatelessWidget {
                     const Icon(
                       Icons.verified_rounded,
                       color: Color(0xFF00D51D),
-                      size: 78,
+                      size: 80,
                     ),
 
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 5),
 
                     const Text(
-                      'Permintaan Berhasil Dikirim',
+                      'Laporan Berhasil Dikirim',
                       textAlign: TextAlign.center,
+
                       style: TextStyle(
                         color: Color(0xFF202020),
                         fontSize: 16.5,
@@ -239,29 +173,34 @@ class WebsiteSuccessPage extends StatelessWidget {
                       ),
                     ),
 
-                    const SizedBox(height: 9),
+                    const SizedBox(height: 7),
 
-                    const Text(
-                      'Laporan kendala Website Anda telah kami terima '
-                      'dan akan segera diproses oleh Admin',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: Color(0xFF444444),
-                        fontSize: 9.5,
-                        height: 1.35,
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 17),
+
+                      child: Text(
+                        'Laporan fasilitas ruangan Anda telah kami terima '
+                        'dan akan ditindaklanjuti oleh Tim Helpdesk.',
+                        textAlign: TextAlign.center,
+
+                        style: TextStyle(
+                          color: Color(0xFF444444),
+                          fontSize: 9,
+                          height: 1.3,
+                        ),
                       ),
                     ),
 
-                    const SizedBox(height: 17),
+                    const SizedBox(height: 13),
 
-                    // DETAIL PENGAJUAN
                     Container(
                       width: double.infinity,
 
-                      padding: const EdgeInsets.fromLTRB(8, 11, 8, 12),
+                      padding: const EdgeInsets.fromLTRB(8, 9, 8, 10),
 
                       decoration: BoxDecoration(
                         color: const Color(0xFFDCDCDC),
+
                         borderRadius: BorderRadius.circular(5),
                       ),
 
@@ -270,7 +209,7 @@ class WebsiteSuccessPage extends StatelessWidget {
 
                         children: [
                           const Text(
-                            'Detail Pengajuan',
+                            'Detail Laporan',
                             style: TextStyle(
                               color: Color(0xFF202020),
                               fontSize: 10.5,
@@ -278,7 +217,7 @@ class WebsiteSuccessPage extends StatelessWidget {
                             ),
                           ),
 
-                          const SizedBox(height: 9),
+                          const SizedBox(height: 7),
 
                           const Divider(
                             height: 1,
@@ -286,59 +225,70 @@ class WebsiteSuccessPage extends StatelessWidget {
                             color: Color(0xFF707070),
                           ),
 
-                          const SizedBox(height: 11),
+                          const SizedBox(height: 9),
 
-                          _buildDetailCard(
+                          _detail(
                             asset: 'assets/images/pp.png',
                             label: 'Nama Pengguna',
                             value: fullName,
-                            iconBackground: const Color(0xFFD6EBF8),
                           ),
 
-                          const SizedBox(height: 6),
+                          const SizedBox(height: 4),
 
-                          _buildDetailCard(
+                          _detail(
                             asset: 'assets/images/book.png',
                             label: 'NIM / NIP',
                             value: identifierValue,
-                            iconBackground: const Color(0xFFD6EBF8),
                           ),
 
-                          const SizedBox(height: 6),
+                          const SizedBox(height: 4),
 
-                          _buildDetailCard(
-                            asset: 'assets/images/weblink.png',
-                            label: 'Website',
-                            value: websiteName,
-                            iconBackground: const Color(0xFFD6EBF8),
+                          _detail(
+                            asset: 'assets/images/gedung.png',
+                            label: 'Nama Gedung',
+                            value: buildingName,
                           ),
 
-                          const SizedBox(height: 6),
+                          const SizedBox(height: 4),
 
-                          _buildDetailCard(
-                            asset: issueAsset,
-                            label: 'Jenis Kendala',
-                            value: formattedIssueType,
-                            iconBackground: issueBackground,
-                            compactIcon: true,
+                          _detail(
+                            asset: 'assets/images/tangga.png',
+                            label: 'Lantai',
+                            value: floor,
                           ),
 
-                          const SizedBox(height: 6),
+                          const SizedBox(height: 4),
 
-                          _buildDetailCard(
+                          _detail(
+                            asset: 'assets/images/door.png',
+                            label: 'Nama / Nomor Ruangan',
+                            value: roomName,
+                          ),
+
+                          const SizedBox(height: 4),
+
+                          _detail(
+                            asset: 'assets/images/rumah.png',
+                            label: 'Jenis Fasilitas',
+                            value: facilityType,
+                          ),
+
+                          const SizedBox(height: 4),
+
+                          _detail(
                             asset: 'assets/images/kalender.png',
                             label: 'Tanggal',
                             value: formattedDate,
-                            iconBackground: const Color(0xFF3E64C7),
+                            iconBackgroundColor: const Color(0xFF315DB3),
                           ),
 
-                          const SizedBox(height: 6),
+                          const SizedBox(height: 4),
 
-                          _buildDetailCard(
+                          _detail(
                             asset: 'assets/images/ticket.png',
                             label: 'No. Tiket',
                             value: requestNumber,
-                            iconBackground: const Color(0xFF41B64E),
+                            iconBackgroundColor: const Color(0xFF36A83A),
                           ),
                         ],
                       ),
@@ -347,16 +297,15 @@ class WebsiteSuccessPage extends StatelessWidget {
                 ),
               ),
 
-              const SizedBox(height: 27),
+              const SizedBox(height: 21),
 
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
 
                 children: [
-                  // KEMBALI KE BERANDA
                   SizedBox(
                     width: 105,
-                    height: 42,
+                    height: 38,
 
                     child: ElevatedButton(
                       onPressed: () {
@@ -372,31 +321,26 @@ class WebsiteSuccessPage extends StatelessWidget {
 
                         elevation: 0,
 
-                        padding: const EdgeInsets.symmetric(horizontal: 10),
+                        padding: EdgeInsets.zero,
 
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(24),
+                          borderRadius: BorderRadius.circular(5),
                         ),
                       ),
 
                       child: const Text(
-                        'Kembali Ke\nBeranda',
+                        'Kembali Ke Beranda',
                         textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 9,
-                          height: 1.15,
-                          fontWeight: FontWeight.w400,
-                        ),
+                        style: TextStyle(fontSize: 8.5),
                       ),
                     ),
                   ),
 
-                  const SizedBox(width: 24),
+                  const SizedBox(width: 28),
 
-                  // BUAT PERTANYAAN LAGI
                   SizedBox(
-                    width: 116,
-                    height: 42,
+                    width: 120,
+                    height: 38,
 
                     child: ElevatedButton(
                       onPressed: () {
@@ -410,27 +354,23 @@ class WebsiteSuccessPage extends StatelessWidget {
 
                         elevation: 0,
 
-                        padding: const EdgeInsets.symmetric(horizontal: 7),
+                        padding: EdgeInsets.zero,
 
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(24),
+                          borderRadius: BorderRadius.circular(5),
                         ),
                       ),
 
                       child: const Text(
-                        'Buat Pertanyaan Lagi',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 9,
-                          fontWeight: FontWeight.w400,
-                        ),
+                        'Buat Laporan Lagi',
+                        style: TextStyle(fontSize: 8.5),
                       ),
                     ),
                   ),
                 ],
               ),
 
-              const SizedBox(height: 20),
+              const SizedBox(height: 15),
             ],
           ),
         ),
@@ -438,24 +378,23 @@ class WebsiteSuccessPage extends StatelessWidget {
     );
   }
 
-  Widget _buildDetailCard({
+  Widget _detail({
     required String asset,
     required String label,
     required String value,
-    required Color iconBackground,
-    bool compactIcon = false,
+    Color iconBackgroundColor = const Color(0xFFD6EBF8),
   }) {
     return Container(
       width: double.infinity,
 
-      constraints: const BoxConstraints(minHeight: 62),
+      constraints: const BoxConstraints(minHeight: 54),
 
-      padding: const EdgeInsets.fromLTRB(8, 6, 9, 6),
+      padding: const EdgeInsets.fromLTRB(7, 5, 8, 5),
 
       decoration: BoxDecoration(
-        color: const Color(0xFFE5E5E5),
+        color: const Color(0xFFE2E2E2),
 
-        borderRadius: BorderRadius.circular(9),
+        borderRadius: BorderRadius.circular(8),
 
         border: Border.all(color: const Color(0xFF969696), width: 0.7),
       ),
@@ -463,32 +402,26 @@ class WebsiteSuccessPage extends StatelessWidget {
       child: Row(
         children: [
           Container(
-            width: 50,
-            height: 50,
+            width: 44,
+            height: 44,
 
-            alignment: Alignment.center,
-
-            padding: EdgeInsets.all(compactIcon ? 10 : 6),
+            padding: const EdgeInsets.all(6),
 
             decoration: BoxDecoration(
-              color: iconBackground,
+              color: iconBackgroundColor,
 
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(9),
             ),
 
-            child: Image.asset(
-              asset,
-              width: double.infinity,
-              height: double.infinity,
-              fit: BoxFit.contain,
-            ),
+            child: Image.asset(asset, fit: BoxFit.contain),
           ),
 
-          const SizedBox(width: 12),
+          const SizedBox(width: 11),
 
           Expanded(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
+
               crossAxisAlignment: CrossAxisAlignment.start,
 
               children: [
@@ -497,12 +430,12 @@ class WebsiteSuccessPage extends StatelessWidget {
 
                   style: const TextStyle(
                     color: Color(0xFF1762B0),
-                    fontSize: 9,
+                    fontSize: 8.5,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
 
-                const SizedBox(height: 3),
+                const SizedBox(height: 2),
 
                 Text(
                   value,
@@ -513,9 +446,8 @@ class WebsiteSuccessPage extends StatelessWidget {
 
                   style: const TextStyle(
                     color: Color(0xFF202020),
-                    fontSize: 11,
+                    fontSize: 10.5,
                     height: 1.15,
-                    fontWeight: FontWeight.w400,
                   ),
                 ),
               ],

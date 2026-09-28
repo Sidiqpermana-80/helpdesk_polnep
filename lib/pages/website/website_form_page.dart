@@ -35,13 +35,18 @@ class _WebsiteFormPageState extends State<WebsiteFormPage> {
   bool _isSubmitting = false;
   int _formVersion = 0;
 
-  static const List<String> _issueOptions = [
-    'Lainnya',
-    'Tidak Bisa Login',
-    'Error Sistem',
-    'Data Tidak Sesuai',
-    'Permintaan Akses',
-  ];
+  List<String> _issueOptions = <String>[];
+
+  bool _isLoadingIssues = true;
+
+  bool _hasIssueLoadError = false;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _loadIssueOptions();
+  }
 
   @override
   void dispose() {
@@ -53,35 +58,99 @@ class _WebsiteFormPageState extends State<WebsiteFormPage> {
     super.dispose();
   }
 
-  // =========================================================
-  // UBAH JENIS KENDALA KE FORMAT API
-  // =========================================================
-
   String _apiIssueType() {
-    switch (_selectedIssue) {
-      case 'Lainnya':
-        return 'lainnya';
+    final String issue = _selectedIssue?.trim() ?? '';
 
-      case 'Tidak Bisa Login':
-        return 'tidak_bisa_login';
-
-      case 'Error Sistem':
-        return 'error_sistem';
-
-      case 'Data Tidak Sesuai':
-        return 'data_tidak_sesuai';
-
-      case 'Permintaan Akses':
-        return 'permintaan_akses';
-
-      default:
-        return '';
+    if (issue.isEmpty) {
+      return '';
     }
+
+    return issue
+        .toLowerCase()
+        .replaceAll(RegExp(r'[^a-z0-9]+'), '_')
+        .replaceAll(RegExp(r'^_+|_+$'), '');
   }
 
-  // =========================================================
-  // PILIH FILE
-  // =========================================================
+  Future<void> _loadIssueOptions() async {
+    if (mounted) {
+      setState(() {
+        _isLoadingIssues = true;
+        _hasIssueLoadError = false;
+      });
+    }
+
+    try {
+      final http.Response response = await http
+          .get(Uri.parse(ApiConfig.websiteIssueTypes))
+          .timeout(const Duration(seconds: 20));
+
+      debugPrint('WEBSITE ISSUE STATUS: ${response.statusCode}');
+
+      debugPrint('WEBSITE ISSUE RESPONSE: ${response.body}');
+
+      final dynamic decoded = jsonDecode(response.body);
+
+      if (response.statusCode != 200 ||
+          decoded is! Map<String, dynamic> ||
+          decoded['success'] != true) {
+        throw const FormatException('Data jenis kendala tidak valid.');
+      }
+
+      final dynamic rawData = decoded['data'];
+
+      if (rawData is! List) {
+        throw const FormatException('Daftar jenis kendala tidak valid.');
+      }
+
+      final List<String> issues = rawData
+          .whereType<Map<String, dynamic>>()
+          .map(
+            (Map<String, dynamic> item) =>
+                item['option_label']?.toString().trim() ?? '',
+          )
+          .where((String value) => value.isNotEmpty)
+          .toList();
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _issueOptions = issues;
+
+        if (_selectedIssue != null && !_issueOptions.contains(_selectedIssue)) {
+          _selectedIssue = null;
+        }
+
+        _isLoadingIssues = false;
+        _hasIssueLoadError = false;
+      });
+    } on TimeoutException {
+      debugPrint('LOAD WEBSITE ISSUES ERROR: TimeoutException');
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _issueOptions = <String>[];
+        _isLoadingIssues = false;
+        _hasIssueLoadError = true;
+      });
+    } catch (e) {
+      debugPrint('LOAD WEBSITE ISSUES ERROR: $e');
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _issueOptions = <String>[];
+        _isLoadingIssues = false;
+        _hasIssueLoadError = true;
+      });
+    }
+  }
 
   Future<void> _pickSupportFile() async {
     try {
@@ -126,12 +195,6 @@ class _WebsiteFormPageState extends State<WebsiteFormPage> {
     }
   }
 
-  // =========================================================
-  // DECORATION INPUT
-  //
-  // Dibuat lebih kecil agar sesuai Figma
-  // =========================================================
-
   InputDecoration _decoration({String? hintText}) {
     return InputDecoration(
       hintText: hintText,
@@ -175,10 +238,6 @@ class _WebsiteFormPageState extends State<WebsiteFormPage> {
     );
   }
 
-  // =========================================================
-  // BUILD
-  // =========================================================
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -189,7 +248,6 @@ class _WebsiteFormPageState extends State<WebsiteFormPage> {
           width: double.infinity,
           height: double.infinity,
 
-          // Tetap mengikuti background halaman lain.
           decoration: const BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topCenter,
@@ -206,9 +264,7 @@ class _WebsiteFormPageState extends State<WebsiteFormPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // =================================================
                 // HEADER
-                // =================================================
                 Row(
                   children: [
                     IconButton(
@@ -240,12 +296,9 @@ class _WebsiteFormPageState extends State<WebsiteFormPage> {
                   ],
                 ),
 
-                // Jarak header ke card dibuat seperti Figma.
                 const SizedBox(height: 30),
 
-                // =================================================
                 // FORM CARD
-                // =================================================
                 Container(
                   width: double.infinity,
 
@@ -276,9 +329,6 @@ class _WebsiteFormPageState extends State<WebsiteFormPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // =========================================
-                        // JUDUL FORM
-                        // =========================================
                         const Text(
                           'FORM PERTANYAAN',
                           style: TextStyle(
@@ -300,9 +350,6 @@ class _WebsiteFormPageState extends State<WebsiteFormPage> {
 
                         const SizedBox(height: 19),
 
-                        // =========================================
-                        // NAMA
-                        // =========================================
                         _title('Nama Lengkap'),
 
                         TextFormField(
@@ -330,9 +377,6 @@ class _WebsiteFormPageState extends State<WebsiteFormPage> {
 
                         const SizedBox(height: 8),
 
-                        // =========================================
-                        // NIM / NIP
-                        // =========================================
                         _title('NIM / NIP'),
 
                         TextFormField(
@@ -366,7 +410,6 @@ class _WebsiteFormPageState extends State<WebsiteFormPage> {
 
                         const SizedBox(height: 8),
 
-                        //Email
                         _title('Email'),
 
                         TextFormField(
@@ -396,18 +439,12 @@ class _WebsiteFormPageState extends State<WebsiteFormPage> {
                           },
                         ),
 
-                        // =========================================
-                        // PILIHAN WEBSITE
-                        // =========================================
                         _title('Pilihan Website'),
 
                         _lockedWebsite(),
 
                         const SizedBox(height: 8),
 
-                        // =========================================
-                        // JENIS KENDALA
-                        // =========================================
                         _title('Jenis Kendala'),
 
                         DropdownButtonFormField<String>(
@@ -432,7 +469,13 @@ class _WebsiteFormPageState extends State<WebsiteFormPage> {
                             color: Color(0xFF555555),
                           ),
 
-                          decoration: _decoration(),
+                          decoration: _decoration(
+                            hintText: _isLoadingIssues
+                                ? 'Memuat jenis kendala...'
+                                : _hasIssueLoadError
+                                ? 'Gagal memuat jenis kendala'
+                                : 'Pilih jenis kendala',
+                          ),
 
                           items: _issueOptions.map((String issue) {
                             return DropdownMenuItem<String>(
@@ -445,13 +488,30 @@ class _WebsiteFormPageState extends State<WebsiteFormPage> {
                             );
                           }).toList(),
 
-                          onChanged: (String? value) {
-                            setState(() {
-                              _selectedIssue = value;
-                            });
-                          },
+                          onChanged:
+                              _isLoadingIssues ||
+                                  _hasIssueLoadError ||
+                                  _issueOptions.isEmpty
+                              ? null
+                              : (String? value) {
+                                  setState(() {
+                                    _selectedIssue = value;
+                                  });
+                                },
 
                           validator: (String? value) {
+                            if (_isLoadingIssues) {
+                              return 'Jenis kendala masih dimuat';
+                            }
+
+                            if (_hasIssueLoadError) {
+                              return 'Jenis kendala gagal dimuat';
+                            }
+
+                            if (_issueOptions.isEmpty) {
+                              return 'Jenis kendala tidak tersedia';
+                            }
+
                             if (value == null || value.isEmpty) {
                               return 'Jenis kendala wajib dipilih';
                             }
@@ -460,11 +520,42 @@ class _WebsiteFormPageState extends State<WebsiteFormPage> {
                           },
                         ),
 
+                        if (_hasIssueLoadError)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 5),
+
+                            child: Align(
+                              alignment: Alignment.centerRight,
+
+                              child: TextButton.icon(
+                                onPressed: _loadIssueOptions,
+
+                                icon: const Icon(
+                                  Icons.refresh_rounded,
+                                  size: 13,
+                                ),
+
+                                label: const Text(
+                                  'Coba Lagi',
+
+                                  style: TextStyle(fontSize: 8),
+                                ),
+
+                                style: TextButton.styleFrom(
+                                  foregroundColor: const Color(0xFF168DE2),
+
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 5,
+                                  ),
+
+                                  minimumSize: const Size(0, 25),
+                                ),
+                              ),
+                            ),
+                          ),
+
                         const SizedBox(height: 8),
 
-                        // =========================================
-                        // DESKRIPSI
-                        // =========================================
                         _title('Deskripsikan Permasalahan Anda'),
 
                         SizedBox(
@@ -502,9 +593,6 @@ class _WebsiteFormPageState extends State<WebsiteFormPage> {
 
                         const SizedBox(height: 9),
 
-                        // =========================================
-                        // FILE
-                        // =========================================
                         _title('Upload File Pendukung'),
 
                         _fileInput(),
@@ -532,9 +620,6 @@ class _WebsiteFormPageState extends State<WebsiteFormPage> {
 
                         const SizedBox(height: 18),
 
-                        // =========================================
-                        // BUTTON
-                        // =========================================
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
 

@@ -774,6 +774,12 @@ class _AplikasiFormPageState extends State<AplikasiFormPage> {
                 elevation: 0,
 
                 padding: const EdgeInsets.symmetric(horizontal: 4),
+
+                shape: const RoundedRectangleBorder(
+                  borderRadius: BorderRadius.horizontal(
+                    right: Radius.circular(5),
+                  ),
+                ),
               ),
             ),
           ),

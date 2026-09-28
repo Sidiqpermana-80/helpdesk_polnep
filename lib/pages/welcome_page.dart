@@ -13,23 +13,19 @@ class WelcomePage extends StatelessWidget {
       body: Stack(
         fit: StackFit.expand,
         children: [
-          // Foto gedung sebagai latar belakang.
           Image.asset(
             'assets/images/hero.webp',
             fit: BoxFit.cover,
             alignment: const Alignment(-0.30, 0),
           ),
 
-          // Lapisan gelap tipis agar logo dan tombol lebih jelas.
           const ColoredBox(color: Color(0x14000000)),
 
-          // Konten halaman awal.
           SafeArea(
             child: Column(
               children: [
                 SizedBox(height: screenSize.height * 0.14),
 
-                // Logo POLNEP.
                 Image.asset(
                   'assets/images/logopolnep-BESAR.png',
                   width: screenSize.width * 0.44,

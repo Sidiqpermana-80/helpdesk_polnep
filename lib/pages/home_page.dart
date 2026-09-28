@@ -3,6 +3,9 @@ import 'permintaan_data/permintaan_data_page.dart';
 import 'aplikasi/aplikasi_page.dart';
 import 'website/website_page.dart';
 import 'wifi_internet/wifi_internet_page.dart';
+import 'fasilitas_ruangan/fasilitas_ruangan_page.dart';
+import 'antrian_tiket/antrian_tiket_page.dart';
+import 'cek_status/cek_status_page.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -21,6 +24,10 @@ class HomePage extends StatelessWidget {
         title: 'Fasilitas\nRuangan',
         imagePath: 'assets/images/building.jpeg',
       ),
+      ServiceData(
+        title: 'Antrian tiket',
+        imagePath: 'assets/images/monitor.png',
+      ),
     ];
 
     return Scaffold(
@@ -30,7 +37,7 @@ class HomePage extends StatelessWidget {
         width: double.infinity,
         height: double.infinity,
 
-        // Background sama dengan halaman Permintaan Data.
+        // Background
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
@@ -61,10 +68,7 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  // =========================================================
   // HEADER
-  // =========================================================
-
   Widget _buildHeader() {
     return Container(
       height: 165,
@@ -85,17 +89,14 @@ class HomePage extends StatelessWidget {
       child: Stack(
         fit: StackFit.expand,
         children: [
-          // Foto Gedung POLNEP.
           Image.asset(
             'assets/images/hero.webp',
             fit: BoxFit.cover,
             alignment: const Alignment(0, -0.1),
           ),
 
-          // Lapisan biru agar sesuai dengan warna aplikasi.
           Container(color: const Color(0x993AA7F5)),
 
-          // Gradient bagian bawah header.
           const DecoratedBox(
             decoration: BoxDecoration(
               gradient: LinearGradient(
@@ -131,11 +132,9 @@ class HomePage extends StatelessWidget {
 
                 const Expanded(
                   child: Padding(
-                    // Nilai top bisa diperbesar jika tulisan
-                    // ingin diturunkan lagi.
                     padding: EdgeInsets.only(top: 18),
                     child: Text(
-                      'Aplikasi untuk merespon permintaan, pertanyaan '
+                      'Aplikasi untuk merespon permintaan'
                       'dan keluhan terhadap layanan di Politeknik Negeri '
                       'Pontianak.',
                       style: TextStyle(
@@ -186,10 +185,7 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  // =========================================================
   // ANNOUNCEMENT
-  // =========================================================
-
   Widget _buildAnnouncement(BuildContext context) {
     return Container(
       width: double.infinity,
@@ -309,22 +305,25 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  // =========================================================
   // MENU LAYANAN
-  // =========================================================
-
   Widget _buildServiceMenu({
     required BuildContext context,
     required List<ServiceData> services,
   }) {
     return Container(
       width: double.infinity,
+
       margin: const EdgeInsets.fromLTRB(8, 12, 8, 0),
+
       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 12),
+
       decoration: BoxDecoration(
         color: Colors.white,
+
         borderRadius: BorderRadius.circular(12),
+
         border: Border.all(color: const Color(0xFFD6E9F7), width: 0.8),
+
         boxShadow: const [
           BoxShadow(
             color: Color(0x12000000),
@@ -336,13 +335,18 @@ class HomePage extends StatelessWidget {
 
       child: GridView.builder(
         itemCount: services.length,
+
         shrinkWrap: true,
+
         physics: const NeverScrollableScrollPhysics(),
 
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 3,
+
           childAspectRatio: 0.95,
+
           crossAxisSpacing: 5,
+
           mainAxisSpacing: 7,
         ),
 
@@ -362,10 +366,11 @@ class HomePage extends StatelessWidget {
                     },
                   ),
                 );
+
                 return;
               }
 
-              // WIFI / INTERNET
+              // 1. WIFI / INTERNET
               if (index == 1) {
                 Navigator.of(context).push(
                   MaterialPageRoute<void>(
@@ -374,10 +379,11 @@ class HomePage extends StatelessWidget {
                     },
                   ),
                 );
+
                 return;
               }
 
-              // APLIKASI
+              // 2. APLIKASI
               if (index == 2) {
                 Navigator.of(context).push(
                   MaterialPageRoute<void>(
@@ -386,10 +392,11 @@ class HomePage extends StatelessWidget {
                     },
                   ),
                 );
+
                 return;
               }
 
-              // WEBSITE
+              // 3. WEBSITE
               if (index == 3) {
                 Navigator.of(context).push(
                   MaterialPageRoute<void>(
@@ -398,12 +405,33 @@ class HomePage extends StatelessWidget {
                     },
                   ),
                 );
+
                 return;
               }
 
-              // FASILITAS RUANGAN
+              // 4. FASILITAS RUANGAN
               if (index == 4) {
-                _showMessage(context, 'Menu Fasilitas Ruangan belum dibuat.');
+                Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (BuildContext context) {
+                      return const FasilitasRuanganPage();
+                    },
+                  ),
+                );
+
+                return;
+              }
+
+              // 5. ANTRIAN TIKET
+              if (index == 5) {
+                Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (BuildContext context) {
+                      return const AntrianTiketPage();
+                    },
+                  ),
+                );
+
                 return;
               }
             },
@@ -413,19 +441,21 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  // =========================================================
-  // CEK STATUS ANTRIAN
-  // =========================================================
-
+  // CEK STATUS
   Widget _buildQueueStatus(BuildContext context) {
     return Container(
       width: double.infinity,
       height: 76,
+
       margin: const EdgeInsets.fromLTRB(8, 14, 8, 0),
+
       decoration: BoxDecoration(
         color: Colors.white,
+
         borderRadius: BorderRadius.circular(12),
+
         border: Border.all(color: const Color(0xFFD6E9F7), width: 0.8),
+
         boxShadow: const [
           BoxShadow(
             color: Color(0x16000000),
@@ -441,8 +471,15 @@ class HomePage extends StatelessWidget {
         child: InkWell(
           borderRadius: BorderRadius.circular(12),
 
+          // BUKA HALAMAN CEK STATUS
           onTap: () {
-            _showMessage(context, 'Halaman cek status antrian belum dibuat.');
+            Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (BuildContext context) {
+                  return const CekStatusPage();
+                },
+              ),
+            );
           },
 
           child: Padding(
@@ -453,11 +490,15 @@ class HomePage extends StatelessWidget {
                 Container(
                   width: 56,
                   height: 48,
+
                   padding: const EdgeInsets.all(3),
+
                   decoration: BoxDecoration(
                     color: const Color(0xFFEAF7FF),
+
                     borderRadius: BorderRadius.circular(7),
                   ),
+
                   child: Image.asset(
                     'assets/images/card.jpeg',
                     fit: BoxFit.cover,
@@ -468,7 +509,7 @@ class HomePage extends StatelessWidget {
 
                 const Expanded(
                   child: Text(
-                    'Cek Status Antrian',
+                    'Cek Status',
                     style: TextStyle(
                       color: Color(0xFF202020),
                       fontSize: 18,
@@ -490,10 +531,7 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  // =========================================================
   // SNACKBAR
-  // =========================================================
-
   void _showMessage(BuildContext context, String message) {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
@@ -507,10 +545,7 @@ class HomePage extends StatelessWidget {
   }
 }
 
-// ===========================================================
 // ITEM MENU
-// ===========================================================
-
 class ServiceMenuItem extends StatelessWidget {
   const ServiceMenuItem({
     required this.service,
@@ -578,10 +613,7 @@ class ServiceMenuItem extends StatelessWidget {
   }
 }
 
-// ===========================================================
 // DATA MENU
-// ===========================================================
-
 class ServiceData {
   const ServiceData({required this.title, required this.imagePath});
 
