@@ -1,7 +1,7 @@
 class ApiConfig {
   ApiConfig._();
 
-  static const String baseUrl = 'http://192.168.202.73:8000/api';
+  static const String baseUrl = 'http://192.168.200.172:8000/api';
 
   static String get units => '$baseUrl/units';
 
@@ -35,6 +35,15 @@ class ApiConfig {
       '$baseUrl/master-options/fasilitas_ruangan/facility_type';
 
   static String get createAntrianTiket => '$baseUrl/antrian-tiket';
+
+  static String get antrianSemesterOptions =>
+      '$baseUrl/master-options/antrian_tiket/semester';
+
+  static String get antrianStudentServiceOptions =>
+      '$baseUrl/master-options/antrian_tiket/student_service';
+
+  static String get antrianGeneralServiceOptions =>
+      '$baseUrl/master-options/antrian_tiket/general_service';
 
   static String get cekStatus => '$baseUrl/cek-status';
 

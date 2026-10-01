@@ -61,6 +61,10 @@ class _FasilitasRuanganPageState extends State<FasilitasRuanganPage> {
     _loadFacilityOptions();
   }
 
+  Future<void> _refreshPage() async {
+    await Future.wait([_loadBuildingOptions(), _loadFacilityOptions()]);
+  }
+
   @override
   void dispose() {
     _nameController.dispose();
@@ -277,875 +281,889 @@ class _FasilitasRuanganPageState extends State<FasilitasRuanganPage> {
             ),
           ),
 
-          child: SingleChildScrollView(
-            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+          child: RefreshIndicator(
+            onRefresh: _refreshPage,
 
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 28),
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(
+                parent: BouncingScrollPhysics(),
+              ),
 
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
 
-              children: [
-                // HEADER
-                Row(
-                  children: [
-                    IconButton(
-                      padding: EdgeInsets.zero,
+              padding: const EdgeInsets.fromLTRB(16, 14, 16, 28),
 
-                      constraints: const BoxConstraints(),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
 
-                      tooltip: 'Kembali',
-
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                      },
-
-                      icon: const Icon(
-                        Icons.arrow_back_ios_new_rounded,
-
-                        size: 21,
-
-                        color: Color(0xFF111111),
-                      ),
-                    ),
-
-                    const SizedBox(width: 10),
-
-                    const Text(
-                      'Fasilitas Ruangan',
-
-                      style: TextStyle(
-                        color: Color(0xFF111111),
-
-                        fontSize: 16,
-
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 25),
-
-                // LOGO
-                SizedBox(
-                  width: double.infinity,
-
-                  height: 112,
-
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-
+                children: [
+                  // HEADER
+                  Row(
                     children: [
-                      const Expanded(
-                        child: Padding(
-                          padding: EdgeInsets.only(left: 7, top: 2),
+                      IconButton(
+                        padding: EdgeInsets.zero,
 
-                          child: Text(
-                            'Pilih Fasilitas\n'
-                            'Ruangan yang\n'
-                            'ingin anda\n'
-                            'keluhkan',
+                        constraints: const BoxConstraints(),
+
+                        tooltip: 'Kembali',
+
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                        },
+
+                        icon: const Icon(
+                          Icons.arrow_back_ios_new_rounded,
+
+                          size: 21,
+
+                          color: Color(0xFF111111),
+                        ),
+                      ),
+
+                      const SizedBox(width: 10),
+
+                      const Text(
+                        'Fasilitas Ruangan',
+
+                        style: TextStyle(
+                          color: Color(0xFF111111),
+
+                          fontSize: 16,
+
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 25),
+
+                  // LOGO
+                  SizedBox(
+                    width: double.infinity,
+
+                    height: 112,
+
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+
+                      children: [
+                        const Expanded(
+                          child: Padding(
+                            padding: EdgeInsets.only(left: 7, top: 2),
+
+                            child: Text(
+                              'Pilih Fasilitas\n'
+                              'Ruangan yang\n'
+                              'ingin anda\n'
+                              'keluhkan',
+
+                              style: TextStyle(
+                                color: Color(0xFF111111),
+
+                                fontSize: 20.5,
+
+                                height: 1.08,
+
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                        ),
+
+                        SizedBox(
+                          width: 150,
+
+                          height: 105,
+
+                          child: Image.asset(
+                            'assets/images/rusak.png',
+
+                            fit: BoxFit.contain,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 10),
+
+                  // FORM CARD
+                  Container(
+                    width: double.infinity,
+
+                    padding: const EdgeInsets.fromLTRB(10, 14, 10, 20),
+
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+
+                      borderRadius: BorderRadius.circular(10),
+
+                      border: Border.all(
+                        color: const Color(0xFFD6E9F7),
+
+                        width: 0.7,
+                      ),
+
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Color(0x12000000),
+
+                          blurRadius: 5,
+
+                          offset: Offset(0, 2),
+                        ),
+                      ],
+                    ),
+
+                    child: Form(
+                      key: _formKey,
+
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+
+                        children: [
+                          const Text(
+                            'DATA PELAPOR',
 
                             style: TextStyle(
-                              color: Color(0xFF111111),
+                              color: Color(0xFF202020),
 
-                              fontSize: 20.5,
-
-                              height: 1.08,
+                              fontSize: 12,
 
                               fontWeight: FontWeight.w700,
                             ),
                           ),
-                        ),
-                      ),
 
-                      SizedBox(
-                        width: 150,
+                          const SizedBox(height: 3),
 
-                        height: 105,
+                          const Text(
+                            'Lengkapi data pelapor berikut:',
 
-                        child: Image.asset(
-                          'assets/images/rusak.png',
+                            style: TextStyle(
+                              color: Color(0xFF202020),
 
-                          fit: BoxFit.contain,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 10),
-
-                // FORM CARD
-                Container(
-                  width: double.infinity,
-
-                  padding: const EdgeInsets.fromLTRB(10, 14, 10, 20),
-
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-
-                    borderRadius: BorderRadius.circular(10),
-
-                    border: Border.all(
-                      color: const Color(0xFFD6E9F7),
-
-                      width: 0.7,
-                    ),
-
-                    boxShadow: const [
-                      BoxShadow(
-                        color: Color(0x12000000),
-
-                        blurRadius: 5,
-
-                        offset: Offset(0, 2),
-                      ),
-                    ],
-                  ),
-
-                  child: Form(
-                    key: _formKey,
-
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-
-                      children: [
-                        const Text(
-                          'DATA PELAPOR',
-
-                          style: TextStyle(
-                            color: Color(0xFF202020),
-
-                            fontSize: 12,
-
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-
-                        const SizedBox(height: 3),
-
-                        const Text(
-                          'Lengkapi data pelapor berikut:',
-
-                          style: TextStyle(
-                            color: Color(0xFF202020),
-
-                            fontSize: 10.5,
-                          ),
-                        ),
-
-                        const SizedBox(height: 25),
-
-                        _fieldTitle('Nama Lengkap'),
-
-                        TextFormField(
-                          controller: _nameController,
-
-                          enabled: !_isSubmitting,
-
-                          style: const TextStyle(fontSize: 14),
-
-                          textCapitalization: TextCapitalization.words,
-
-                          textInputAction: TextInputAction.next,
-
-                          decoration: _fieldDecoration(
-                            hintText: 'Masukkan nama lengkap',
-
-                            prefixIcon: Padding(
-                              padding: const EdgeInsets.all(8),
-
-                              child: Image.asset(
-                                'assets/images/pp.png',
-
-                                width: 20,
-
-                                height: 20,
-
-                                fit: BoxFit.contain,
-                              ),
+                              fontSize: 10.5,
                             ),
                           ),
 
-                          validator: (String? value) {
-                            final String name = value?.trim() ?? '';
+                          const SizedBox(height: 25),
 
-                            if (name.isEmpty) {
-                              return 'Nama lengkap wajib diisi';
-                            }
+                          _fieldTitle('Nama Lengkap'),
 
-                            if (name.length < 3) {
-                              return 'Nama lengkap belum sesuai';
-                            }
-
-                            return null;
-                          },
-                        ),
-
-                        const SizedBox(height: 13),
-
-                        _fieldTitle('NIM / NIP'),
-
-                        TextFormField(
-                          controller: _identifierController,
-
-                          enabled: !_isSubmitting,
-
-                          style: const TextStyle(fontSize: 14),
-
-                          keyboardType: TextInputType.number,
-
-                          textInputAction: TextInputAction.next,
-
-                          inputFormatters: [
-                            FilteringTextInputFormatter.digitsOnly,
-
-                            LengthLimitingTextInputFormatter(30),
-                          ],
-
-                          decoration: _fieldDecoration(
-                            hintText: 'Masukkan NIM atau NIP',
-
-                            prefixIcon: Padding(
-                              padding: const EdgeInsets.all(8),
-
-                              child: Image.asset(
-                                'assets/images/book.png',
-
-                                width: 20,
-
-                                height: 20,
-
-                                fit: BoxFit.contain,
-                              ),
-                            ),
-                          ),
-
-                          validator: (String? value) {
-                            final String identifier = value?.trim() ?? '';
-
-                            if (identifier.isEmpty) {
-                              return 'NIM/NIP wajib diisi';
-                            }
-
-                            if (identifier.length < 5) {
-                              return 'NIM/NIP belum sesuai';
-                            }
-
-                            return null;
-                          },
-                        ),
-
-                        const SizedBox(height: 13),
-
-                        _fieldTitle('Email'),
-
-                        TextFormField(
-                          controller: _emailController,
-
-                          enabled: !_isSubmitting,
-
-                          style: const TextStyle(fontSize: 14),
-
-                          keyboardType: TextInputType.emailAddress,
-
-                          textInputAction: TextInputAction.next,
-
-                          autocorrect: false,
-
-                          decoration: _fieldDecoration(
-                            hintText: 'Masukkan email aktif',
-
-                            prefixIcon: Padding(
-                              padding: const EdgeInsets.all(8),
-
-                              child: Image.asset(
-                                'assets/images/email.png',
-
-                                width: 20,
-
-                                height: 20,
-
-                                fit: BoxFit.contain,
-                              ),
-                            ),
-                          ),
-
-                          validator: (String? value) {
-                            final String email = value?.trim() ?? '';
-
-                            if (email.isEmpty) {
-                              return 'Email wajib diisi';
-                            }
-
-                            final RegExp emailRegex = RegExp(
-                              r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
-                            );
-
-                            if (!emailRegex.hasMatch(email)) {
-                              return 'Format email tidak valid';
-                            }
-
-                            return null;
-                          },
-                        ),
-
-                        const SizedBox(height: 28),
-
-                        const Divider(color: Color(0xFF555555), thickness: 1),
-
-                        const SizedBox(height: 22),
-
-                        const Text(
-                          'DETAIL LOKASI',
-
-                          style: TextStyle(
-                            color: Color(0xFF202020),
-
-                            fontSize: 12,
-
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-
-                        const SizedBox(height: 3),
-
-                        const Text(
-                          'Lengkapi lokasi dan fasilitas yang mengalami kendala:',
-
-                          style: TextStyle(
-                            color: Color(0xFF202020),
-
-                            fontSize: 10.5,
-                          ),
-                        ),
-
-                        const SizedBox(height: 25),
-
-                        _fieldTitle('Nama Gedung'),
-
-                        DropdownButtonFormField<String>(
-                          key: ValueKey('building-$_formVersion'),
-                          initialValue: _selectedBuilding,
-                          isExpanded: true,
-                          menuMaxHeight: 320,
-                          dropdownColor: const Color(0xFFF0F7FF),
-                          decoration: _fieldDecoration(
-                            hintText: _isLoadingBuildings
-                                ? 'Memuat nama gedung...'
-                                : _buildingLoadError
-                                ? 'Gagal memuat nama gedung'
-                                : 'Pilih nama gedung',
-                            prefixIcon: Padding(
-                              padding: const EdgeInsets.all(8),
-                              child: Image.asset(
-                                'assets/images/gedung.png',
-                                width: 20,
-                                height: 20,
-                                fit: BoxFit.contain,
-                              ),
-                            ),
-                          ),
-                          icon: const Icon(
-                            Icons.keyboard_arrow_down_rounded,
-                            size: 19,
-                            color: Color(0xFF222222),
-                          ),
-                          style: const TextStyle(
-                            color: Color(0xFF202020),
-                            fontSize: 10.5,
-                          ),
-                          items: _buildingOptions.map((String building) {
-                            return DropdownMenuItem<String>(
-                              value: building,
-                              child: Text(
-                                building,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  color: Color(0xFF202020),
-                                  fontSize: 14,
-                                ),
-                              ),
-                            );
-                          }).toList(),
-                          onChanged:
-                              _isSubmitting ||
-                                  _isLoadingBuildings ||
-                                  _buildingLoadError ||
-                                  _buildingOptions.isEmpty
-                              ? null
-                              : (String? value) {
-                                  setState(() {
-                                    _selectedBuilding = value;
-                                  });
-                                },
-                          validator: (String? value) {
-                            if (_isLoadingBuildings) {
-                              return 'Daftar gedung masih dimuat';
-                            }
-
-                            if (_buildingLoadError) {
-                              return 'Daftar gedung gagal dimuat';
-                            }
-
-                            if (_buildingOptions.isEmpty) {
-                              return 'Daftar gedung tidak tersedia';
-                            }
-
-                            if (value == null || value.isEmpty) {
-                              return 'Nama gedung wajib dipilih';
-                            }
-
-                            return null;
-                          },
-                        ),
-
-                        if (_buildingLoadError)
-                          Align(
-                            alignment: Alignment.centerRight,
-                            child: TextButton.icon(
-                              onPressed: _isSubmitting
-                                  ? null
-                                  : _loadBuildingOptions,
-                              icon: const Icon(Icons.refresh_rounded, size: 14),
-                              label: const Text(
-                                'Coba Lagi',
-                                style: TextStyle(fontSize: 9),
-                              ),
-                              style: TextButton.styleFrom(
-                                foregroundColor: const Color(0xFF168DE2),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 4,
-                                ),
-                              ),
-                            ),
-                          ),
-
-                        const SizedBox(height: 13),
-
-                        _fieldTitle('Lantai'),
-
-                        TextFormField(
-                          controller: _floorController,
-
-                          enabled: !_isSubmitting,
-
-                          textInputAction: TextInputAction.next,
-
-                          style: const TextStyle(fontSize: 14),
-
-                          decoration: _fieldDecoration(
-                            hintText: 'Contoh: Lantai 3',
-
-                            prefixIcon: Padding(
-                              padding: const EdgeInsets.all(7),
-
-                              child: Image.asset(
-                                'assets/images/tangga.png',
-
-                                width: 21,
-
-                                height: 21,
-
-                                fit: BoxFit.contain,
-                              ),
-                            ),
-                          ),
-
-                          validator: (String? value) {
-                            if (value == null || value.trim().isEmpty) {
-                              return 'Lantai wajib diisi';
-                            }
-
-                            return null;
-                          },
-                        ),
-
-                        const SizedBox(height: 13),
-
-                        _fieldTitle('Nama / Nomor Ruangan'),
-
-                        TextFormField(
-                          controller: _roomController,
-
-                          enabled: !_isSubmitting,
-
-                          style: const TextStyle(fontSize: 14),
-
-                          textCapitalization: TextCapitalization.words,
-
-                          textInputAction: TextInputAction.next,
-
-                          decoration: _fieldDecoration(
-                            hintText: 'Contoh: R. 201',
-
-                            prefixIcon: Padding(
-                              padding: const EdgeInsets.all(8),
-
-                              child: Image.asset(
-                                'assets/images/door.png',
-
-                                width: 20,
-
-                                height: 20,
-
-                                fit: BoxFit.contain,
-                              ),
-                            ),
-                          ),
-
-                          validator: (String? value) {
-                            if (value == null || value.trim().isEmpty) {
-                              return 'Nama/nomor ruangan wajib diisi';
-                            }
-
-                            return null;
-                          },
-                        ),
-
-                        const SizedBox(height: 13),
-
-                        _fieldTitle('Jenis Fasilitas'),
-
-                        DropdownButtonFormField<String>(
-                          key: ValueKey('facility-$_formVersion'),
-                          initialValue: _selectedFacility,
-                          isExpanded: true,
-                          menuMaxHeight: 300,
-                          dropdownColor: const Color(0xFFF0F7FF),
-                          decoration: _fieldDecoration(
-                            hintText: _isLoadingFacilities
-                                ? 'Memuat jenis fasilitas...'
-                                : _facilityLoadError
-                                ? 'Gagal memuat jenis fasilitas'
-                                : 'Pilih jenis fasilitas',
-                            prefixIcon: Padding(
-                              padding: const EdgeInsets.all(7),
-                              child: Image.asset(
-                                'assets/images/rumah.png',
-                                width: 21,
-                                height: 21,
-                                fit: BoxFit.contain,
-                              ),
-                            ),
-                          ),
-                          icon: const Icon(
-                            Icons.keyboard_arrow_down_rounded,
-                            size: 19,
-                            color: Color(0xFF222222),
-                          ),
-                          style: const TextStyle(
-                            color: Color(0xFF202020),
-                            fontSize: 10.5,
-                          ),
-                          items: _facilityOptions.map((String facility) {
-                            return DropdownMenuItem<String>(
-                              value: facility,
-                              child: Text(
-                                facility,
-                                style: const TextStyle(
-                                  color: Color(0xFF202020),
-                                  fontSize: 14,
-                                ),
-                              ),
-                            );
-                          }).toList(),
-                          onChanged:
-                              _isSubmitting ||
-                                  _isLoadingFacilities ||
-                                  _facilityLoadError ||
-                                  _facilityOptions.isEmpty
-                              ? null
-                              : (String? value) {
-                                  setState(() {
-                                    _selectedFacility = value;
-                                  });
-                                },
-                          validator: (String? value) {
-                            if (_isLoadingFacilities) {
-                              return 'Jenis fasilitas masih dimuat';
-                            }
-
-                            if (_facilityLoadError) {
-                              return 'Jenis fasilitas gagal dimuat';
-                            }
-
-                            if (_facilityOptions.isEmpty) {
-                              return 'Jenis fasilitas tidak tersedia';
-                            }
-
-                            if (value == null || value.isEmpty) {
-                              return 'Jenis fasilitas wajib dipilih';
-                            }
-
-                            return null;
-                          },
-                        ),
-
-                        if (_facilityLoadError)
-                          Align(
-                            alignment: Alignment.centerRight,
-                            child: TextButton.icon(
-                              onPressed: _isSubmitting
-                                  ? null
-                                  : _loadFacilityOptions,
-                              icon: const Icon(Icons.refresh_rounded, size: 14),
-                              label: const Text(
-                                'Coba Lagi',
-                                style: TextStyle(fontSize: 9),
-                              ),
-                              style: TextButton.styleFrom(
-                                foregroundColor: const Color(0xFF168DE2),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 4,
-                                ),
-                              ),
-                            ),
-                          ),
-
-                        const SizedBox(height: 13),
-
-                        _fieldTitle('Keterangan'),
-
-                        SizedBox(
-                          height: 115,
-
-                          child: TextFormField(
-                            controller: _descriptionController,
+                          TextFormField(
+                            controller: _nameController,
 
                             enabled: !_isSubmitting,
 
-                            expands: true,
-
-                            minLines: null,
-
-                            maxLines: null,
-
-                            keyboardType: TextInputType.multiline,
-
-                            textCapitalization: TextCapitalization.sentences,
-
-                            textAlignVertical: TextAlignVertical.top,
-
                             style: const TextStyle(fontSize: 14),
 
+                            textCapitalization: TextCapitalization.words,
+
+                            textInputAction: TextInputAction.next,
+
                             decoration: _fieldDecoration(
-                              hintText:
-                                  'Jelaskan kondisi atau kerusakan fasilitas',
+                              hintText: 'Masukkan nama lengkap',
+
+                              prefixIcon: Padding(
+                                padding: const EdgeInsets.all(8),
+
+                                child: Image.asset(
+                                  'assets/images/pp.png',
+
+                                  width: 20,
+
+                                  height: 20,
+
+                                  fit: BoxFit.contain,
+                                ),
+                              ),
                             ),
 
                             validator: (String? value) {
-                              final String description = value?.trim() ?? '';
+                              final String name = value?.trim() ?? '';
 
-                              if (description.isEmpty) {
-                                return 'Keterangan wajib diisi';
+                              if (name.isEmpty) {
+                                return 'Nama lengkap wajib diisi';
+                              }
+
+                              if (name.length < 3) {
+                                return 'Nama lengkap belum sesuai';
                               }
 
                               return null;
                             },
                           ),
-                        ),
 
-                        const SizedBox(height: 14),
+                          const SizedBox(height: 13),
 
-                        _fieldTitle('Upload File Pendukung'),
+                          _fieldTitle('NIM / NIP'),
 
-                        _buildFileInput(),
+                          TextFormField(
+                            controller: _identifierController,
 
-                        const SizedBox(height: 7),
+                            enabled: !_isSubmitting,
 
-                        const Center(
-                          child: Text(
-                            'Upload hanya jika diperlukan file pendukung',
+                            style: const TextStyle(fontSize: 14),
 
-                            textAlign: TextAlign.center,
+                            keyboardType: TextInputType.number,
+
+                            textInputAction: TextInputAction.next,
+
+                            inputFormatters: [
+                              FilteringTextInputFormatter.digitsOnly,
+
+                              LengthLimitingTextInputFormatter(30),
+                            ],
+
+                            decoration: _fieldDecoration(
+                              hintText: 'Masukkan NIM atau NIP',
+
+                              prefixIcon: Padding(
+                                padding: const EdgeInsets.all(8),
+
+                                child: Image.asset(
+                                  'assets/images/book.png',
+
+                                  width: 20,
+
+                                  height: 20,
+
+                                  fit: BoxFit.contain,
+                                ),
+                              ),
+                            ),
+
+                            validator: (String? value) {
+                              final String identifier = value?.trim() ?? '';
+
+                              if (identifier.isEmpty) {
+                                return 'NIM/NIP wajib diisi';
+                              }
+
+                              if (identifier.length < 5) {
+                                return 'NIM/NIP belum sesuai';
+                              }
+
+                              return null;
+                            },
+                          ),
+
+                          const SizedBox(height: 13),
+
+                          _fieldTitle('Email'),
+
+                          TextFormField(
+                            controller: _emailController,
+
+                            enabled: !_isSubmitting,
+
+                            style: const TextStyle(fontSize: 14),
+
+                            keyboardType: TextInputType.emailAddress,
+
+                            textInputAction: TextInputAction.next,
+
+                            autocorrect: false,
+
+                            decoration: _fieldDecoration(
+                              hintText: 'Masukkan email aktif',
+
+                              prefixIcon: Padding(
+                                padding: const EdgeInsets.all(8),
+
+                                child: Image.asset(
+                                  'assets/images/email.png',
+
+                                  width: 20,
+
+                                  height: 20,
+
+                                  fit: BoxFit.contain,
+                                ),
+                              ),
+                            ),
+
+                            validator: (String? value) {
+                              final String email = value?.trim() ?? '';
+
+                              if (email.isEmpty) {
+                                return 'Email wajib diisi';
+                              }
+
+                              final RegExp emailRegex = RegExp(
+                                r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
+                              );
+
+                              if (!emailRegex.hasMatch(email)) {
+                                return 'Format email tidak valid';
+                              }
+
+                              return null;
+                            },
+                          ),
+
+                          const SizedBox(height: 28),
+
+                          const Divider(color: Color(0xFF555555), thickness: 1),
+
+                          const SizedBox(height: 22),
+
+                          const Text(
+                            'DETAIL LOKASI',
 
                             style: TextStyle(
-                              color: Color(0xFF555555),
+                              color: Color(0xFF202020),
 
-                              fontSize: 9,
+                              fontSize: 12,
+
+                              fontWeight: FontWeight.w700,
                             ),
                           ),
-                        ),
 
-                        const SizedBox(height: 5),
+                          const SizedBox(height: 3),
 
-                        const Center(
-                          child: Text(
-                            'Format: JPG, PNG, PDF, DOC, DOCX, XLS atau XLSX. Maksimal 5 MB.',
-
-                            textAlign: TextAlign.center,
+                          const Text(
+                            'Lengkapi lokasi dan fasilitas yang mengalami kendala:',
 
                             style: TextStyle(
-                              color: Color(0xFF777777),
+                              color: Color(0xFF202020),
 
-                              fontSize: 8.5,
-                            ),
-                          ),
-                        ),
-
-                        const SizedBox(height: 28),
-
-                        const Divider(color: Color(0xFF555555), thickness: 1),
-
-                        const SizedBox(height: 22),
-
-                        Container(
-                          width: double.infinity,
-
-                          padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
-
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFF0F7FF),
-
-                            borderRadius: BorderRadius.circular(8),
-
-                            border: Border.all(
-                              color: const Color(0xFF9D8EE7),
-
-                              width: 0.6,
+                              fontSize: 10.5,
                             ),
                           ),
 
-                          child: const Row(
+                          const SizedBox(height: 25),
+
+                          _fieldTitle('Nama Gedung'),
+
+                          DropdownButtonFormField<String>(
+                            key: ValueKey('building-$_formVersion'),
+                            initialValue: _selectedBuilding,
+                            isExpanded: true,
+                            menuMaxHeight: 320,
+                            dropdownColor: const Color(0xFFF0F7FF),
+                            decoration: _fieldDecoration(
+                              hintText: _isLoadingBuildings
+                                  ? 'Memuat nama gedung...'
+                                  : _buildingLoadError
+                                  ? 'Gagal memuat nama gedung'
+                                  : 'Pilih nama gedung',
+                              prefixIcon: Padding(
+                                padding: const EdgeInsets.all(8),
+                                child: Image.asset(
+                                  'assets/images/gedung.png',
+                                  width: 20,
+                                  height: 20,
+                                  fit: BoxFit.contain,
+                                ),
+                              ),
+                            ),
+                            icon: const Icon(
+                              Icons.keyboard_arrow_down_rounded,
+                              size: 19,
+                              color: Color(0xFF222222),
+                            ),
+                            style: const TextStyle(
+                              color: Color(0xFF202020),
+                              fontSize: 10.5,
+                            ),
+                            items: _buildingOptions.map((String building) {
+                              return DropdownMenuItem<String>(
+                                value: building,
+                                child: Text(
+                                  building,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    color: Color(0xFF202020),
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              );
+                            }).toList(),
+                            onChanged:
+                                _isSubmitting ||
+                                    _isLoadingBuildings ||
+                                    _buildingLoadError ||
+                                    _buildingOptions.isEmpty
+                                ? null
+                                : (String? value) {
+                                    setState(() {
+                                      _selectedBuilding = value;
+                                    });
+                                  },
+                            validator: (String? value) {
+                              if (_isLoadingBuildings) {
+                                return 'Daftar gedung masih dimuat';
+                              }
+
+                              if (_buildingLoadError) {
+                                return 'Daftar gedung gagal dimuat';
+                              }
+
+                              if (_buildingOptions.isEmpty) {
+                                return 'Daftar gedung tidak tersedia';
+                              }
+
+                              if (value == null || value.isEmpty) {
+                                return 'Nama gedung wajib dipilih';
+                              }
+
+                              return null;
+                            },
+                          ),
+
+                          if (_buildingLoadError)
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: TextButton.icon(
+                                onPressed: _isSubmitting
+                                    ? null
+                                    : _loadBuildingOptions,
+                                icon: const Icon(
+                                  Icons.refresh_rounded,
+                                  size: 14,
+                                ),
+                                label: const Text(
+                                  'Coba Lagi',
+                                  style: TextStyle(fontSize: 9),
+                                ),
+                                style: TextButton.styleFrom(
+                                  foregroundColor: const Color(0xFF168DE2),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 4,
+                                  ),
+                                ),
+                              ),
+                            ),
+
+                          const SizedBox(height: 13),
+
+                          _fieldTitle('Lantai'),
+
+                          TextFormField(
+                            controller: _floorController,
+
+                            enabled: !_isSubmitting,
+
+                            textInputAction: TextInputAction.next,
+
+                            style: const TextStyle(fontSize: 14),
+
+                            decoration: _fieldDecoration(
+                              hintText: 'Contoh: Lantai 3',
+
+                              prefixIcon: Padding(
+                                padding: const EdgeInsets.all(7),
+
+                                child: Image.asset(
+                                  'assets/images/tangga.png',
+
+                                  width: 21,
+
+                                  height: 21,
+
+                                  fit: BoxFit.contain,
+                                ),
+                              ),
+                            ),
+
+                            validator: (String? value) {
+                              if (value == null || value.trim().isEmpty) {
+                                return 'Lantai wajib diisi';
+                              }
+
+                              return null;
+                            },
+                          ),
+
+                          const SizedBox(height: 13),
+
+                          _fieldTitle('Nama / Nomor Ruangan'),
+
+                          TextFormField(
+                            controller: _roomController,
+
+                            enabled: !_isSubmitting,
+
+                            style: const TextStyle(fontSize: 14),
+
+                            textCapitalization: TextCapitalization.words,
+
+                            textInputAction: TextInputAction.next,
+
+                            decoration: _fieldDecoration(
+                              hintText: 'Contoh: R. 201',
+
+                              prefixIcon: Padding(
+                                padding: const EdgeInsets.all(8),
+
+                                child: Image.asset(
+                                  'assets/images/door.png',
+
+                                  width: 20,
+
+                                  height: 20,
+
+                                  fit: BoxFit.contain,
+                                ),
+                              ),
+                            ),
+
+                            validator: (String? value) {
+                              if (value == null || value.trim().isEmpty) {
+                                return 'Nama/nomor ruangan wajib diisi';
+                              }
+
+                              return null;
+                            },
+                          ),
+
+                          const SizedBox(height: 13),
+
+                          _fieldTitle('Jenis Fasilitas'),
+
+                          DropdownButtonFormField<String>(
+                            key: ValueKey('facility-$_formVersion'),
+                            initialValue: _selectedFacility,
+                            isExpanded: true,
+                            menuMaxHeight: 300,
+                            dropdownColor: const Color(0xFFF0F7FF),
+                            decoration: _fieldDecoration(
+                              hintText: _isLoadingFacilities
+                                  ? 'Memuat jenis fasilitas...'
+                                  : _facilityLoadError
+                                  ? 'Gagal memuat jenis fasilitas'
+                                  : 'Pilih jenis fasilitas',
+                              prefixIcon: Padding(
+                                padding: const EdgeInsets.all(7),
+                                child: Image.asset(
+                                  'assets/images/rumah.png',
+                                  width: 21,
+                                  height: 21,
+                                  fit: BoxFit.contain,
+                                ),
+                              ),
+                            ),
+                            icon: const Icon(
+                              Icons.keyboard_arrow_down_rounded,
+                              size: 19,
+                              color: Color(0xFF222222),
+                            ),
+                            style: const TextStyle(
+                              color: Color(0xFF202020),
+                              fontSize: 10.5,
+                            ),
+                            items: _facilityOptions.map((String facility) {
+                              return DropdownMenuItem<String>(
+                                value: facility,
+                                child: Text(
+                                  facility,
+                                  style: const TextStyle(
+                                    color: Color(0xFF202020),
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              );
+                            }).toList(),
+                            onChanged:
+                                _isSubmitting ||
+                                    _isLoadingFacilities ||
+                                    _facilityLoadError ||
+                                    _facilityOptions.isEmpty
+                                ? null
+                                : (String? value) {
+                                    setState(() {
+                                      _selectedFacility = value;
+                                    });
+                                  },
+                            validator: (String? value) {
+                              if (_isLoadingFacilities) {
+                                return 'Jenis fasilitas masih dimuat';
+                              }
+
+                              if (_facilityLoadError) {
+                                return 'Jenis fasilitas gagal dimuat';
+                              }
+
+                              if (_facilityOptions.isEmpty) {
+                                return 'Jenis fasilitas tidak tersedia';
+                              }
+
+                              if (value == null || value.isEmpty) {
+                                return 'Jenis fasilitas wajib dipilih';
+                              }
+
+                              return null;
+                            },
+                          ),
+
+                          if (_facilityLoadError)
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: TextButton.icon(
+                                onPressed: _isSubmitting
+                                    ? null
+                                    : _loadFacilityOptions,
+                                icon: const Icon(
+                                  Icons.refresh_rounded,
+                                  size: 14,
+                                ),
+                                label: const Text(
+                                  'Coba Lagi',
+                                  style: TextStyle(fontSize: 9),
+                                ),
+                                style: TextButton.styleFrom(
+                                  foregroundColor: const Color(0xFF168DE2),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 4,
+                                  ),
+                                ),
+                              ),
+                            ),
+
+                          const SizedBox(height: 13),
+
+                          _fieldTitle('Keterangan'),
+
+                          SizedBox(
+                            height: 115,
+
+                            child: TextFormField(
+                              controller: _descriptionController,
+
+                              enabled: !_isSubmitting,
+
+                              expands: true,
+
+                              minLines: null,
+
+                              maxLines: null,
+
+                              keyboardType: TextInputType.multiline,
+
+                              textCapitalization: TextCapitalization.sentences,
+
+                              textAlignVertical: TextAlignVertical.top,
+
+                              style: const TextStyle(fontSize: 14),
+
+                              decoration: _fieldDecoration(
+                                hintText:
+                                    'Jelaskan kondisi atau kerusakan fasilitas',
+                              ),
+
+                              validator: (String? value) {
+                                final String description = value?.trim() ?? '';
+
+                                if (description.isEmpty) {
+                                  return 'Keterangan wajib diisi';
+                                }
+
+                                return null;
+                              },
+                            ),
+                          ),
+
+                          const SizedBox(height: 14),
+
+                          _fieldTitle('Upload File Pendukung'),
+
+                          _buildFileInput(),
+
+                          const SizedBox(height: 7),
+
+                          const Center(
+                            child: Text(
+                              'Upload hanya jika diperlukan file pendukung',
+
+                              textAlign: TextAlign.center,
+
+                              style: TextStyle(
+                                color: Color(0xFF555555),
+
+                                fontSize: 9,
+                              ),
+                            ),
+                          ),
+
+                          const SizedBox(height: 5),
+
+                          const Center(
+                            child: Text(
+                              'Format: JPG, PNG, PDF, DOC, DOCX, XLS atau XLSX. Maksimal 5 MB.',
+
+                              textAlign: TextAlign.center,
+
+                              style: TextStyle(
+                                color: Color(0xFF777777),
+
+                                fontSize: 8.5,
+                              ),
+                            ),
+                          ),
+
+                          const SizedBox(height: 28),
+
+                          const Divider(color: Color(0xFF555555), thickness: 1),
+
+                          const SizedBox(height: 22),
+
+                          Container(
+                            width: double.infinity,
+
+                            padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF0F7FF),
+
+                              borderRadius: BorderRadius.circular(8),
+
+                              border: Border.all(
+                                color: const Color(0xFF9D8EE7),
+
+                                width: 0.6,
+                              ),
+                            ),
+
+                            child: const Row(
+                              children: [
+                                CircleAvatar(
+                                  radius: 15,
+
+                                  backgroundColor: Color(0xFF075DBD),
+
+                                  child: Icon(
+                                    Icons.priority_high_rounded,
+
+                                    color: Colors.white,
+
+                                    size: 21,
+                                  ),
+                                ),
+
+                                SizedBox(width: 12),
+
+                                Expanded(
+                                  child: Text(
+                                    'Pastikan Data yang Anda isi sudah benar.\n'
+                                    'Tim Helpdesk akan menindaklanjuti laporan Anda.',
+
+                                    style: TextStyle(
+                                      color: Color(0xFF222222),
+
+                                      fontSize: 9.5,
+
+                                      height: 1.3,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          const SizedBox(height: 28),
+
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+
                             children: [
-                              CircleAvatar(
-                                radius: 15,
+                              SizedBox(
+                                width: 100,
 
-                                backgroundColor: Color(0xFF075DBD),
+                                height: 40,
 
-                                child: Icon(
-                                  Icons.priority_high_rounded,
+                                child: ElevatedButton(
+                                  onPressed: _isSubmitting ? null : _submitForm,
 
-                                  color: Colors.white,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFF8C99F2),
 
-                                  size: 21,
+                                    disabledBackgroundColor: const Color(
+                                      0xFFADB5F5,
+                                    ),
+
+                                    foregroundColor: Colors.white,
+
+                                    elevation: 0,
+
+                                    padding: EdgeInsets.zero,
+
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(5),
+                                    ),
+                                  ),
+
+                                  child: _isSubmitting
+                                      ? const SizedBox(
+                                          width: 18,
+
+                                          height: 18,
+
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+
+                                            color: Colors.white,
+                                          ),
+                                        )
+                                      : const Text(
+                                          'Kirim Data',
+
+                                          style: TextStyle(
+                                            fontSize: 9.5,
+
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
                                 ),
                               ),
 
-                              SizedBox(width: 12),
+                              const SizedBox(width: 22),
 
-                              Expanded(
-                                child: Text(
-                                  'Pastikan Data yang Anda isi sudah benar.\n'
-                                  'Tim Helpdesk akan menindaklanjuti laporan Anda.',
+                              SizedBox(
+                                width: 72,
 
-                                  style: TextStyle(
-                                    color: Color(0xFF222222),
+                                height: 40,
 
-                                    fontSize: 9.5,
+                                child: ElevatedButton(
+                                  onPressed: _isSubmitting ? null : _resetForm,
 
-                                    height: 1.3,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFF59C467),
+
+                                    foregroundColor: Colors.white,
+
+                                    elevation: 0,
+
+                                    padding: EdgeInsets.zero,
+
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(5),
+                                    ),
+                                  ),
+
+                                  child: const Text(
+                                    'Reset',
+
+                                    style: TextStyle(
+                                      fontSize: 9.5,
+
+                                      fontWeight: FontWeight.w500,
+                                    ),
                                   ),
                                 ),
                               ),
                             ],
                           ),
-                        ),
 
-                        const SizedBox(height: 28),
-
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-
-                          children: [
-                            SizedBox(
-                              width: 100,
-
-                              height: 40,
-
-                              child: ElevatedButton(
-                                onPressed: _isSubmitting ? null : _submitForm,
-
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFF8C99F2),
-
-                                  disabledBackgroundColor: const Color(
-                                    0xFFADB5F5,
-                                  ),
-
-                                  foregroundColor: Colors.white,
-
-                                  elevation: 0,
-
-                                  padding: EdgeInsets.zero,
-
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(5),
-                                  ),
-                                ),
-
-                                child: _isSubmitting
-                                    ? const SizedBox(
-                                        width: 18,
-
-                                        height: 18,
-
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-
-                                          color: Colors.white,
-                                        ),
-                                      )
-                                    : const Text(
-                                        'Kirim Data',
-
-                                        style: TextStyle(
-                                          fontSize: 9.5,
-
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
-                              ),
-                            ),
-
-                            const SizedBox(width: 22),
-
-                            SizedBox(
-                              width: 72,
-
-                              height: 40,
-
-                              child: ElevatedButton(
-                                onPressed: _isSubmitting ? null : _resetForm,
-
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFF59C467),
-
-                                  foregroundColor: Colors.white,
-
-                                  elevation: 0,
-
-                                  padding: EdgeInsets.zero,
-
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(5),
-                                  ),
-                                ),
-
-                                child: const Text(
-                                  'Reset',
-
-                                  style: TextStyle(
-                                    fontSize: 9.5,
-
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-
-                        const SizedBox(height: 5),
-                      ],
+                          const SizedBox(height: 5),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),

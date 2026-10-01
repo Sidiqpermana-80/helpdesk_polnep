@@ -50,6 +50,14 @@ class _AplikasiFormPageState extends State<AplikasiFormPage> {
 
   bool _isSubmitting = false;
 
+  Future<void> _refreshPage() async {
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {});
+  }
+
   // =========================================================
   // DISPOSE
   // =========================================================
@@ -211,396 +219,405 @@ class _AplikasiFormPageState extends State<AplikasiFormPage> {
             ),
           ),
 
-          child: SingleChildScrollView(
-            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+          child: RefreshIndicator(
+            onRefresh: _refreshPage,
 
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 28),
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(
+                parent: BouncingScrollPhysics(),
+              ),
 
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
 
-              children: [
-                // =================================================
-                // HEADER
-                // =================================================
-                Row(
-                  children: [
-                    IconButton(
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
-                      tooltip: 'Kembali',
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                      },
-                      icon: const Icon(
-                        Icons.arrow_back_ios_new_rounded,
-                        size: 21,
-                        color: Color(0xFF111111),
+              padding: const EdgeInsets.fromLTRB(16, 14, 16, 28),
+
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+
+                children: [
+                  // =================================================
+                  // HEADER
+                  // =================================================
+                  Row(
+                    children: [
+                      IconButton(
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                        tooltip: 'Kembali',
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                        },
+                        icon: const Icon(
+                          Icons.arrow_back_ios_new_rounded,
+                          size: 21,
+                          color: Color(0xFF111111),
+                        ),
                       ),
-                    ),
 
-                    const SizedBox(width: 10),
+                      const SizedBox(width: 10),
 
-                    const Text(
-                      'Layanan Aplikasi',
-                      style: TextStyle(
-                        color: Color(0xFF111111),
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 34),
-
-                // =================================================
-                // FORM
-                // =================================================
-                Container(
-                  width: double.infinity,
-
-                  padding: const EdgeInsets.fromLTRB(10, 14, 10, 20),
-
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-
-                    borderRadius: BorderRadius.circular(10),
-
-                    border: Border.all(
-                      color: const Color(0xFFD6E9F7),
-                      width: 0.7,
-                    ),
-
-                    boxShadow: const [
-                      BoxShadow(
-                        color: Color(0x12000000),
-                        blurRadius: 5,
-                        offset: Offset(0, 2),
+                      const Text(
+                        'Layanan Aplikasi',
+                        style: TextStyle(
+                          color: Color(0xFF111111),
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
                     ],
                   ),
 
-                  child: Form(
-                    key: _formKey,
+                  const SizedBox(height: 34),
 
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                  // =================================================
+                  // FORM
+                  // =================================================
+                  Container(
+                    width: double.infinity,
 
-                      children: [
-                        const Text(
-                          'FORM PERTANYAAN',
-                          style: TextStyle(
-                            color: Color(0xFF202020),
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                          ),
+                    padding: const EdgeInsets.fromLTRB(10, 14, 10, 20),
+
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+
+                      borderRadius: BorderRadius.circular(10),
+
+                      border: Border.all(
+                        color: const Color(0xFFD6E9F7),
+                        width: 0.7,
+                      ),
+
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Color(0x12000000),
+                          blurRadius: 5,
+                          offset: Offset(0, 2),
                         ),
+                      ],
+                    ),
 
-                        const SizedBox(height: 3),
+                    child: Form(
+                      key: _formKey,
 
-                        const Text(
-                          'Lengkapi data berikut sesuai dengan pilihan anda:',
-                          style: TextStyle(
-                            color: Color(0xFF202020),
-                            fontSize: 9.5,
-                          ),
-                        ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
 
-                        const SizedBox(height: 25),
-
-                        // =========================================
-                        // NAMA
-                        // =========================================
-                        _fieldTitle('Nama Lengkap'),
-
-                        TextFormField(
-                          controller: _nameController,
-
-                          textCapitalization: TextCapitalization.words,
-
-                          textInputAction: TextInputAction.next,
-
-                          decoration: _fieldDecoration(
-                            hintText: 'Masukkan nama lengkap',
-                          ),
-
-                          validator: (String? value) {
-                            final String name = value?.trim() ?? '';
-
-                            if (name.isEmpty) {
-                              return 'Nama lengkap wajib diisi';
-                            }
-
-                            if (name.length < 3) {
-                              return 'Nama lengkap belum sesuai';
-                            }
-
-                            return null;
-                          },
-                        ),
-
-                        const SizedBox(height: 13),
-
-                        // =========================================
-                        // NIM / NIP
-                        // =========================================
-                        _fieldTitle('NIM / NIP'),
-
-                        TextFormField(
-                          controller: _identifierController,
-
-                          keyboardType: TextInputType.number,
-
-                          textInputAction: TextInputAction.next,
-
-                          inputFormatters: [
-                            FilteringTextInputFormatter.digitsOnly,
-
-                            LengthLimitingTextInputFormatter(30),
-                          ],
-
-                          decoration: _fieldDecoration(
-                            hintText: 'Masukkan NIM atau NIP',
+                        children: [
+                          const Text(
+                            'FORM PERTANYAAN',
+                            style: TextStyle(
+                              color: Color(0xFF202020),
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                            ),
                           ),
 
-                          validator: (String? value) {
-                            final String identifier = value?.trim() ?? '';
+                          const SizedBox(height: 3),
 
-                            if (identifier.isEmpty) {
-                              return 'NIM/NIP wajib diisi';
-                            }
-
-                            if (identifier.length < 5) {
-                              return 'NIM/NIP belum sesuai';
-                            }
-
-                            return null;
-                          },
-                        ),
-
-                        const SizedBox(height: 13),
-
-                        _fieldTitle('Email'),
-
-                        TextFormField(
-                          controller: _emailController,
-                          keyboardType: TextInputType.emailAddress,
-                          textInputAction: TextInputAction.next,
-                          decoration: _fieldDecoration(
-                            hintText: 'Masukkan email aktif',
+                          const Text(
+                            'Lengkapi data berikut sesuai dengan pilihan anda:',
+                            style: TextStyle(
+                              color: Color(0xFF202020),
+                              fontSize: 9.5,
+                            ),
                           ),
-                          validator: (String? value) {
-                            final String email = value?.trim() ?? '';
 
-                            if (email.isEmpty) {
-                              return 'Email wajib diisi';
-                            }
+                          const SizedBox(height: 25),
 
-                            final RegExp emailRegex = RegExp(
-                              r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
-                            );
+                          // =========================================
+                          // NAMA
+                          // =========================================
+                          _fieldTitle('Nama Lengkap'),
 
-                            if (!emailRegex.hasMatch(email)) {
-                              return 'Format email tidak valid';
-                            }
+                          TextFormField(
+                            controller: _nameController,
 
-                            return null;
-                          },
-                        ),
+                            textCapitalization: TextCapitalization.words,
 
-                        // =========================================
-                        // APLIKASI
-                        // TIDAK BISA DIEDIT
-                        // =========================================
-                        _fieldTitle('Pilihan Aplikasi'),
-
-                        _buildLockedField(value: widget.applicationName),
-
-                        const SizedBox(height: 13),
-
-                        // =========================================
-                        // JENIS KENDALA
-                        // TIDAK BISA DIEDIT
-                        // =========================================
-                        _fieldTitle('Jenis Kendala'),
-
-                        _buildLockedField(value: widget.issueType),
-
-                        const SizedBox(height: 13),
-
-                        // =========================================
-                        // DESKRIPSI
-                        // =========================================
-                        _fieldTitle('Deskripsikan Permasalahan Anda'),
-
-                        SizedBox(
-                          height: 115,
-
-                          child: TextFormField(
-                            controller: _descriptionController,
-
-                            expands: true,
-                            minLines: null,
-                            maxLines: null,
-
-                            keyboardType: TextInputType.multiline,
-
-                            textCapitalization: TextCapitalization.sentences,
-
-                            textAlignVertical: TextAlignVertical.top,
+                            textInputAction: TextInputAction.next,
 
                             decoration: _fieldDecoration(
-                              hintText: 'Tuliskan permasalahan yang Anda alami',
+                              hintText: 'Masukkan nama lengkap',
                             ),
 
                             validator: (String? value) {
-                              final String description = value?.trim() ?? '';
+                              final String name = value?.trim() ?? '';
 
-                              if (description.isEmpty) {
-                                return 'Deskripsi permasalahan wajib diisi';
+                              if (name.isEmpty) {
+                                return 'Nama lengkap wajib diisi';
+                              }
+
+                              if (name.length < 3) {
+                                return 'Nama lengkap belum sesuai';
                               }
 
                               return null;
                             },
                           ),
-                        ),
 
-                        const SizedBox(height: 14),
+                          const SizedBox(height: 13),
 
-                        // =========================================
-                        // FILE
-                        // =========================================
-                        _fieldTitle('Upload File Pendukung'),
+                          // =========================================
+                          // NIM / NIP
+                          // =========================================
+                          _fieldTitle('NIM / NIP'),
 
-                        _buildFileInput(),
+                          TextFormField(
+                            controller: _identifierController,
 
-                        const SizedBox(height: 7),
+                            keyboardType: TextInputType.number,
 
-                        const Center(
-                          child: Text(
-                            'Upload hanya jika diperlukan file pendukung',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: Color(0xFF555555),
-                              fontSize: 8,
+                            textInputAction: TextInputAction.next,
+
+                            inputFormatters: [
+                              FilteringTextInputFormatter.digitsOnly,
+
+                              LengthLimitingTextInputFormatter(30),
+                            ],
+
+                            decoration: _fieldDecoration(
+                              hintText: 'Masukkan NIM atau NIP',
+                            ),
+
+                            validator: (String? value) {
+                              final String identifier = value?.trim() ?? '';
+
+                              if (identifier.isEmpty) {
+                                return 'NIM/NIP wajib diisi';
+                              }
+
+                              if (identifier.length < 5) {
+                                return 'NIM/NIP belum sesuai';
+                              }
+
+                              return null;
+                            },
+                          ),
+
+                          const SizedBox(height: 13),
+
+                          _fieldTitle('Email'),
+
+                          TextFormField(
+                            controller: _emailController,
+                            keyboardType: TextInputType.emailAddress,
+                            textInputAction: TextInputAction.next,
+                            decoration: _fieldDecoration(
+                              hintText: 'Masukkan email aktif',
+                            ),
+                            validator: (String? value) {
+                              final String email = value?.trim() ?? '';
+
+                              if (email.isEmpty) {
+                                return 'Email wajib diisi';
+                              }
+
+                              final RegExp emailRegex = RegExp(
+                                r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
+                              );
+
+                              if (!emailRegex.hasMatch(email)) {
+                                return 'Format email tidak valid';
+                              }
+
+                              return null;
+                            },
+                          ),
+
+                          // =========================================
+                          // APLIKASI
+                          // TIDAK BISA DIEDIT
+                          // =========================================
+                          _fieldTitle('Pilihan Aplikasi'),
+
+                          _buildLockedField(value: widget.applicationName),
+
+                          const SizedBox(height: 13),
+
+                          // =========================================
+                          // JENIS KENDALA
+                          // TIDAK BISA DIEDIT
+                          // =========================================
+                          _fieldTitle('Jenis Kendala'),
+
+                          _buildLockedField(value: widget.issueType),
+
+                          const SizedBox(height: 13),
+
+                          // =========================================
+                          // DESKRIPSI
+                          // =========================================
+                          _fieldTitle('Deskripsikan Permasalahan Anda'),
+
+                          SizedBox(
+                            height: 115,
+
+                            child: TextFormField(
+                              controller: _descriptionController,
+
+                              expands: true,
+                              minLines: null,
+                              maxLines: null,
+
+                              keyboardType: TextInputType.multiline,
+
+                              textCapitalization: TextCapitalization.sentences,
+
+                              textAlignVertical: TextAlignVertical.top,
+
+                              decoration: _fieldDecoration(
+                                hintText:
+                                    'Tuliskan permasalahan yang Anda alami',
+                              ),
+
+                              validator: (String? value) {
+                                final String description = value?.trim() ?? '';
+
+                                if (description.isEmpty) {
+                                  return 'Deskripsi permasalahan wajib diisi';
+                                }
+
+                                return null;
+                              },
                             ),
                           ),
-                        ),
 
-                        const SizedBox(height: 5),
+                          const SizedBox(height: 14),
 
-                        const Center(
-                          child: Text(
-                            'Format: JPG, PNG, PDF, DOC, DOCX, XLS atau XLSX. Maksimal 5 MB.',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: Color(0xFF777777),
-                              fontSize: 7.5,
+                          // =========================================
+                          // FILE
+                          // =========================================
+                          _fieldTitle('Upload File Pendukung'),
+
+                          _buildFileInput(),
+
+                          const SizedBox(height: 7),
+
+                          const Center(
+                            child: Text(
+                              'Upload hanya jika diperlukan file pendukung',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: Color(0xFF555555),
+                                fontSize: 8,
+                              ),
                             ),
                           ),
-                        ),
 
-                        const SizedBox(height: 28),
+                          const SizedBox(height: 5),
 
-                        const Divider(color: Color(0xFF555555), thickness: 1),
-
-                        const SizedBox(height: 22),
-
-                        // =========================================
-                        // BUTTON
-                        // =========================================
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-
-                          children: [
-                            // KIRIM DATA
-                            SizedBox(
-                              width: 100,
-                              height: 40,
-
-                              child: ElevatedButton(
-                                onPressed: _isSubmitting ? null : _submitForm,
-
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFF8C99F2),
-
-                                  disabledBackgroundColor: const Color(
-                                    0xFFADB5F5,
-                                  ),
-
-                                  foregroundColor: Colors.white,
-
-                                  elevation: 0,
-
-                                  padding: EdgeInsets.zero,
-
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(5),
-                                  ),
-                                ),
-
-                                child: _isSubmitting
-                                    ? const SizedBox(
-                                        width: 18,
-                                        height: 18,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                          color: Colors.white,
-                                        ),
-                                      )
-                                    : const Text(
-                                        'Kirim Data',
-                                        style: TextStyle(
-                                          fontSize: 9.5,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
+                          const Center(
+                            child: Text(
+                              'Format: JPG, PNG, PDF, DOC, DOCX, XLS atau XLSX. Maksimal 5 MB.',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: Color(0xFF777777),
+                                fontSize: 7.5,
                               ),
                             ),
+                          ),
 
-                            const SizedBox(width: 22),
+                          const SizedBox(height: 28),
 
-                            // RESET
-                            SizedBox(
-                              width: 72,
-                              height: 40,
+                          const Divider(color: Color(0xFF555555), thickness: 1),
 
-                              child: ElevatedButton(
-                                onPressed: _isSubmitting ? null : _resetForm,
+                          const SizedBox(height: 22),
 
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFF59C467),
+                          // =========================================
+                          // BUTTON
+                          // =========================================
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
 
-                                  foregroundColor: Colors.white,
+                            children: [
+                              // KIRIM DATA
+                              SizedBox(
+                                width: 100,
+                                height: 40,
 
-                                  elevation: 0,
+                                child: ElevatedButton(
+                                  onPressed: _isSubmitting ? null : _submitForm,
 
-                                  padding: EdgeInsets.zero,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFF8C99F2),
 
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(5),
+                                    disabledBackgroundColor: const Color(
+                                      0xFFADB5F5,
+                                    ),
+
+                                    foregroundColor: Colors.white,
+
+                                    elevation: 0,
+
+                                    padding: EdgeInsets.zero,
+
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(5),
+                                    ),
                                   ),
-                                ),
 
-                                child: const Text(
-                                  'Reset',
-                                  style: TextStyle(
-                                    fontSize: 9.5,
-                                    fontWeight: FontWeight.w500,
+                                  child: _isSubmitting
+                                      ? const SizedBox(
+                                          width: 18,
+                                          height: 18,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            color: Colors.white,
+                                          ),
+                                        )
+                                      : const Text(
+                                          'Kirim Data',
+                                          style: TextStyle(
+                                            fontSize: 9.5,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                ),
+                              ),
+
+                              const SizedBox(width: 22),
+
+                              // RESET
+                              SizedBox(
+                                width: 72,
+                                height: 40,
+
+                                child: ElevatedButton(
+                                  onPressed: _isSubmitting ? null : _resetForm,
+
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFF59C467),
+
+                                    foregroundColor: Colors.white,
+
+                                    elevation: 0,
+
+                                    padding: EdgeInsets.zero,
+
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(5),
+                                    ),
+                                  ),
+
+                                  child: const Text(
+                                    'Reset',
+                                    style: TextStyle(
+                                      fontSize: 9.5,
+                                      fontWeight: FontWeight.w500,
+                                    ),
                                   ),
                                 ),
                               ),
-                            ),
-                          ],
-                        ),
+                            ],
+                          ),
 
-                        const SizedBox(height: 5),
-                      ],
+                          const SizedBox(height: 5),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),

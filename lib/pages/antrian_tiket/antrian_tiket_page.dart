@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -73,6 +74,45 @@ class _AntrianTiketPageState extends State<AntrianTiketPage> {
   DateTime? _selectedBookingDate;
 
   // =========================================================
+  // MASTER DATA DINAMIS
+  // =========================================================
+
+  List<String> _semesterOptions = <String>[];
+
+  List<String> _studentServices = <String>[];
+
+  List<String> _generalServices = <String>[];
+
+  // =========================================================
+  // NOTIFIKASI LAYANAN MAHASISWA
+  //
+  // key   = nama layanan
+  // value = notification_text dari Laravel
+  // =========================================================
+
+  final Map<String, String> _studentServiceNotifications = <String, String>{};
+
+  // =========================================================
+  // LOADING MASTER DATA
+  // =========================================================
+
+  bool _isLoadingSemesters = true;
+
+  bool _isLoadingStudentServices = true;
+
+  bool _isLoadingGeneralServices = true;
+
+  // =========================================================
+  // ERROR MASTER DATA
+  // =========================================================
+
+  bool _semesterLoadError = false;
+
+  bool _studentServiceLoadError = false;
+
+  bool _generalServiceLoadError = false;
+
+  // =========================================================
   // LAINNYA
   // =========================================================
 
@@ -81,41 +121,27 @@ class _AntrianTiketPageState extends State<AntrianTiketPage> {
   int _formVersion = 0;
 
   // =========================================================
-  // SEMESTER
+  // INIT
   // =========================================================
 
-  static const List<String> _semesterOptions = [
-    '1',
-    '2',
-    '3',
-    '4',
-    '5',
-    '6',
-    '7',
-    '8',
-  ];
+  @override
+  void initState() {
+    super.initState();
 
-  // =========================================================
-  // LAYANAN MAHASISWA
-  // =========================================================
+    _loadSemesterOptions();
 
-  static const List<String> _studentServices = [
-    'Legalisir Ijazah',
-    'Surat Magang',
-    'Surat Aktif Kuliah',
-    'Surat Permohonan Cuti Kuliah',
-    'Surat Permohonan Drop Out',
-  ];
+    _loadStudentServices();
 
-  // =========================================================
-  // LAYANAN UMUM
-  // =========================================================
+    _loadGeneralServices();
+  }
 
-  static const List<String> _generalServices = [
-    'Surat Dari Luar ke Direktur',
-    'Surat Cuti Pegawai',
-    'Surat ke Wadir 1',
-  ];
+  Future<void> _refreshPage() async {
+    await Future.wait([
+      _loadSemesterOptions(),
+      _loadStudentServices(),
+      _loadGeneralServices(),
+    ]);
+  }
 
   // =========================================================
   // DISPOSE
@@ -124,17 +150,330 @@ class _AntrianTiketPageState extends State<AntrianTiketPage> {
   @override
   void dispose() {
     _nameController.dispose();
+
     _phoneController.dispose();
+
     _emailController.dispose();
+
     _descriptionController.dispose();
 
     _identifierController.dispose();
+
     _departmentController.dispose();
 
     _originController.dispose();
+
     _destinationController.dispose();
 
     super.dispose();
+  }
+
+  // =========================================================
+  // GET NOTIFIKASI LAYANAN MAHASISWA TERPILIH
+  // =========================================================
+
+  String? get _selectedStudentServiceNotification {
+    final String service = _selectedService?.trim() ?? '';
+
+    if (service.isEmpty) {
+      return null;
+    }
+
+    final String notification =
+        _studentServiceNotifications[service]?.trim() ?? '';
+
+    if (notification.isEmpty) {
+      return null;
+    }
+
+    return notification;
+  }
+
+  // =========================================================
+  // APAKAH ANTRIAN LANGSUNG HARUS DINONAKTIFKAN
+  //
+  // Jika:
+  // - kategori Mahasiswa
+  // - layanan memiliki notification_text
+  //
+  // maka Langsung tidak boleh digunakan.
+  // =========================================================
+
+  bool get _isDirectQueueDisabled {
+    return _selectedCategory == 'Mahasiswa' &&
+        _selectedStudentServiceNotification != null;
+  }
+
+  // =========================================================
+  // FETCH MASTER DATA
+  // =========================================================
+
+  Future<List<Map<String, dynamic>>> _fetchMasterOptionItems(String url) async {
+    final http.Response response = await http
+        .get(Uri.parse(url))
+        .timeout(const Duration(seconds: 20));
+
+    debugPrint('ANTRIAN MASTER STATUS: ${response.statusCode}');
+
+    debugPrint('ANTRIAN MASTER RESPONSE: ${response.body}');
+
+    final dynamic decoded = jsonDecode(response.body);
+
+    if (response.statusCode != 200 ||
+        decoded is! Map<String, dynamic> ||
+        decoded['success'] != true) {
+      throw const FormatException('Data master tidak valid.');
+    }
+
+    final dynamic rawData = decoded['data'];
+
+    if (rawData is! List) {
+      throw const FormatException('Daftar master tidak valid.');
+    }
+
+    return rawData.whereType<Map<String, dynamic>>().toList();
+  }
+
+  // =========================================================
+  // LOAD SEMESTER
+  // =========================================================
+
+  Future<void> _loadSemesterOptions() async {
+    if (mounted) {
+      setState(() {
+        _isLoadingSemesters = true;
+
+        _semesterLoadError = false;
+      });
+    }
+
+    try {
+      final List<Map<String, dynamic>> items = await _fetchMasterOptionItems(
+        ApiConfig.antrianSemesterOptions,
+      );
+
+      final List<String> options = items
+          .map(
+            (Map<String, dynamic> item) =>
+                item['option_label']?.toString().trim() ?? '',
+          )
+          .where((String value) => value.isNotEmpty)
+          .toList();
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _semesterOptions = options;
+
+        if (_selectedSemester != null &&
+            !_semesterOptions.contains(_selectedSemester)) {
+          _selectedSemester = null;
+        }
+
+        _isLoadingSemesters = false;
+
+        _semesterLoadError = false;
+      });
+    } on TimeoutException {
+      debugPrint('LOAD ANTRIAN SEMESTER ERROR: TimeoutException');
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _semesterOptions = <String>[];
+
+        _isLoadingSemesters = false;
+
+        _semesterLoadError = true;
+      });
+    } catch (e) {
+      debugPrint('LOAD ANTRIAN SEMESTER ERROR: $e');
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _semesterOptions = <String>[];
+
+        _isLoadingSemesters = false;
+
+        _semesterLoadError = true;
+      });
+    }
+  }
+
+  // =========================================================
+  // LOAD LAYANAN MAHASISWA
+  //
+  // Termasuk notification_text dari Laravel.
+  // =========================================================
+
+  Future<void> _loadStudentServices() async {
+    if (mounted) {
+      setState(() {
+        _isLoadingStudentServices = true;
+
+        _studentServiceLoadError = false;
+      });
+    }
+
+    try {
+      final List<Map<String, dynamic>> items = await _fetchMasterOptionItems(
+        ApiConfig.antrianStudentServiceOptions,
+      );
+
+      final List<String> services = <String>[];
+
+      final Map<String, String> notifications = <String, String>{};
+
+      for (final Map<String, dynamic> item in items) {
+        final String label = item['option_label']?.toString().trim() ?? '';
+
+        if (label.isEmpty) {
+          continue;
+        }
+
+        services.add(label);
+
+        final String notification =
+            item['notification_text']?.toString().trim() ?? '';
+
+        if (notification.isNotEmpty) {
+          notifications[label] = notification;
+        }
+      }
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _studentServices = services;
+
+        _studentServiceNotifications
+          ..clear()
+          ..addAll(notifications);
+
+        if (_selectedService != null &&
+            !_studentServices.contains(_selectedService)) {
+          _selectedService = null;
+        }
+
+        _isLoadingStudentServices = false;
+
+        _studentServiceLoadError = false;
+      });
+    } on TimeoutException {
+      debugPrint('LOAD STUDENT SERVICES ERROR: TimeoutException');
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _studentServices = <String>[];
+
+        _studentServiceNotifications.clear();
+
+        _isLoadingStudentServices = false;
+
+        _studentServiceLoadError = true;
+      });
+    } catch (e) {
+      debugPrint('LOAD STUDENT SERVICES ERROR: $e');
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _studentServices = <String>[];
+
+        _studentServiceNotifications.clear();
+
+        _isLoadingStudentServices = false;
+
+        _studentServiceLoadError = true;
+      });
+    }
+  }
+
+  // =========================================================
+  // LOAD LAYANAN UMUM
+  // =========================================================
+
+  Future<void> _loadGeneralServices() async {
+    if (mounted) {
+      setState(() {
+        _isLoadingGeneralServices = true;
+
+        _generalServiceLoadError = false;
+      });
+    }
+
+    try {
+      final List<Map<String, dynamic>> items = await _fetchMasterOptionItems(
+        ApiConfig.antrianGeneralServiceOptions,
+      );
+
+      final List<String> options = items
+          .map(
+            (Map<String, dynamic> item) =>
+                item['option_label']?.toString().trim() ?? '',
+          )
+          .where((String value) => value.isNotEmpty)
+          .toList();
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _generalServices = options;
+
+        if (_selectedGeneralService != null &&
+            !_generalServices.contains(_selectedGeneralService)) {
+          _selectedGeneralService = null;
+        }
+
+        _isLoadingGeneralServices = false;
+
+        _generalServiceLoadError = false;
+      });
+    } on TimeoutException {
+      debugPrint('LOAD GENERAL SERVICES ERROR: TimeoutException');
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _generalServices = <String>[];
+
+        _isLoadingGeneralServices = false;
+
+        _generalServiceLoadError = true;
+      });
+    } catch (e) {
+      debugPrint('LOAD GENERAL SERVICES ERROR: $e');
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _generalServices = <String>[];
+
+        _isLoadingGeneralServices = false;
+
+        _generalServiceLoadError = true;
+      });
+    }
   }
 
   // =========================================================
@@ -144,28 +483,39 @@ class _AntrianTiketPageState extends State<AntrianTiketPage> {
   InputDecoration _fieldDecoration({String? hintText, Widget? prefixIcon}) {
     return InputDecoration(
       hintText: hintText,
+
       hintStyle: const TextStyle(color: Color(0xFF888888), fontSize: 10.5),
+
       prefixIcon: prefixIcon,
+
       prefixIconConstraints: const BoxConstraints(minWidth: 38, minHeight: 42),
+
       filled: true,
+
       fillColor: const Color(0xFFF5F6FA),
+
       contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 11),
+
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(5),
         borderSide: const BorderSide(color: Color(0xFF8D8D8D), width: 0.8),
       ),
+
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(5),
         borderSide: const BorderSide(color: Color(0xFF8D8D8D), width: 0.8),
       ),
+
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(5),
         borderSide: const BorderSide(color: Color(0xFF3AA7F5), width: 1.4),
       ),
+
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(5),
         borderSide: const BorderSide(color: Colors.red, width: 1),
       ),
+
       focusedErrorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(5),
         borderSide: const BorderSide(color: Colors.red, width: 1.3),
@@ -181,10 +531,12 @@ class _AntrianTiketPageState extends State<AntrianTiketPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF0F9FF),
+
       body: SafeArea(
         child: Container(
           width: double.infinity,
           height: double.infinity,
+
           decoration: const BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topCenter,
@@ -192,161 +544,147 @@ class _AntrianTiketPageState extends State<AntrianTiketPage> {
               colors: [Color(0xFFF0F9FF), Color(0xFFD7EEFF), Color(0xFFB9E1FF)],
             ),
           ),
-          child: SingleChildScrollView(
-            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 28),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // =================================================
-                // HEADER
-                // =================================================
-                Row(
-                  children: [
-                    IconButton(
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
-                      tooltip: 'Kembali',
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                      },
-                      icon: const Icon(
-                        Icons.arrow_back_ios_new_rounded,
-                        size: 21,
-                        color: Color(0xFF111111),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    const Text(
-                      'Antrian Tiket',
-                      style: TextStyle(
-                        color: Color(0xFF111111),
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
 
-                const SizedBox(height: 22),
+          child: RefreshIndicator(
+            onRefresh: _refreshPage,
 
-                // =================================================
-                // HERO
-                // =================================================
-                SizedBox(
-                  width: double.infinity,
-                  height: 120,
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(
+                parent: BouncingScrollPhysics(),
+              ),
+
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+
+              padding: const EdgeInsets.fromLTRB(16, 14, 16, 28),
+
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+
+                children: [
+                  // =================================================
+                  // HEADER
+                  // =================================================
+                  Row(
                     children: [
-                      const Expanded(
-                        child: Padding(
-                          padding: EdgeInsets.only(left: 7, top: 2),
-                          child: Text(
-                            'Isi form dibawah\n'
-                            'untuk\n'
-                            'mendapatkan\n'
-                            'nomor antrian tiket',
-                            style: TextStyle(
-                              color: Color(0xFF111111),
-                              fontSize: 20.5,
-                              height: 1.08,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
+                      IconButton(
+                        padding: EdgeInsets.zero,
+
+                        constraints: const BoxConstraints(),
+
+                        tooltip: 'Kembali',
+
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                        },
+
+                        icon: const Icon(
+                          Icons.arrow_back_ios_new_rounded,
+                          size: 21,
+                          color: Color(0xFF111111),
                         ),
                       ),
-                      SizedBox(
-                        width: 155,
-                        height: 115,
-                        child: Image.asset(
-                          'assets/images/antrian.png',
-                          fit: BoxFit.contain,
+
+                      const SizedBox(width: 10),
+
+                      const Text(
+                        'Antrian Tiket',
+                        style: TextStyle(
+                          color: Color(0xFF111111),
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
                     ],
                   ),
-                ),
 
-                const SizedBox(height: 7),
+                  const SizedBox(height: 22),
 
-                // =================================================
-                // CARD FORM
-                // =================================================
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.fromLTRB(10, 12, 10, 16),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(
-                      color: const Color(0xFFD6E9F7),
-                      width: 0.7,
-                    ),
-                    boxShadow: const [
-                      BoxShadow(
-                        color: Color(0x12000000),
-                        blurRadius: 5,
-                        offset: Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: Form(
-                    key: _formKey,
-                    child: Column(
+                  // =================================================
+                  // HERO
+                  // =================================================
+                  SizedBox(
+                    width: double.infinity,
+                    height: 120,
+
+                    child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
+
                       children: [
-                        // =========================================
-                        // PILIH KATEGORI
-                        // =========================================
-                        const Text(
-                          'Pilih Kategori',
-                          style: TextStyle(
-                            color: Color(0xFF202020),
-                            fontSize: 10.5,
-                            fontWeight: FontWeight.w500,
+                        const Expanded(
+                          child: Padding(
+                            padding: EdgeInsets.only(left: 7, top: 2),
+
+                            child: Text(
+                              'Isi form dibawah\n'
+                              'untuk\n'
+                              'mendapatkan\n'
+                              'nomor antrian tiket',
+
+                              style: TextStyle(
+                                color: Color(0xFF111111),
+                                fontSize: 20.5,
+                                height: 1.08,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
                           ),
                         ),
 
-                        const SizedBox(height: 7),
+                        SizedBox(
+                          width: 155,
+                          height: 115,
 
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _categoryButton(
-                                title: 'Mahasiswa',
-                                value: 'Mahasiswa',
-                                asset: 'assets/images/mhs.png',
-                                iconColor: const Color(0xFF6757D9),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: _categoryButton(
-                                title: 'Umum',
-                                value: 'Umum',
-                                asset: 'assets/images/tendik.png',
-                                iconColor: const Color(0xFFFFB74D),
-                              ),
-                            ),
-                          ],
+                          child: Image.asset(
+                            'assets/images/antrian.png',
+                            fit: BoxFit.contain,
+                          ),
                         ),
+                      ],
+                    ),
+                  ),
 
-                        // =========================================
-                        // FORM BARU MUNCUL SETELAH PILIH KATEGORI
-                        // =========================================
-                        if (_selectedCategory != null) ...[
-                          const SizedBox(height: 18),
+                  const SizedBox(height: 7),
 
-                          const Divider(color: Color(0xFF555555), thickness: 1),
+                  // =================================================
+                  // CARD
+                  // =================================================
+                  Container(
+                    width: double.infinity,
 
-                          const SizedBox(height: 12),
+                    padding: const EdgeInsets.fromLTRB(10, 12, 10, 16),
 
-                          // =======================================
-                          // JENIS ANTRIAN
-                          // =======================================
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+
+                      borderRadius: BorderRadius.circular(10),
+
+                      border: Border.all(
+                        color: const Color(0xFFD6E9F7),
+                        width: 0.7,
+                      ),
+
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Color(0x12000000),
+                          blurRadius: 5,
+                          offset: Offset(0, 2),
+                        ),
+                      ],
+                    ),
+
+                    child: Form(
+                      key: _formKey,
+
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+
+                        children: [
+                          // =========================================
+                          // PILIH KATEGORI
+                          // =========================================
                           const Text(
-                            'Jenis Antrian',
+                            'Pilih Kategori',
+
                             style: TextStyle(
                               color: Color(0xFF202020),
                               fontSize: 10.5,
@@ -359,299 +697,220 @@ class _AntrianTiketPageState extends State<AntrianTiketPage> {
                           Row(
                             children: [
                               Expanded(
-                                child: _queueTypeButton(
-                                  title: 'Langsung',
-                                  subtitle: 'Hari Ini',
-                                  value: 'langsung',
-                                  icon: Icons.flash_on_rounded,
+                                child: _categoryButton(
+                                  title: 'Mahasiswa',
+                                  value: 'Mahasiswa',
+                                  asset: 'assets/images/mhs.png',
+                                  iconColor: const Color(0xFF6757D9),
                                 ),
                               ),
+
                               const SizedBox(width: 8),
+
                               Expanded(
-                                child: _queueTypeButton(
-                                  title: 'Booking',
-                                  subtitle: 'Pilih Hari',
-                                  value: 'booking',
-                                  icon: Icons.calendar_month_rounded,
+                                child: _categoryButton(
+                                  title: 'Umum',
+                                  value: 'Umum',
+                                  asset: 'assets/images/tendik.png',
+                                  iconColor: const Color(0xFFFFB74D),
                                 ),
                               ),
                             ],
                           ),
 
-                          // =======================================
-                          // LANGSUNG
-                          // =======================================
-                          if (_selectedQueueType == 'langsung') ...[
-                            const SizedBox(height: 10),
-                            _todayInformation(),
-                          ],
+                          // =========================================
+                          // FORM MUNCUL SETELAH KATEGORI
+                          // =========================================
+                          if (_selectedCategory != null) ...[
+                            const SizedBox(height: 18),
 
-                          // =======================================
-                          // BOOKING
-                          // =======================================
-                          if (_selectedQueueType == 'booking') ...[
-                            const SizedBox(height: 13),
-                            _fieldTitle('Tanggal Antrian'),
-                            _bookingDateField(),
-                          ],
-
-                          const SizedBox(height: 18),
-
-                          const Divider(color: Color(0xFF555555), thickness: 1),
-
-                          const SizedBox(height: 10),
-
-                          Text(
-                            _selectedCategory == 'Mahasiswa'
-                                ? 'Silakan isi data mahasiswa berikut.'
-                                : 'Silakan isi data pengunjung berikut.',
-                            style: const TextStyle(
-                              color: Color(0xFF333333),
-                              fontSize: 9.5,
+                            const Divider(
+                              color: Color(0xFF555555),
+                              thickness: 1,
                             ),
-                          ),
 
-                          const SizedBox(height: 18),
+                            const SizedBox(height: 12),
 
-                          // =======================================
-                          // NAMA
-                          // =======================================
-                          _fieldTitle('Nama'),
+                            // =======================================
+                            // JENIS ANTRIAN
+                            // =======================================
+                            const Text(
+                              'Jenis Antrian',
 
-                          TextFormField(
-                            controller: _nameController,
-                            enabled: !_isSubmitting,
-                            textCapitalization: TextCapitalization.words,
-                            textInputAction: TextInputAction.next,
-                            decoration: _fieldDecoration(
-                              hintText: 'Masukkan nama lengkap',
-                              prefixIcon: Padding(
-                                padding: const EdgeInsets.all(8),
-                                child: Image.asset(
-                                  'assets/images/pp.png',
-                                  width: 20,
-                                  height: 20,
-                                  fit: BoxFit.contain,
-                                ),
+                              style: TextStyle(
+                                color: Color(0xFF202020),
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.w500,
                               ),
                             ),
-                            validator: (String? value) {
-                              final String name = value?.trim() ?? '';
 
-                              if (name.isEmpty) {
-                                return 'Nama wajib diisi';
-                              }
+                            const SizedBox(height: 7),
 
-                              if (name.length < 3) {
-                                return 'Nama belum sesuai';
-                              }
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: _queueTypeButton(
+                                    title: 'Langsung',
 
-                              return null;
-                            },
-                          ),
+                                    subtitle: _isDirectQueueDisabled
+                                        ? 'Tidak Tersedia'
+                                        : 'Hari Ini',
 
-                          const SizedBox(height: 13),
+                                    value: 'langsung',
 
-                          // =======================================
-                          // MAHASISWA -> NIM
-                          // =======================================
-                          if (_selectedCategory == 'Mahasiswa') ...[
-                            _fieldTitle('NIM'),
+                                    icon: Icons.flash_on_rounded,
+
+                                    disabled: _isDirectQueueDisabled,
+                                  ),
+                                ),
+
+                                const SizedBox(width: 8),
+
+                                Expanded(
+                                  child: _queueTypeButton(
+                                    title: 'Booking',
+                                    subtitle: 'Pilih Hari',
+                                    value: 'booking',
+                                    icon: Icons.calendar_month_rounded,
+                                  ),
+                                ),
+                              ],
+                            ),
+
+                            // =======================================
+                            // INFO JIKA LANGSUNG DINONAKTIFKAN
+                            // =======================================
+                            if (_isDirectQueueDisabled) ...[
+                              const SizedBox(height: 8),
+
+                              Container(
+                                width: double.infinity,
+
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 8,
+                                ),
+
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFFFF3F3),
+
+                                  borderRadius: BorderRadius.circular(5),
+
+                                  border: Border.all(
+                                    color: const Color(0xFFFFCDD2),
+                                    width: 0.7,
+                                  ),
+                                ),
+
+                                child: const Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+
+                                  children: [
+                                    Icon(
+                                      Icons.info_outline_rounded,
+                                      size: 16,
+                                      color: Color(0xFFD32F2F),
+                                    ),
+
+                                    SizedBox(width: 7),
+
+                                    Expanded(
+                                      child: Text(
+                                        'Jenis antrian Langsung tidak tersedia '
+                                        'untuk layanan ini. Silakan pilih Booking.',
+
+                                        style: TextStyle(
+                                          color: Color(0xFFC62828),
+                                          fontSize: 9,
+                                          height: 1.3,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+
+                            // =======================================
+                            // LANGSUNG
+                            // =======================================
+                            if (_selectedQueueType == 'langsung') ...[
+                              const SizedBox(height: 10),
+
+                              _todayInformation(),
+                            ],
+
+                            // =======================================
+                            // BOOKING
+                            // =======================================
+                            if (_selectedQueueType == 'booking') ...[
+                              const SizedBox(height: 13),
+
+                              _fieldTitle('Tanggal Antrian'),
+
+                              _bookingDateField(),
+                            ],
+
+                            const SizedBox(height: 18),
+
+                            const Divider(
+                              color: Color(0xFF555555),
+                              thickness: 1,
+                            ),
+
+                            const SizedBox(height: 10),
+
+                            Text(
+                              _selectedCategory == 'Mahasiswa'
+                                  ? 'Silakan isi data mahasiswa berikut.'
+                                  : 'Silakan isi data pengunjung berikut.',
+
+                              style: const TextStyle(
+                                color: Color(0xFF333333),
+                                fontSize: 9.5,
+                              ),
+                            ),
+
+                            const SizedBox(height: 18),
+
+                            // =======================================
+                            // NAMA
+                            // =======================================
+                            _fieldTitle('Nama'),
 
                             TextFormField(
-                              controller: _identifierController,
+                              controller: _nameController,
+
                               enabled: !_isSubmitting,
-                              keyboardType: TextInputType.number,
+
+                              textCapitalization: TextCapitalization.words,
+
                               textInputAction: TextInputAction.next,
-                              inputFormatters: [
-                                FilteringTextInputFormatter.digitsOnly,
-                                LengthLimitingTextInputFormatter(30),
-                              ],
+
                               decoration: _fieldDecoration(
-                                hintText: 'Masukkan NIM',
+                                hintText: 'Masukkan nama lengkap',
+
                                 prefixIcon: Padding(
                                   padding: const EdgeInsets.all(8),
+
                                   child: Image.asset(
-                                    'assets/images/book.png',
+                                    'assets/images/pp.png',
                                     width: 20,
                                     height: 20,
                                     fit: BoxFit.contain,
                                   ),
                                 ),
                               ),
+
                               validator: (String? value) {
-                                if (_selectedCategory != 'Mahasiswa') {
-                                  return null;
+                                final String name = value?.trim() ?? '';
+
+                                if (name.isEmpty) {
+                                  return 'Nama wajib diisi';
                                 }
 
-                                final String nim = value?.trim() ?? '';
-
-                                if (nim.isEmpty) {
-                                  return 'NIM wajib diisi';
-                                }
-
-                                if (nim.length < 5) {
-                                  return 'NIM belum sesuai';
-                                }
-
-                                return null;
-                              },
-                            ),
-
-                            const SizedBox(height: 13),
-                          ],
-
-                          // =======================================
-                          // UMUM -> DARI
-                          // =======================================
-                          if (_selectedCategory == 'Umum') ...[
-                            _fieldTitle('Dari'),
-
-                            TextFormField(
-                              controller: _originController,
-                              enabled: !_isSubmitting,
-                              textCapitalization: TextCapitalization.words,
-                              textInputAction: TextInputAction.next,
-                              decoration: _fieldDecoration(
-                                hintText: 'Masukkan asal / instansi',
-                                prefixIcon: const Icon(
-                                  Icons.business_rounded,
-                                  size: 20,
-                                  color: Color(0xFF6757D9),
-                                ),
-                              ),
-                              validator: (String? value) {
-                                if (_selectedCategory != 'Umum') {
-                                  return null;
-                                }
-
-                                final String origin = value?.trim() ?? '';
-
-                                if (origin.isEmpty) {
-                                  return 'Dari wajib diisi';
-                                }
-
-                                return null;
-                              },
-                            ),
-
-                            const SizedBox(height: 13),
-                          ],
-
-                          // =======================================
-                          // NO HP
-                          // =======================================
-                          _fieldTitle('No. HP'),
-
-                          TextFormField(
-                            controller: _phoneController,
-                            enabled: !_isSubmitting,
-                            keyboardType: TextInputType.phone,
-                            textInputAction: TextInputAction.next,
-                            inputFormatters: [
-                              FilteringTextInputFormatter.digitsOnly,
-                              LengthLimitingTextInputFormatter(13),
-                            ],
-                            decoration: _fieldDecoration(
-                              hintText: 'Masukkan nomor HP aktif',
-                              prefixIcon: const Icon(
-                                Icons.phone_android_rounded,
-                                size: 20,
-                                color: Color(0xFF168DE2),
-                              ),
-                            ),
-                            validator: (String? value) {
-                              final String phone = value?.trim() ?? '';
-
-                              if (phone.isEmpty) {
-                                return 'Nomor HP wajib diisi';
-                              }
-
-                              if (phone.length < 10) {
-                                return 'Nomor HP belum sesuai';
-                              }
-
-                              return null;
-                            },
-                          ),
-
-                          const SizedBox(height: 13),
-
-                          // =======================================
-                          // EMAIL
-                          // =======================================
-                          _fieldTitle('Email'),
-
-                          TextFormField(
-                            controller: _emailController,
-                            enabled: !_isSubmitting,
-                            keyboardType: TextInputType.emailAddress,
-                            textInputAction: TextInputAction.next,
-                            autocorrect: false,
-                            decoration: _fieldDecoration(
-                              hintText: 'Masukkan email aktif',
-                              prefixIcon: Padding(
-                                padding: const EdgeInsets.all(8),
-                                child: Image.asset(
-                                  'assets/images/email.png',
-                                  width: 20,
-                                  height: 20,
-                                  fit: BoxFit.contain,
-                                ),
-                              ),
-                            ),
-                            validator: (String? value) {
-                              final String email = value?.trim() ?? '';
-
-                              if (email.isEmpty) {
-                                return 'Email wajib diisi';
-                              }
-
-                              final RegExp emailRegex = RegExp(
-                                r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
-                              );
-
-                              if (!emailRegex.hasMatch(email)) {
-                                return 'Format email tidak valid';
-                              }
-
-                              return null;
-                            },
-                          ),
-
-                          const SizedBox(height: 13),
-
-                          // =======================================
-                          // MAHASISWA
-                          // =======================================
-                          if (_selectedCategory == 'Mahasiswa') ...[
-                            // =====================================
-                            // JURUSAN
-                            // =====================================
-                            _fieldTitle('Jurusan'),
-
-                            TextFormField(
-                              controller: _departmentController,
-                              enabled: !_isSubmitting,
-                              textCapitalization: TextCapitalization.words,
-                              textInputAction: TextInputAction.next,
-                              decoration: _fieldDecoration(
-                                hintText: 'Masukkan nama jurusan',
-                                prefixIcon: const Icon(
-                                  Icons.account_balance_rounded,
-                                  size: 20,
-                                  color: Color(0xFF6757D9),
-                                ),
-                              ),
-                              validator: (String? value) {
-                                if (_selectedCategory != 'Mahasiswa') {
-                                  return null;
-                                }
-
-                                final String department = value?.trim() ?? '';
-
-                                if (department.isEmpty) {
-                                  return 'Jurusan wajib diisi';
+                                if (name.length < 3) {
+                                  return 'Nama belum sesuai';
                                 }
 
                                 return null;
@@ -660,60 +919,138 @@ class _AntrianTiketPageState extends State<AntrianTiketPage> {
 
                             const SizedBox(height: 13),
 
-                            // =====================================
-                            // SEMESTER
-                            // =====================================
-                            _fieldTitle('Semester'),
+                            // =======================================
+                            // MAHASISWA -> NIM
+                            // =======================================
+                            if (_selectedCategory == 'Mahasiswa') ...[
+                              _fieldTitle('NIM'),
 
-                            DropdownButtonFormField<String>(
-                              key: ValueKey('semester-$_formVersion'),
-                              initialValue: _selectedSemester,
-                              isExpanded: true,
-                              menuMaxHeight: 300,
-                              dropdownColor: const Color(0xFFF0F7FF),
-                              decoration: _fieldDecoration(
-                                hintText: 'Pilih Semester',
-                                prefixIcon: const Icon(
-                                  Icons.school_rounded,
-                                  size: 20,
-                                  color: Color(0xFF3EA94C),
-                                ),
-                              ),
-                              icon: const Icon(
-                                Icons.keyboard_arrow_down_rounded,
-                                size: 20,
-                                color: Color(0xFF222222),
-                              ),
-                              style: const TextStyle(
-                                color: Color(0xFF202020),
-                                fontSize: 14,
-                              ),
-                              items: _semesterOptions.map((String semester) {
-                                return DropdownMenuItem<String>(
-                                  value: semester,
-                                  child: Text(
-                                    'Semester $semester',
-                                    style: const TextStyle(
-                                      color: Color(0xFF202020),
-                                      fontSize: 14,
+                              TextFormField(
+                                controller: _identifierController,
+
+                                enabled: !_isSubmitting,
+
+                                keyboardType: TextInputType.number,
+
+                                textInputAction: TextInputAction.next,
+
+                                inputFormatters: [
+                                  FilteringTextInputFormatter.digitsOnly,
+
+                                  LengthLimitingTextInputFormatter(30),
+                                ],
+
+                                decoration: _fieldDecoration(
+                                  hintText: 'Masukkan NIM',
+
+                                  prefixIcon: Padding(
+                                    padding: const EdgeInsets.all(8),
+
+                                    child: Image.asset(
+                                      'assets/images/book.png',
+                                      width: 20,
+                                      height: 20,
+                                      fit: BoxFit.contain,
                                     ),
                                   ),
-                                );
-                              }).toList(),
-                              onChanged: _isSubmitting
-                                  ? null
-                                  : (String? value) {
-                                      setState(() {
-                                        _selectedSemester = value;
-                                      });
-                                    },
-                              validator: (String? value) {
-                                if (_selectedCategory != 'Mahasiswa') {
+                                ),
+
+                                validator: (String? value) {
+                                  final String nim = value?.trim() ?? '';
+
+                                  if (nim.isEmpty) {
+                                    return 'NIM wajib diisi';
+                                  }
+
+                                  if (nim.length < 5) {
+                                    return 'NIM belum sesuai';
+                                  }
+
                                   return null;
+                                },
+                              ),
+
+                              const SizedBox(height: 13),
+                            ],
+
+                            // =======================================
+                            // UMUM -> DARI
+                            // =======================================
+                            if (_selectedCategory == 'Umum') ...[
+                              _fieldTitle('Dari'),
+
+                              TextFormField(
+                                controller: _originController,
+
+                                enabled: !_isSubmitting,
+
+                                textCapitalization: TextCapitalization.words,
+
+                                textInputAction: TextInputAction.next,
+
+                                decoration: _fieldDecoration(
+                                  hintText: 'Masukkan asal / instansi',
+
+                                  prefixIcon: const Icon(
+                                    Icons.business_rounded,
+                                    size: 20,
+                                    color: Color(0xFF6757D9),
+                                  ),
+                                ),
+
+                                validator: (String? value) {
+                                  final String origin = value?.trim() ?? '';
+
+                                  if (origin.isEmpty) {
+                                    return 'Dari wajib diisi';
+                                  }
+
+                                  return null;
+                                },
+                              ),
+
+                              const SizedBox(height: 13),
+                            ],
+
+                            // =======================================
+                            // NO HP
+                            // =======================================
+                            _fieldTitle('No. HP'),
+
+                            TextFormField(
+                              controller: _phoneController,
+
+                              enabled: !_isSubmitting,
+
+                              keyboardType: TextInputType.phone,
+
+                              textInputAction: TextInputAction.next,
+
+                              inputFormatters: [
+                                FilteringTextInputFormatter.digitsOnly,
+
+                                LengthLimitingTextInputFormatter(13),
+                              ],
+
+                              decoration: _fieldDecoration(
+                                hintText: 'Masukkan nomor HP aktif',
+
+                                prefixIcon: const Icon(
+                                  Icons.phone_android_rounded,
+                                  size: 20,
+                                  color: Color(0xFF168DE2),
+                                ),
+                              ),
+
+                              validator: (String? value) {
+                                final String phone = value?.trim() ?? '';
+
+                                if (phone.isEmpty) {
+                                  return 'Nomor HP wajib diisi';
                                 }
 
-                                if (value == null || value.isEmpty) {
-                                  return 'Semester wajib dipilih';
+                                if (phone.length < 10) {
+                                  return 'Nomor HP belum sesuai';
                                 }
 
                                 return null;
@@ -722,64 +1059,50 @@ class _AntrianTiketPageState extends State<AntrianTiketPage> {
 
                             const SizedBox(height: 13),
 
-                            // =====================================
-                            // LAYANAN MAHASISWA
-                            // =====================================
-                            _fieldTitle('Layanan'),
+                            // =======================================
+                            // EMAIL
+                            // =======================================
+                            _fieldTitle('Email'),
 
-                            DropdownButtonFormField<String>(
-                              key: ValueKey('service-$_formVersion'),
-                              initialValue: _selectedService,
-                              isExpanded: true,
-                              menuMaxHeight: 300,
-                              dropdownColor: const Color(0xFFF0F7FF),
+                            TextFormField(
+                              controller: _emailController,
+
+                              enabled: !_isSubmitting,
+
+                              keyboardType: TextInputType.emailAddress,
+
+                              textInputAction: TextInputAction.next,
+
+                              autocorrect: false,
+
                               decoration: _fieldDecoration(
-                                hintText: 'Pilih Layanan',
+                                hintText: 'Masukkan email aktif',
+
                                 prefixIcon: Padding(
-                                  padding: const EdgeInsets.all(7),
+                                  padding: const EdgeInsets.all(8),
+
                                   child: Image.asset(
-                                    'assets/images/layanan.png',
-                                    width: 21,
-                                    height: 21,
+                                    'assets/images/email.png',
+                                    width: 20,
+                                    height: 20,
                                     fit: BoxFit.contain,
                                   ),
                                 ),
                               ),
-                              icon: const Icon(
-                                Icons.keyboard_arrow_down_rounded,
-                                size: 20,
-                                color: Color(0xFF222222),
-                              ),
-                              style: const TextStyle(
-                                color: Color(0xFF202020),
-                                fontSize: 14,
-                              ),
-                              items: _studentServices.map((String service) {
-                                return DropdownMenuItem<String>(
-                                  value: service,
-                                  child: Text(
-                                    service,
-                                    style: const TextStyle(
-                                      color: Color(0xFF202020),
-                                      fontSize: 14,
-                                    ),
-                                  ),
-                                );
-                              }).toList(),
-                              onChanged: _isSubmitting
-                                  ? null
-                                  : (String? value) {
-                                      setState(() {
-                                        _selectedService = value;
-                                      });
-                                    },
+
                               validator: (String? value) {
-                                if (_selectedCategory != 'Mahasiswa') {
-                                  return null;
+                                final String email = value?.trim() ?? '';
+
+                                if (email.isEmpty) {
+                                  return 'Email wajib diisi';
                                 }
 
-                                if (value == null || value.isEmpty) {
-                                  return 'Layanan wajib dipilih';
+                                final RegExp emailRegex = RegExp(
+                                  r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
+                                );
+
+                                if (!emailRegex.hasMatch(email)) {
+                                  return 'Format email tidak valid';
                                 }
 
                                 return null;
@@ -787,228 +1110,575 @@ class _AntrianTiketPageState extends State<AntrianTiketPage> {
                             ),
 
                             const SizedBox(height: 13),
-                          ],
 
-                          // =======================================
-                          // UMUM
-                          // =======================================
-                          if (_selectedCategory == 'Umum') ...[
-                            // =====================================
-                            // JENIS LAYANAN
-                            // =====================================
-                            _fieldTitle('Jenis Layanan'),
+                            // =======================================
+                            // MAHASISWA
+                            // =======================================
+                            if (_selectedCategory == 'Mahasiswa') ...[
+                              // =====================================
+                              // JURUSAN
+                              // =====================================
+                              _fieldTitle('Jurusan'),
 
-                            DropdownButtonFormField<String>(
-                              key: ValueKey('general-service-$_formVersion'),
-                              initialValue: _selectedGeneralService,
-                              isExpanded: true,
-                              menuMaxHeight: 300,
-                              dropdownColor: const Color(0xFFF0F7FF),
-                              decoration: _fieldDecoration(
-                                hintText: 'Pilih Jenis Layanan',
-                                prefixIcon: Padding(
-                                  padding: const EdgeInsets.all(7),
-                                  child: Image.asset(
-                                    'assets/images/layanan.png',
-                                    width: 21,
-                                    height: 21,
-                                    fit: BoxFit.contain,
+                              TextFormField(
+                                controller: _departmentController,
+
+                                enabled: !_isSubmitting,
+
+                                textCapitalization: TextCapitalization.words,
+
+                                textInputAction: TextInputAction.next,
+
+                                decoration: _fieldDecoration(
+                                  hintText: 'Masukkan nama jurusan',
+
+                                  prefixIcon: const Icon(
+                                    Icons.account_balance_rounded,
+                                    size: 20,
+                                    color: Color(0xFF6757D9),
                                   ),
                                 ),
-                              ),
-                              icon: const Icon(
-                                Icons.keyboard_arrow_down_rounded,
-                                size: 20,
-                                color: Color(0xFF222222),
-                              ),
-                              style: const TextStyle(
-                                color: Color(0xFF202020),
-                                fontSize: 14,
-                              ),
-                              items: _generalServices.map((String service) {
-                                return DropdownMenuItem<String>(
-                                  value: service,
-                                  child: Text(
-                                    service,
-                                    style: const TextStyle(
-                                      color: Color(0xFF202020),
-                                      fontSize: 14,
-                                    ),
-                                  ),
-                                );
-                              }).toList(),
-                              onChanged: _isSubmitting
-                                  ? null
-                                  : (String? value) {
-                                      setState(() {
-                                        _selectedGeneralService = value;
-                                      });
-                                    },
-                              validator: (String? value) {
-                                if (_selectedCategory != 'Umum') {
+
+                                validator: (String? value) {
+                                  final String department = value?.trim() ?? '';
+
+                                  if (department.isEmpty) {
+                                    return 'Jurusan wajib diisi';
+                                  }
+
                                   return null;
-                                }
+                                },
+                              ),
 
-                                if (value == null || value.isEmpty) {
-                                  return 'Jenis layanan wajib dipilih';
-                                }
+                              const SizedBox(height: 13),
 
-                                return null;
-                              },
-                            ),
+                              // =====================================
+                              // SEMESTER
+                              // =====================================
+                              _fieldTitle('Semester'),
 
-                            const SizedBox(height: 13),
+                              DropdownButtonFormField<String>(
+                                key: ValueKey('semester-$_formVersion'),
 
-                            // =====================================
-                            // UNTUK
-                            // =====================================
-                            _fieldTitle('Untuk'),
+                                initialValue: _selectedSemester,
 
-                            TextFormField(
-                              controller: _destinationController,
-                              enabled: !_isSubmitting,
-                              textCapitalization: TextCapitalization.sentences,
-                              textInputAction: TextInputAction.next,
-                              decoration: _fieldDecoration(
-                                hintText: 'Masukkan tujuan pengajuan',
-                                prefixIcon: const Icon(
-                                  Icons.send_rounded,
+                                isExpanded: true,
+
+                                menuMaxHeight: 300,
+
+                                dropdownColor: const Color(0xFFF0F7FF),
+
+                                decoration: _fieldDecoration(
+                                  hintText: _isLoadingSemesters
+                                      ? 'Memuat semester...'
+                                      : _semesterLoadError
+                                      ? 'Gagal memuat semester'
+                                      : 'Pilih Semester',
+
+                                  prefixIcon: const Icon(
+                                    Icons.school_rounded,
+                                    size: 20,
+                                    color: Color(0xFF3EA94C),
+                                  ),
+                                ),
+
+                                icon: const Icon(
+                                  Icons.keyboard_arrow_down_rounded,
                                   size: 20,
-                                  color: Color(0xFF3EA94C),
+                                  color: Color(0xFF222222),
                                 ),
-                              ),
-                              validator: (String? value) {
-                                if (_selectedCategory != 'Umum') {
+
+                                style: const TextStyle(
+                                  color: Color(0xFF202020),
+                                  fontSize: 14,
+                                ),
+
+                                items: _semesterOptions.map((String semester) {
+                                  return DropdownMenuItem<String>(
+                                    value: semester,
+
+                                    child: Text(
+                                      'Semester $semester',
+
+                                      style: const TextStyle(
+                                        color: Color(0xFF202020),
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                  );
+                                }).toList(),
+
+                                onChanged:
+                                    _isSubmitting ||
+                                        _isLoadingSemesters ||
+                                        _semesterLoadError ||
+                                        _semesterOptions.isEmpty
+                                    ? null
+                                    : (String? value) {
+                                        setState(() {
+                                          _selectedSemester = value;
+                                        });
+                                      },
+
+                                validator: (String? value) {
+                                  if (_isLoadingSemesters) {
+                                    return 'Daftar semester masih dimuat';
+                                  }
+
+                                  if (_semesterLoadError) {
+                                    return 'Daftar semester gagal dimuat';
+                                  }
+
+                                  if (_semesterOptions.isEmpty) {
+                                    return 'Daftar semester tidak tersedia';
+                                  }
+
+                                  if (value == null || value.isEmpty) {
+                                    return 'Semester wajib dipilih';
+                                  }
+
                                   return null;
-                                }
-
-                                final String destination = value?.trim() ?? '';
-
-                                if (destination.isEmpty) {
-                                  return 'Untuk wajib diisi';
-                                }
-
-                                return null;
-                              },
-                            ),
-
-                            const SizedBox(height: 13),
-                          ],
-
-                          // =======================================
-                          // KETERANGAN
-                          //
-                          // PENTING:
-                          // DILUAR BLOK MAHASISWA DAN UMUM
-                          // AGAR MUNCUL PADA KEDUANYA
-                          // =======================================
-                          _fieldTitle('Keterangan'),
-
-                          SizedBox(
-                            height: 115,
-                            child: TextFormField(
-                              controller: _descriptionController,
-                              enabled: !_isSubmitting,
-                              expands: true,
-                              minLines: null,
-                              maxLines: null,
-                              keyboardType: TextInputType.multiline,
-                              textCapitalization: TextCapitalization.sentences,
-                              textAlignVertical: TextAlignVertical.top,
-                              decoration: _fieldDecoration(
-                                hintText: 'Tuliskan keterangan pengajuan Anda',
+                                },
                               ),
-                              validator: (String? value) {
-                                final String description = value?.trim() ?? '';
 
-                                if (description.isEmpty) {
-                                  return 'Keterangan wajib diisi';
-                                }
+                              if (_semesterLoadError)
+                                _retryButton(onPressed: _loadSemesterOptions),
 
-                                return null;
-                              },
-                            ),
-                          ),
+                              const SizedBox(height: 13),
 
-                          const SizedBox(height: 25),
+                              // =====================================
+                              // LAYANAN MAHASISWA
+                              // =====================================
+                              _fieldTitle('Layanan'),
 
-                          // =======================================
-                          // BUTTON
-                          // =======================================
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              SizedBox(
-                                width: 100,
-                                height: 40,
-                                child: ElevatedButton(
-                                  onPressed: _isSubmitting ? null : _submitForm,
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: const Color(0xFF5868FF),
-                                    disabledBackgroundColor: const Color(
-                                      0xFFADB5F5,
-                                    ),
-                                    foregroundColor: Colors.white,
-                                    elevation: 0,
-                                    padding: EdgeInsets.zero,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(5),
-                                    ),
-                                  ),
-                                  child: _isSubmitting
-                                      ? const SizedBox(
-                                          width: 18,
-                                          height: 18,
-                                          child: CircularProgressIndicator(
-                                            strokeWidth: 2,
-                                            color: Colors.white,
-                                          ),
-                                        )
-                                      : const Text(
-                                          'Kirim Data',
-                                          style: TextStyle(
-                                            fontSize: 9.5,
-                                            fontWeight: FontWeight.w500,
-                                          ),
-                                        ),
-                                ),
-                              ),
-                              const SizedBox(width: 22),
-                              SizedBox(
-                                width: 72,
-                                height: 40,
-                                child: ElevatedButton(
-                                  onPressed: _isSubmitting ? null : _resetForm,
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: const Color(0xFF59C467),
-                                    foregroundColor: Colors.white,
-                                    elevation: 0,
-                                    padding: EdgeInsets.zero,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(5),
-                                    ),
-                                  ),
-                                  child: const Text(
-                                    'Reset',
-                                    style: TextStyle(
-                                      fontSize: 9.5,
-                                      fontWeight: FontWeight.w500,
+                              DropdownButtonFormField<String>(
+                                key: ValueKey('service-$_formVersion'),
+
+                                initialValue: _selectedService,
+
+                                isExpanded: true,
+
+                                menuMaxHeight: 300,
+
+                                dropdownColor: const Color(0xFFF0F7FF),
+
+                                decoration: _fieldDecoration(
+                                  hintText: _isLoadingStudentServices
+                                      ? 'Memuat layanan...'
+                                      : _studentServiceLoadError
+                                      ? 'Gagal memuat layanan'
+                                      : 'Pilih Layanan',
+
+                                  prefixIcon: Padding(
+                                    padding: const EdgeInsets.all(7),
+
+                                    child: Image.asset(
+                                      'assets/images/layanan.png',
+                                      width: 21,
+                                      height: 21,
+                                      fit: BoxFit.contain,
                                     ),
                                   ),
                                 ),
+
+                                icon: const Icon(
+                                  Icons.keyboard_arrow_down_rounded,
+                                  size: 20,
+                                  color: Color(0xFF222222),
+                                ),
+
+                                style: const TextStyle(
+                                  color: Color(0xFF202020),
+                                  fontSize: 14,
+                                ),
+
+                                items: _studentServices.map((String service) {
+                                  return DropdownMenuItem<String>(
+                                    value: service,
+
+                                    child: Text(
+                                      service,
+
+                                      style: const TextStyle(
+                                        color: Color(0xFF202020),
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                  );
+                                }).toList(),
+
+                                onChanged:
+                                    _isSubmitting ||
+                                        _isLoadingStudentServices ||
+                                        _studentServiceLoadError ||
+                                        _studentServices.isEmpty
+                                    ? null
+                                    : (String? value) {
+                                        final String notification =
+                                            value == null
+                                            ? ''
+                                            : (_studentServiceNotifications[value]
+                                                      ?.trim() ??
+                                                  '');
+
+                                        final bool hasNotification =
+                                            notification.isNotEmpty;
+
+                                        final bool wasDirect =
+                                            _selectedQueueType == 'langsung';
+
+                                        setState(() {
+                                          _selectedService = value;
+
+                                          // Jika layanan mempunyai
+                                          // peringatan, antrian Langsung
+                                          // tidak diperbolehkan.
+                                          if (hasNotification && wasDirect) {
+                                            _selectedQueueType = null;
+
+                                            _selectedBookingDate = null;
+                                          }
+                                        });
+
+                                        if (hasNotification && wasDirect) {
+                                          _showMessage(
+                                            'Layanan ini tidak dapat menggunakan '
+                                            'antrian Langsung. Silakan pilih Booking.',
+                                          );
+                                        }
+                                      },
+
+                                validator: (String? value) {
+                                  if (_isLoadingStudentServices) {
+                                    return 'Daftar layanan masih dimuat';
+                                  }
+
+                                  if (_studentServiceLoadError) {
+                                    return 'Daftar layanan gagal dimuat';
+                                  }
+
+                                  if (_studentServices.isEmpty) {
+                                    return 'Daftar layanan tidak tersedia';
+                                  }
+
+                                  if (value == null || value.isEmpty) {
+                                    return 'Layanan wajib dipilih';
+                                  }
+
+                                  return null;
+                                },
                               ),
+
+                              if (_studentServiceLoadError)
+                                _retryButton(onPressed: _loadStudentServices),
+
+                              // =====================================
+                              // PERINGATAN DARI ADMIN
+                              // =====================================
+                              if (_selectedStudentServiceNotification !=
+                                  null) ...[
+                                const SizedBox(height: 8),
+
+                                _buildServiceNotification(
+                                  _selectedStudentServiceNotification!,
+                                ),
+                              ],
+
+                              const SizedBox(height: 13),
                             ],
-                          ),
 
-                          const SizedBox(height: 5),
+                            // =======================================
+                            // UMUM
+                            // =======================================
+                            if (_selectedCategory == 'Umum') ...[
+                              // =====================================
+                              // JENIS LAYANAN
+                              // =====================================
+                              _fieldTitle('Jenis Layanan'),
+
+                              DropdownButtonFormField<String>(
+                                key: ValueKey('general-service-$_formVersion'),
+
+                                initialValue: _selectedGeneralService,
+
+                                isExpanded: true,
+
+                                menuMaxHeight: 300,
+
+                                dropdownColor: const Color(0xFFF0F7FF),
+
+                                decoration: _fieldDecoration(
+                                  hintText: _isLoadingGeneralServices
+                                      ? 'Memuat jenis layanan...'
+                                      : _generalServiceLoadError
+                                      ? 'Gagal memuat jenis layanan'
+                                      : 'Pilih Jenis Layanan',
+
+                                  prefixIcon: Padding(
+                                    padding: const EdgeInsets.all(7),
+
+                                    child: Image.asset(
+                                      'assets/images/layanan.png',
+                                      width: 21,
+                                      height: 21,
+                                      fit: BoxFit.contain,
+                                    ),
+                                  ),
+                                ),
+
+                                icon: const Icon(
+                                  Icons.keyboard_arrow_down_rounded,
+                                  size: 20,
+                                  color: Color(0xFF222222),
+                                ),
+
+                                style: const TextStyle(
+                                  color: Color(0xFF202020),
+                                  fontSize: 14,
+                                ),
+
+                                items: _generalServices.map((String service) {
+                                  return DropdownMenuItem<String>(
+                                    value: service,
+
+                                    child: Text(
+                                      service,
+
+                                      style: const TextStyle(
+                                        color: Color(0xFF202020),
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                  );
+                                }).toList(),
+
+                                onChanged:
+                                    _isSubmitting ||
+                                        _isLoadingGeneralServices ||
+                                        _generalServiceLoadError ||
+                                        _generalServices.isEmpty
+                                    ? null
+                                    : (String? value) {
+                                        setState(() {
+                                          _selectedGeneralService = value;
+                                        });
+                                      },
+
+                                validator: (String? value) {
+                                  if (_isLoadingGeneralServices) {
+                                    return 'Daftar layanan masih dimuat';
+                                  }
+
+                                  if (_generalServiceLoadError) {
+                                    return 'Daftar layanan gagal dimuat';
+                                  }
+
+                                  if (_generalServices.isEmpty) {
+                                    return 'Daftar layanan tidak tersedia';
+                                  }
+
+                                  if (value == null || value.isEmpty) {
+                                    return 'Jenis layanan wajib dipilih';
+                                  }
+
+                                  return null;
+                                },
+                              ),
+
+                              if (_generalServiceLoadError)
+                                _retryButton(onPressed: _loadGeneralServices),
+
+                              const SizedBox(height: 13),
+
+                              // =====================================
+                              // UNTUK
+                              // =====================================
+                              _fieldTitle('Untuk'),
+
+                              TextFormField(
+                                controller: _destinationController,
+
+                                enabled: !_isSubmitting,
+
+                                textCapitalization:
+                                    TextCapitalization.sentences,
+
+                                textInputAction: TextInputAction.next,
+
+                                decoration: _fieldDecoration(
+                                  hintText: 'Masukkan tujuan pengajuan',
+
+                                  prefixIcon: const Icon(
+                                    Icons.send_rounded,
+                                    size: 20,
+                                    color: Color(0xFF3EA94C),
+                                  ),
+                                ),
+
+                                validator: (String? value) {
+                                  final String destination =
+                                      value?.trim() ?? '';
+
+                                  if (destination.isEmpty) {
+                                    return 'Untuk wajib diisi';
+                                  }
+
+                                  return null;
+                                },
+                              ),
+
+                              const SizedBox(height: 13),
+                            ],
+
+                            // =======================================
+                            // KETERANGAN
+                            // =======================================
+                            _fieldTitle('Keterangan'),
+
+                            SizedBox(
+                              height: 115,
+
+                              child: TextFormField(
+                                controller: _descriptionController,
+
+                                enabled: !_isSubmitting,
+
+                                expands: true,
+
+                                minLines: null,
+
+                                maxLines: null,
+
+                                keyboardType: TextInputType.multiline,
+
+                                textCapitalization:
+                                    TextCapitalization.sentences,
+
+                                textAlignVertical: TextAlignVertical.top,
+
+                                decoration: _fieldDecoration(
+                                  hintText:
+                                      'Tuliskan keterangan pengajuan Anda',
+                                ),
+
+                                validator: (String? value) {
+                                  final String description =
+                                      value?.trim() ?? '';
+
+                                  if (description.isEmpty) {
+                                    return 'Keterangan wajib diisi';
+                                  }
+
+                                  return null;
+                                },
+                              ),
+                            ),
+
+                            const SizedBox(height: 25),
+
+                            // =======================================
+                            // BUTTON
+                            // =======================================
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+
+                              children: [
+                                SizedBox(
+                                  width: 100,
+                                  height: 40,
+
+                                  child: ElevatedButton(
+                                    onPressed: _isSubmitting
+                                        ? null
+                                        : _submitForm,
+
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: const Color(0xFF5868FF),
+
+                                      disabledBackgroundColor: const Color(
+                                        0xFFADB5F5,
+                                      ),
+
+                                      foregroundColor: Colors.white,
+
+                                      elevation: 0,
+
+                                      padding: EdgeInsets.zero,
+
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(5),
+                                      ),
+                                    ),
+
+                                    child: _isSubmitting
+                                        ? const SizedBox(
+                                            width: 18,
+                                            height: 18,
+
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                              color: Colors.white,
+                                            ),
+                                          )
+                                        : const Text(
+                                            'Kirim Data',
+
+                                            style: TextStyle(
+                                              fontSize: 9.5,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                  ),
+                                ),
+
+                                const SizedBox(width: 22),
+
+                                SizedBox(
+                                  width: 72,
+                                  height: 40,
+
+                                  child: ElevatedButton(
+                                    onPressed: _isSubmitting
+                                        ? null
+                                        : _resetForm,
+
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: const Color(0xFF59C467),
+
+                                      foregroundColor: Colors.white,
+
+                                      elevation: 0,
+
+                                      padding: EdgeInsets.zero,
+
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(5),
+                                      ),
+                                    ),
+
+                                    child: const Text(
+                                      'Reset',
+
+                                      style: TextStyle(
+                                        fontSize: 9.5,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+
+                            const SizedBox(height: 5),
+                          ],
                         ],
-                      ],
+                      ),
                     ),
                   ),
-                ),
 
-                const SizedBox(height: 10),
-              ],
+                  const SizedBox(height: 10),
+                ],
+              ),
             ),
           ),
         ),
@@ -1030,8 +1700,10 @@ class _AntrianTiketPageState extends State<AntrianTiketPage> {
 
     return Material(
       color: Colors.transparent,
+
       child: InkWell(
         borderRadius: BorderRadius.circular(5),
+
         onTap: _isSubmitting
             ? null
             : () {
@@ -1087,30 +1759,42 @@ class _AntrianTiketPageState extends State<AntrianTiketPage> {
 
                 _formKey.currentState?.reset();
               },
+
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 180),
+
           height: 55,
+
           padding: const EdgeInsets.symmetric(horizontal: 8),
+
           decoration: BoxDecoration(
             color: selected ? const Color(0xFFEAF5FF) : Colors.white,
+
             borderRadius: BorderRadius.circular(5),
+
             border: Border.all(
               color: selected
                   ? const Color(0xFF3AA7F5)
                   : const Color(0xFF8D8D8D),
+
               width: selected ? 1.3 : 0.8,
             ),
           ),
+
           child: Row(
             children: [
               Container(
                 width: 25,
                 height: 25,
+
                 padding: const EdgeInsets.all(4),
+
                 decoration: BoxDecoration(
                   color: iconColor,
+
                   borderRadius: BorderRadius.circular(4),
                 ),
+
                 child: Image.asset(
                   asset,
                   fit: BoxFit.contain,
@@ -1118,15 +1802,22 @@ class _AntrianTiketPageState extends State<AntrianTiketPage> {
                   colorBlendMode: BlendMode.srcIn,
                 ),
               ),
+
               const SizedBox(width: 6),
+
               Expanded(
                 child: Text(
                   title,
+
                   maxLines: 1,
+
                   overflow: TextOverflow.ellipsis,
+
                   style: TextStyle(
                     color: const Color(0xFF202020),
+
                     fontSize: 10.5,
+
                     fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
                   ),
                 ),
@@ -1147,14 +1838,19 @@ class _AntrianTiketPageState extends State<AntrianTiketPage> {
     required String subtitle,
     required String value,
     required IconData icon,
+    bool disabled = false,
   }) {
     final bool selected = _selectedQueueType == value;
 
+    final bool isDisabled = _isSubmitting || disabled;
+
     return Material(
       color: Colors.transparent,
+
       child: InkWell(
         borderRadius: BorderRadius.circular(6),
-        onTap: _isSubmitting
+
+        onTap: isDisabled
             ? null
             : () {
                 setState(() {
@@ -1165,59 +1861,103 @@ class _AntrianTiketPageState extends State<AntrianTiketPage> {
                   }
                 });
               },
+
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 180),
+
           height: 55,
+
           padding: const EdgeInsets.symmetric(horizontal: 10),
+
           decoration: BoxDecoration(
-            color: selected ? const Color(0xFFEAF5FF) : const Color(0xFFF9FAFC),
+            color: disabled
+                ? const Color(0xFFF2F2F2)
+                : selected
+                ? const Color(0xFFEAF5FF)
+                : const Color(0xFFF9FAFC),
+
             borderRadius: BorderRadius.circular(6),
+
             border: Border.all(
-              color: selected
+              color: disabled
+                  ? const Color(0xFFD0D0D0)
+                  : selected
                   ? const Color(0xFF3AA7F5)
                   : const Color(0xFFB8B8B8),
-              width: selected ? 1.3 : 0.8,
+
+              width: selected && !disabled ? 1.3 : 0.8,
             ),
           ),
+
           child: Row(
             children: [
               Container(
                 width: 31,
                 height: 31,
+
                 decoration: BoxDecoration(
-                  color: selected
+                  color: disabled
+                      ? const Color(0xFFD8D8D8)
+                      : selected
                       ? const Color(0xFF3AA7F5)
                       : const Color(0xFFE1E6EC),
+
                   borderRadius: BorderRadius.circular(5),
                 ),
+
                 child: Icon(
-                  icon,
+                  disabled ? Icons.block_rounded : icon,
+
                   size: 19,
-                  color: selected ? Colors.white : const Color(0xFF555555),
+
+                  color: disabled
+                      ? const Color(0xFF888888)
+                      : selected
+                      ? Colors.white
+                      : const Color(0xFF555555),
                 ),
               ),
+
               const SizedBox(width: 8),
+
               Expanded(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
+
                   crossAxisAlignment: CrossAxisAlignment.start,
+
                   children: [
                     Text(
                       title,
+
                       style: TextStyle(
-                        color: const Color(0xFF202020),
+                        color: disabled
+                            ? const Color(0xFF999999)
+                            : const Color(0xFF202020),
+
                         fontSize: 10.5,
-                        fontWeight: selected
+
+                        fontWeight: selected && !disabled
                             ? FontWeight.w600
                             : FontWeight.w500,
                       ),
                     ),
+
                     const SizedBox(height: 2),
+
                     Text(
                       subtitle,
-                      style: const TextStyle(
-                        color: Color(0xFF777777),
+
+                      style: TextStyle(
+                        color: disabled
+                            ? const Color(0xFFD32F2F)
+                            : const Color(0xFF777777),
+
                         fontSize: 8.5,
+
+                        fontWeight: disabled
+                            ? FontWeight.w500
+                            : FontWeight.w400,
                       ),
                     ),
                   ],
@@ -1239,12 +1979,17 @@ class _AntrianTiketPageState extends State<AntrianTiketPage> {
 
     return Container(
       width: double.infinity,
+
       padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 10),
+
       decoration: BoxDecoration(
         color: const Color(0xFFF0F7FF),
+
         borderRadius: BorderRadius.circular(6),
+
         border: Border.all(color: const Color(0xFF9CCDF2), width: 0.7),
       ),
+
       child: Row(
         children: [
           const Icon(
@@ -1252,10 +1997,14 @@ class _AntrianTiketPageState extends State<AntrianTiketPage> {
             size: 17,
             color: Color(0xFF168DE2),
           ),
+
           const SizedBox(width: 9),
+
           Expanded(
             child: Text(
-              'Tanggal antrian: Hari ini, ${_formatDisplayDate(today)}',
+              'Tanggal antrian: Hari ini, '
+              '${_formatDisplayDate(today)}',
+
               style: const TextStyle(color: Color(0xFF303030), fontSize: 9.5),
             ),
           ),
@@ -1265,7 +2014,7 @@ class _AntrianTiketPageState extends State<AntrianTiketPage> {
   }
 
   // =========================================================
-  // FIELD TANGGAL BOOKING
+  // BOOKING DATE
   // =========================================================
 
   Widget _bookingDateField() {
@@ -1273,16 +2022,23 @@ class _AntrianTiketPageState extends State<AntrianTiketPage> {
 
     return InkWell(
       onTap: _isSubmitting ? null : _selectBookingDate,
+
       borderRadius: BorderRadius.circular(5),
+
       child: Container(
         width: double.infinity,
         height: 44,
+
         padding: const EdgeInsets.symmetric(horizontal: 10),
+
         decoration: BoxDecoration(
           color: const Color(0xFFF5F6FA),
+
           borderRadius: BorderRadius.circular(5),
+
           border: Border.all(color: const Color(0xFF8D8D8D), width: 0.8),
         ),
+
         child: Row(
           children: [
             const Icon(
@@ -1290,20 +2046,25 @@ class _AntrianTiketPageState extends State<AntrianTiketPage> {
               size: 20,
               color: Color(0xFF168DE2),
             ),
+
             const SizedBox(width: 10),
+
             Expanded(
               child: Text(
                 hasDate
                     ? _formatDisplayDate(_selectedBookingDate!)
                     : 'Pilih tanggal booking',
+
                 style: TextStyle(
                   color: hasDate
                       ? const Color(0xFF202020)
                       : const Color(0xFF888888),
+
                   fontSize: 10.5,
                 ),
               ),
             ),
+
             const Icon(
               Icons.keyboard_arrow_down_rounded,
               size: 20,
@@ -1330,11 +2091,17 @@ class _AntrianTiketPageState extends State<AntrianTiketPage> {
 
     final DateTime? selected = await showDatePicker(
       context: context,
+
       initialDate: _selectedBookingDate ?? firstBookingDate,
+
       firstDate: firstBookingDate,
+
       lastDate: lastBookingDate,
+
       helpText: 'Pilih Tanggal Antrian',
+
       cancelText: 'Batal',
+
       confirmText: 'Pilih',
     );
 
@@ -1356,14 +2123,83 @@ class _AntrianTiketPageState extends State<AntrianTiketPage> {
   }
 
   // =========================================================
+  // PERINGATAN LAYANAN DARI ADMIN
+  // =========================================================
+
+  Widget _buildServiceNotification(String message) {
+    return Container(
+      width: double.infinity,
+
+      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 10),
+
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFEBEE),
+
+        borderRadius: BorderRadius.circular(6),
+
+        border: Border.all(color: const Color(0xFFE53935), width: 0.8),
+      ),
+
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+
+        children: [
+          const Icon(
+            Icons.error_outline_rounded,
+            color: Color(0xFFD32F2F),
+            size: 19,
+          ),
+
+          const SizedBox(width: 8),
+
+          Expanded(
+            child: Text(
+              message,
+
+              style: const TextStyle(
+                color: Color(0xFFC62828),
+                fontSize: 9.5,
+                height: 1.35,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // =========================================================
+  // RETRY BUTTON
+  // =========================================================
+
+  Widget _retryButton({required Future<void> Function() onPressed}) {
+    return Align(
+      alignment: Alignment.centerRight,
+
+      child: TextButton.icon(
+        onPressed: () {
+          onPressed();
+        },
+
+        icon: const Icon(Icons.refresh_rounded, size: 14),
+
+        label: const Text('Coba Lagi', style: TextStyle(fontSize: 9)),
+      ),
+    );
+  }
+
+  // =========================================================
   // FIELD TITLE
   // =========================================================
 
   Widget _fieldTitle(String title) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 5),
+
       child: Text(
         title,
+
         style: const TextStyle(
           color: Color(0xFF202020),
           fontSize: 10.5,
@@ -1374,7 +2210,7 @@ class _AntrianTiketPageState extends State<AntrianTiketPage> {
   }
 
   // =========================================================
-  // FORMAT TANGGAL TAMPILAN
+  // FORMAT DISPLAY DATE
   // =========================================================
 
   String _formatDisplayDate(DateTime date) {
@@ -1399,7 +2235,7 @@ class _AntrianTiketPageState extends State<AntrianTiketPage> {
   }
 
   // =========================================================
-  // FORMAT TANGGAL API
+  // FORMAT API DATE
   // =========================================================
 
   String _formatApiDate(DateTime date) {
@@ -1411,7 +2247,7 @@ class _AntrianTiketPageState extends State<AntrianTiketPage> {
   }
 
   // =========================================================
-  // TANGGAL ANTRIAN AKTIF
+  // ACTIVE QUEUE DATE
   // =========================================================
 
   DateTime? get _activeQueueDate {
@@ -1435,9 +2271,9 @@ class _AntrianTiketPageState extends State<AntrianTiketPage> {
   Future<void> _submitForm() async {
     FocusScope.of(context).unfocus();
 
-    // =========================================================
+    // =======================================================
     // KATEGORI
-    // =========================================================
+    // =======================================================
 
     if (_selectedCategory == null) {
       _showMessage('Silakan pilih kategori terlebih dahulu.');
@@ -1445,19 +2281,45 @@ class _AntrianTiketPageState extends State<AntrianTiketPage> {
       return;
     }
 
-    // =========================================================
+    // =======================================================
     // JENIS ANTRIAN
-    // =========================================================
+    // =======================================================
 
     if (_selectedQueueType == null) {
-      _showMessage('Silakan pilih jenis antrian.');
+      if (_isDirectQueueDisabled) {
+        _showMessage(
+          'Layanan ini hanya dapat menggunakan '
+          'jenis antrian Booking.',
+        );
+      } else {
+        _showMessage('Silakan pilih jenis antrian.');
+      }
 
       return;
     }
 
-    // =========================================================
+    // =======================================================
+    // PROTEKSI LANGSUNG
+    // =======================================================
+
+    if (_isDirectQueueDisabled && _selectedQueueType == 'langsung') {
+      setState(() {
+        _selectedQueueType = null;
+
+        _selectedBookingDate = null;
+      });
+
+      _showMessage(
+        'Layanan ini tidak dapat menggunakan '
+        'antrian Langsung. Silakan pilih Booking.',
+      );
+
+      return;
+    }
+
+    // =======================================================
     // BOOKING
-    // =========================================================
+    // =======================================================
 
     if (_selectedQueueType == 'booking' && _selectedBookingDate == null) {
       _showMessage('Silakan pilih tanggal booking.');
@@ -1465,9 +2327,9 @@ class _AntrianTiketPageState extends State<AntrianTiketPage> {
       return;
     }
 
-    // =========================================================
+    // =======================================================
     // VALIDASI FORM
-    // =========================================================
+    // =======================================================
 
     final bool valid = _formKey.currentState?.validate() ?? false;
 
@@ -1494,17 +2356,17 @@ class _AntrianTiketPageState extends State<AntrianTiketPage> {
     });
 
     try {
-      // =======================================================
+      // =====================================================
       // ENDPOINT
-      // =======================================================
+      // =====================================================
 
       final Uri uri = Uri.parse(ApiConfig.createAntrianTiket);
 
       final http.MultipartRequest request = http.MultipartRequest('POST', uri);
 
-      // =======================================================
+      // =====================================================
       // DATA BERSAMA
-      // =======================================================
+      // =====================================================
 
       request.fields.addAll({
         'full_name': _nameController.text.trim(),
@@ -1522,9 +2384,9 @@ class _AntrianTiketPageState extends State<AntrianTiketPage> {
         'description': _descriptionController.text.trim(),
       });
 
-      // =======================================================
+      // =====================================================
       // MAHASISWA
-      // =======================================================
+      // =====================================================
 
       if (_selectedCategory == 'Mahasiswa') {
         request.fields.addAll({
@@ -1538,9 +2400,9 @@ class _AntrianTiketPageState extends State<AntrianTiketPage> {
         });
       }
 
-      // =======================================================
+      // =====================================================
       // UMUM
-      // =======================================================
+      // =====================================================
 
       if (_selectedCategory == 'Umum') {
         request.fields.addAll({
@@ -1552,9 +2414,9 @@ class _AntrianTiketPageState extends State<AntrianTiketPage> {
         });
       }
 
-      // =======================================================
+      // =====================================================
       // KIRIM
-      // =======================================================
+      // =====================================================
 
       final http.StreamedResponse streamedResponse = await request.send();
 
@@ -1572,9 +2434,9 @@ class _AntrianTiketPageState extends State<AntrianTiketPage> {
         '${response.body}',
       );
 
-      // =======================================================
+      // =====================================================
       // PARSE JSON
-      // =======================================================
+      // =====================================================
 
       Map<String, dynamic> jsonResponse;
 
@@ -1596,9 +2458,9 @@ class _AntrianTiketPageState extends State<AntrianTiketPage> {
         return;
       }
 
-      // =======================================================
+      // =====================================================
       // SUCCESS
-      // =======================================================
+      // =====================================================
 
       final bool success = jsonResponse['success'] == true;
 
@@ -1620,10 +2482,6 @@ class _AntrianTiketPageState extends State<AntrianTiketPage> {
         if (!mounted) {
           return;
         }
-
-        // =====================================================
-        // SUCCESS PAGE
-        // =====================================================
 
         Navigator.of(context).pushReplacement(
           MaterialPageRoute<void>(
@@ -1692,9 +2550,9 @@ class _AntrianTiketPageState extends State<AntrianTiketPage> {
         return;
       }
 
-      // =======================================================
+      // =====================================================
       // ERROR BACKEND
-      // =======================================================
+      // =====================================================
 
       if (!mounted) {
         return;
@@ -1715,7 +2573,8 @@ class _AntrianTiketPageState extends State<AntrianTiketPage> {
 
       _showMessage(
         'Tidak dapat terhubung ke server. '
-        'Pastikan perangkat dan server berada pada jaringan yang sama.',
+        'Pastikan perangkat dan server berada '
+        'pada jaringan yang sama.',
       );
     } finally {
       if (mounted) {
@@ -1731,10 +2590,6 @@ class _AntrianTiketPageState extends State<AntrianTiketPage> {
   // =========================================================
 
   void _clearForm() {
-    // =======================================================
-    // FIELD BERSAMA
-    // =======================================================
-
     _nameController.clear();
 
     _phoneController.clear();
@@ -1743,17 +2598,9 @@ class _AntrianTiketPageState extends State<AntrianTiketPage> {
 
     _descriptionController.clear();
 
-    // =======================================================
-    // MAHASISWA
-    // =======================================================
-
     _identifierController.clear();
 
     _departmentController.clear();
-
-    // =======================================================
-    // UMUM
-    // =======================================================
 
     _originController.clear();
 

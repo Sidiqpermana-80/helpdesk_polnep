@@ -37,6 +37,16 @@ class _CekStatusPageState extends State<CekStatusPage> {
     });
   }
 
+  Future<void> _refreshPage() async {
+    final String keyword = _keywordController.text.trim();
+
+    if (keyword.isEmpty || _isLoading) {
+      return;
+    }
+
+    await _submitSearch();
+  }
+
   @override
   void dispose() {
     _countdownTimer?.cancel();
@@ -158,212 +168,218 @@ class _CekStatusPageState extends State<CekStatusPage> {
             ),
           ),
 
-          child: SingleChildScrollView(
-            physics: const BouncingScrollPhysics(),
+          child: RefreshIndicator(
+            onRefresh: _refreshPage,
 
-            padding: const EdgeInsets.fromLTRB(20, 17, 20, 25),
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(
+                parent: BouncingScrollPhysics(),
+              ),
 
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              padding: const EdgeInsets.fromLTRB(20, 17, 20, 25),
 
-              children: [
-                _buildHeader(),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
 
-                const SizedBox(height: 43),
+                children: [
+                  _buildHeader(),
 
-                const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 5),
+                  const SizedBox(height: 43),
 
-                  child: Text(
-                    'Untuk mengecek status permintaan, harap masukkan\n'
-                    'Email atau Kode Tiket Anda.',
-                    style: TextStyle(
-                      color: Color(0xFF202020),
-                      fontSize: 11,
-                      height: 1.25,
-                      fontWeight: FontWeight.w400,
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 5),
+
+                    child: Text(
+                      'Untuk mengecek status permintaan, harap masukkan\n'
+                      'Email atau Kode Tiket Anda.',
+                      style: TextStyle(
+                        color: Color(0xFF202020),
+                        fontSize: 11,
+                        height: 1.25,
+                        fontWeight: FontWeight.w400,
+                      ),
                     ),
                   ),
-                ),
 
-                const SizedBox(height: 17),
+                  const SizedBox(height: 17),
 
-                const Divider(
-                  height: 1,
-                  thickness: 0.8,
-                  color: Color(0xFF333333),
-                ),
+                  const Divider(
+                    height: 1,
+                    thickness: 0.8,
+                    color: Color(0xFF333333),
+                  ),
 
-                const SizedBox(height: 40),
+                  const SizedBox(height: 40),
 
-                // FORM PENCARIAN
-                Form(
-                  key: _formKey,
+                  // FORM PENCARIAN
+                  Form(
+                    key: _formKey,
 
-                  child: Column(
-                    children: [
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                    child: Column(
+                      children: [
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
 
-                        children: [
-                          const SizedBox(
-                            width: 90,
+                          children: [
+                            const SizedBox(
+                              width: 90,
 
-                            child: Padding(
-                              padding: EdgeInsets.only(top: 13),
+                              child: Padding(
+                                padding: EdgeInsets.only(top: 13),
 
-                              child: Text(
-                                'Email / Kode Tiket',
-                                textAlign: TextAlign.right,
-
-                                style: TextStyle(
-                                  color: Color(0xFF333333),
-                                  fontSize: 9.5,
-                                ),
-                              ),
-                            ),
-                          ),
-
-                          const SizedBox(width: 9),
-
-                          Expanded(
-                            child: TextFormField(
-                              controller: _keywordController,
-
-                              keyboardType: TextInputType.text,
-
-                              textInputAction: TextInputAction.done,
-
-                              onFieldSubmitted: (_) {
-                                _submitSearch();
-                              },
-
-                              decoration: InputDecoration(
-                                hintText: 'Masukkan Email atau Kode Tiket',
-
-                                hintStyle: const TextStyle(
-                                  color: Color(0xFF555555),
-                                  fontSize: 8.5,
-                                ),
-
-                                filled: true,
-
-                                fillColor: const Color(0xFFF0F0F0),
-
-                                contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 12,
-                                ),
-
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(5),
-                                  borderSide: BorderSide.none,
-                                ),
-
-                                enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(5),
-                                  borderSide: BorderSide.none,
-                                ),
-
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(5),
-                                  borderSide: const BorderSide(
-                                    color: Color(0xFF3AA7F5),
-                                    width: 1.4,
-                                  ),
-                                ),
-
-                                errorBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(5),
-                                  borderSide: const BorderSide(
-                                    color: Colors.red,
-                                    width: 1,
-                                  ),
-                                ),
-
-                                focusedErrorBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(5),
-                                  borderSide: const BorderSide(
-                                    color: Colors.red,
-                                    width: 1.2,
-                                  ),
-                                ),
-                              ),
-
-                              validator: (String? value) {
-                                final String keyword = value?.trim() ?? '';
-
-                                if (keyword.isEmpty) {
-                                  return 'Email atau Kode Tiket wajib diisi';
-                                }
-
-                                return null;
-                              },
-                            ),
-                          ),
-                        ],
-                      ),
-
-                      const SizedBox(height: 20),
-
-                      // KIRIM
-                      SizedBox(
-                        width: 105,
-                        height: 38,
-
-                        child: ElevatedButton(
-                          onPressed: _isLoading ? null : _submitSearch,
-
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF6E7EF4),
-
-                            disabledBackgroundColor: const Color(0xFFAAB3F7),
-
-                            foregroundColor: Colors.white,
-
-                            elevation: 0,
-
-                            padding: EdgeInsets.zero,
-
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                          ),
-
-                          child: _isLoading
-                              ? const SizedBox(
-                                  width: 17,
-                                  height: 17,
-
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-
-                                    valueColor: AlwaysStoppedAnimation<Color>(
-                                      Colors.white,
-                                    ),
-                                  ),
-                                )
-                              : const Text(
-                                  'Kirim',
+                                child: Text(
+                                  'Email / Kode Tiket',
+                                  textAlign: TextAlign.right,
 
                                   style: TextStyle(
+                                    color: Color(0xFF333333),
                                     fontSize: 9.5,
-
-                                    fontWeight: FontWeight.w500,
                                   ),
                                 ),
+                              ),
+                            ),
+
+                            const SizedBox(width: 9),
+
+                            Expanded(
+                              child: TextFormField(
+                                controller: _keywordController,
+
+                                keyboardType: TextInputType.text,
+
+                                textInputAction: TextInputAction.done,
+
+                                onFieldSubmitted: (_) {
+                                  _submitSearch();
+                                },
+
+                                decoration: InputDecoration(
+                                  hintText: 'Masukkan Email atau Kode Tiket',
+
+                                  hintStyle: const TextStyle(
+                                    color: Color(0xFF555555),
+                                    fontSize: 8.5,
+                                  ),
+
+                                  filled: true,
+
+                                  fillColor: const Color(0xFFF0F0F0),
+
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 12,
+                                  ),
+
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(5),
+                                    borderSide: BorderSide.none,
+                                  ),
+
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(5),
+                                    borderSide: BorderSide.none,
+                                  ),
+
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(5),
+                                    borderSide: const BorderSide(
+                                      color: Color(0xFF3AA7F5),
+                                      width: 1.4,
+                                    ),
+                                  ),
+
+                                  errorBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(5),
+                                    borderSide: const BorderSide(
+                                      color: Colors.red,
+                                      width: 1,
+                                    ),
+                                  ),
+
+                                  focusedErrorBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(5),
+                                    borderSide: const BorderSide(
+                                      color: Colors.red,
+                                      width: 1.2,
+                                    ),
+                                  ),
+                                ),
+
+                                validator: (String? value) {
+                                  final String keyword = value?.trim() ?? '';
+
+                                  if (keyword.isEmpty) {
+                                    return 'Email atau Kode Tiket wajib diisi';
+                                  }
+
+                                  return null;
+                                },
+                              ),
+                            ),
+                          ],
                         ),
-                      ),
-                    ],
+
+                        const SizedBox(height: 20),
+
+                        // KIRIM
+                        SizedBox(
+                          width: 105,
+                          height: 38,
+
+                          child: ElevatedButton(
+                            onPressed: _isLoading ? null : _submitSearch,
+
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF6E7EF4),
+
+                              disabledBackgroundColor: const Color(0xFFAAB3F7),
+
+                              foregroundColor: Colors.white,
+
+                              elevation: 0,
+
+                              padding: EdgeInsets.zero,
+
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                            ),
+
+                            child: _isLoading
+                                ? const SizedBox(
+                                    width: 17,
+                                    height: 17,
+
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                        Colors.white,
+                                      ),
+                                    ),
+                                  )
+                                : const Text(
+                                    'Kirim',
+
+                                    style: TextStyle(
+                                      fontSize: 9.5,
+
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
 
-                if (_hasSearched) ...[
-                  const SizedBox(height: 22),
+                  if (_hasSearched) ...[
+                    const SizedBox(height: 22),
 
-                  _buildResultContainer(),
+                    _buildResultContainer(),
+                  ],
                 ],
-              ],
+              ),
             ),
           ),
         ),
