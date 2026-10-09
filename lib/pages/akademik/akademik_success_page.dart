@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-class PermintaanDataSuccessPage extends StatelessWidget {
-  const PermintaanDataSuccessPage({
+class AkademikSuccessPage extends StatelessWidget {
+  const AkademikSuccessPage({
     required this.categoryName,
     required this.identifierLabel,
     required this.identifierValue,
@@ -75,6 +75,7 @@ class PermintaanDataSuccessPage extends StatelessWidget {
         scrolledUnderElevation: 0,
         surfaceTintColor: Colors.transparent,
         leadingWidth: 39,
+
         leading: IconButton(
           tooltip: 'Kembali',
           onPressed: () {
@@ -86,9 +87,11 @@ class PermintaanDataSuccessPage extends StatelessWidget {
             size: 19,
           ),
         ),
+
         titleSpacing: 0,
+
         title: const Text(
-          'Permintaan Data',
+          'Akademik',
           style: TextStyle(
             color: Color(0xFF202020),
             fontSize: 15,
@@ -100,6 +103,7 @@ class PermintaanDataSuccessPage extends StatelessWidget {
       body: Container(
         width: double.infinity,
         height: double.infinity,
+
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
@@ -108,13 +112,15 @@ class PermintaanDataSuccessPage extends StatelessWidget {
             stops: [0.00, 0.48, 1.00],
           ),
         ),
+
         child: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(7, 5, 7, 28),
+
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Permintaan Data $categoryName',
+                'Akademik $categoryName',
                 style: const TextStyle(
                   color: Color(0xFF202020),
                   fontSize: 12.5,
@@ -125,7 +131,7 @@ class PermintaanDataSuccessPage extends StatelessWidget {
               const SizedBox(height: 6),
 
               const Text(
-                'Home / Permintaan Data',
+                'Home / Akademik',
                 style: TextStyle(
                   color: Color(0xFF168DE2),
                   fontSize: 9.5,
@@ -135,10 +141,11 @@ class PermintaanDataSuccessPage extends StatelessWidget {
 
               const SizedBox(height: 10),
 
-              // CARD
+              // Kartu pengajuan berhasil.
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.fromLTRB(7, 12, 7, 17),
+
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(9),
@@ -150,6 +157,7 @@ class PermintaanDataSuccessPage extends StatelessWidget {
                     ),
                   ],
                 ),
+
                 child: Column(
                   children: [
                     const Icon(
@@ -161,7 +169,7 @@ class PermintaanDataSuccessPage extends StatelessWidget {
                     const SizedBox(height: 5),
 
                     const Text(
-                      'Permintaan Data Berhasil Dikirim',
+                      'Pengajuan Akademik Berhasil Dikirim',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         color: Color(0xFF202020),
@@ -173,7 +181,8 @@ class PermintaanDataSuccessPage extends StatelessWidget {
                     const SizedBox(height: 8),
 
                     const Text(
-                      'Permintaan Anda telah berhasil dikirim dan akan segera diproses',
+                      'Pengajuan Anda telah berhasil dikirim '
+                      'dan akan segera diproses.',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         color: Color(0xFF444444),
@@ -184,19 +193,21 @@ class PermintaanDataSuccessPage extends StatelessWidget {
 
                     const SizedBox(height: 14),
 
-                    // DETAIL
+                    // Detail pengajuan.
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.fromLTRB(10, 14, 10, 14),
+
                       decoration: BoxDecoration(
                         color: const Color(0xFFDCDCDC),
                         borderRadius: BorderRadius.circular(6),
                       ),
+
                       child: Column(
                         children: [
                           _buildDetailRow(
                             icon: Icons.assignment_outlined,
-                            label: 'No Permintaan',
+                            label: 'Nomor Pengajuan',
                             value: requestNumber,
                           ),
 
@@ -215,7 +226,7 @@ class PermintaanDataSuccessPage extends StatelessWidget {
 
                           _buildDetailRow(
                             icon: Icons.category_rounded,
-                            label: 'Kategori Permintaan',
+                            label: 'Kategori Layanan',
                             value: requestCategory,
                           ),
 
@@ -223,7 +234,7 @@ class PermintaanDataSuccessPage extends StatelessWidget {
 
                           _buildDetailRow(
                             icon: Icons.access_time_rounded,
-                            label: 'Estimasi Respon',
+                            label: 'Estimasi Respons',
                             value: estimatedResponse,
                             showBottomSpacing: false,
                           ),
@@ -242,12 +253,14 @@ class PermintaanDataSuccessPage extends StatelessWidget {
                   SizedBox(
                     width: 115,
                     height: 40,
+
                     child: ElevatedButton(
                       onPressed: () {
                         Navigator.of(
                           context,
                         ).popUntil((Route<dynamic> route) => route.isFirst);
                       },
+
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF7C8CF5),
                         foregroundColor: Colors.white,
@@ -257,8 +270,9 @@ class PermintaanDataSuccessPage extends StatelessWidget {
                           borderRadius: BorderRadius.circular(5),
                         ),
                       ),
+
                       child: const Text(
-                        'Kembali Ke Beranda',
+                        'Kembali ke Beranda',
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 9.5,
@@ -273,10 +287,12 @@ class PermintaanDataSuccessPage extends StatelessWidget {
                   SizedBox(
                     width: 125,
                     height: 40,
+
                     child: ElevatedButton(
                       onPressed: () {
                         Navigator.of(context).pop();
                       },
+
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF58C761),
                         foregroundColor: Colors.white,
@@ -286,8 +302,9 @@ class PermintaanDataSuccessPage extends StatelessWidget {
                           borderRadius: BorderRadius.circular(5),
                         ),
                       ),
+
                       child: const Text(
-                        'Buat Permintaan Lagi',
+                        'Buat Pengajuan Lagi',
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 9.5,
@@ -313,6 +330,7 @@ class PermintaanDataSuccessPage extends StatelessWidget {
   }) {
     return Padding(
       padding: EdgeInsets.only(bottom: showBottomSpacing ? 17 : 0),
+
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
@@ -351,6 +369,7 @@ class PermintaanDataSuccessPage extends StatelessWidget {
   Widget _buildStatusRow() {
     return Padding(
       padding: const EdgeInsets.only(bottom: 17),
+
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
@@ -376,15 +395,18 @@ class PermintaanDataSuccessPage extends StatelessWidget {
           Expanded(
             child: Align(
               alignment: Alignment.centerLeft,
+
               child: Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 11,
                   vertical: 5,
                 ),
+
                 decoration: BoxDecoration(
                   color: statusColor,
                   borderRadius: BorderRadius.circular(20),
                 ),
+
                 child: Text(
                   formattedStatus,
                   style: const TextStyle(

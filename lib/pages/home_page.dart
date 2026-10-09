@@ -1,27 +1,16 @@
 import 'dart:async';
-
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-
 import 'package:http/http.dart' as http;
 import 'package:flutter_widget_from_html_core/flutter_widget_from_html_core.dart';
+
 import '../config/api_config.dart';
 
-import 'permintaan_data/permintaan_data_page.dart';
-
-import 'aplikasi/aplikasi_page.dart';
-
-import 'website/website_page.dart';
-
-import 'wifi_internet/wifi_internet_page.dart';
-
-import 'fasilitas_ruangan/fasilitas_ruangan_page.dart';
-
-import 'antrian_tiket/antrian_tiket_page.dart';
-
+import 'akademik/akademik_page.dart';
+import 'ult/ult_page.dart';
+import 'pengaduan/pengaduan_page.dart';
 import 'cek_status/cek_status_page.dart';
-
 import 'announcement/announcement_page.dart';
 
 class HomePage extends StatefulWidget {
@@ -41,13 +30,11 @@ class _HomePageState extends State<HomePage> {
   int _currentAnnouncementIndex = 0;
 
   bool _isLoadingAnnouncement = true;
-
   bool _announcementLoadError = false;
 
   @override
   void initState() {
     super.initState();
-
     _loadAnnouncements();
   }
 
@@ -59,7 +46,6 @@ class _HomePageState extends State<HomePage> {
     if (mounted) {
       setState(() {
         _isLoadingAnnouncement = true;
-
         _announcementLoadError = false;
       });
     }
@@ -68,20 +54,13 @@ class _HomePageState extends State<HomePage> {
       final http.Response response = await http
           .get(
             Uri.parse(ApiConfig.announcements),
-
             headers: const {'Accept': 'application/json'},
           )
           .timeout(const Duration(seconds: 20));
 
-      debugPrint(
-        'HOME ANNOUNCEMENT STATUS: '
-        '${response.statusCode}',
-      );
+      debugPrint('HOME ANNOUNCEMENT STATUS: ${response.statusCode}');
 
-      debugPrint(
-        'HOME ANNOUNCEMENT RESPONSE: '
-        '${response.body}',
-      );
+      debugPrint('HOME ANNOUNCEMENT RESPONSE: ${response.body}');
 
       final dynamic decoded = jsonDecode(response.body);
 
@@ -111,7 +90,6 @@ class _HomePageState extends State<HomePage> {
 
       announcements.sort((AnnouncementData a, AnnouncementData b) {
         final DateTime? dateA = a.publishedAt;
-
         final DateTime? dateB = b.publishedAt;
 
         if (dateA == null && dateB == null) {
@@ -135,11 +113,8 @@ class _HomePageState extends State<HomePage> {
 
       setState(() {
         _announcements = announcements;
-
         _isLoadingAnnouncement = false;
-
         _announcementLoadError = false;
-
         _currentAnnouncementIndex = 0;
       });
 
@@ -163,7 +138,6 @@ class _HomePageState extends State<HomePage> {
 
       setState(() {
         _isLoadingAnnouncement = false;
-
         _announcementLoadError = true;
       });
     } catch (e) {
@@ -175,14 +149,13 @@ class _HomePageState extends State<HomePage> {
 
       setState(() {
         _isLoadingAnnouncement = false;
-
         _announcementLoadError = true;
       });
     }
   }
 
   // =========================================================
-  // AUTO SLIDE ANNOUNCEMENT
+  // AUTO SLIDE PENGUMUMAN
   // =========================================================
 
   void _startAnnouncementAutoSlide() {
@@ -222,70 +195,31 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    const List<ServiceData> services = [
-      ServiceData(
-        title: 'Permintaan\nData',
-
-        imagePath: 'assets/images/file.jpeg',
-      ),
-
-      ServiceData(title: 'Wifi/Internet', imagePath: 'assets/images/wifi.jpeg'),
-
-      ServiceData(title: 'Aplikasi', imagePath: 'assets/images/app.jpeg'),
-
-      ServiceData(title: 'Website', imagePath: 'assets/images/web.jpeg'),
-
-      ServiceData(
-        title: 'Fasilitas\nRuangan',
-
-        imagePath: 'assets/images/building.jpeg',
-      ),
-
-      ServiceData(
-        title: 'Antrian tiket',
-
-        imagePath: 'assets/images/monitor.png',
-      ),
-    ];
-
     return Scaffold(
       backgroundColor: const Color(0xFFF0F9FF),
-
       body: Container(
         width: double.infinity,
-
         height: double.infinity,
-
-        // Background
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
-
             end: Alignment.bottomCenter,
-
             colors: [Color(0xFFF0F9FF), Color(0xFFD7EEFF), Color(0xFFB9E1FF)],
           ),
         ),
-
         child: SafeArea(
           child: RefreshIndicator(
             onRefresh: _refreshPage,
-
             child: SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(
                 parent: BouncingScrollPhysics(),
               ),
-
               child: Column(
                 children: [
                   _buildHeader(),
-
                   _buildAnnouncement(context),
-
-                  _buildServiceMenu(context: context, services: services),
-
+                  _buildServiceMenu(context),
                   _buildQueueStatus(context),
-
                   const SizedBox(height: 20),
                 ],
               ),
@@ -296,41 +230,32 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  // =========================================================
   // HEADER
+  // =========================================================
 
   Widget _buildHeader() {
     return Container(
       height: 165,
-
       width: double.infinity,
-
       margin: const EdgeInsets.fromLTRB(8, 8, 8, 0),
-
       clipBehavior: Clip.antiAlias,
-
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
-
         boxShadow: const [
           BoxShadow(
             color: Color(0x1A000000),
-
             blurRadius: 7,
-
             offset: Offset(0, 3),
           ),
         ],
       ),
-
       child: Stack(
         fit: StackFit.expand,
-
         children: [
           Image.asset(
             'assets/images/hero.webp',
-
             fit: BoxFit.cover,
-
             alignment: const Alignment(0, -0.1),
           ),
 
@@ -340,40 +265,29 @@ class _HomePageState extends State<HomePage> {
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
-
                 end: Alignment.bottomCenter,
-
                 colors: [
                   Color(0x003AA7F5),
-
                   Color(0x33267EBA),
-
                   Color(0x881168AA),
                 ],
               ),
             ),
           ),
 
-          // Logo dan deskripsi.
+          // Logo dan deskripsi aplikasi.
           Positioned(
             top: 15,
-
             left: 14,
-
             right: 14,
-
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
-
               children: [
                 SizedBox(
                   width: 82,
-
                   height: 82,
-
                   child: Image.asset(
                     'assets/images/logopolnep-BESAR.png',
-
                     fit: BoxFit.contain,
                   ),
                 ),
@@ -383,21 +297,15 @@ class _HomePageState extends State<HomePage> {
                 const Expanded(
                   child: Padding(
                     padding: EdgeInsets.only(top: 18),
-
                     child: Text(
-                      'Aplikasi untuk merespon permintaan'
+                      'Aplikasi untuk merespons permintaan '
                       'dan keluhan terhadap layanan di Politeknik Negeri '
                       'Pontianak.',
-
                       style: TextStyle(
                         color: Colors.white,
-
                         fontSize: 12.5,
-
                         height: 1.3,
-
                         fontWeight: FontWeight.w500,
-
                         shadows: [
                           Shadow(color: Color(0x55000000), blurRadius: 2),
                         ],
@@ -412,21 +320,15 @@ class _HomePageState extends State<HomePage> {
           // Nomor telepon dan email.
           const Positioned(
             left: 15,
-
             bottom: 12,
-
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-
               children: [
                 Text(
                   '0561 736180',
-
                   style: TextStyle(
                     color: Colors.white,
-
                     fontSize: 10.5,
-
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -435,12 +337,9 @@ class _HomePageState extends State<HomePage> {
 
                 Text(
                   'kampus@polnep.ac.id',
-
                   style: TextStyle(
                     color: Colors.white,
-
                     fontSize: 10.5,
-
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -452,7 +351,9 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // ANNOUNCEMENT
+  // =========================================================
+  // PENGUMUMAN
+  // =========================================================
 
   Widget _buildAnnouncement(BuildContext context) {
     return Container(
@@ -473,16 +374,14 @@ class _HomePageState extends State<HomePage> {
       ),
       child: Column(
         children: [
-          // ===============================================
-          // HEADER
-          // ===============================================
+          // Judul pengumuman dan tombol Lihat Semua.
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 3),
             child: Row(
               children: [
                 const Expanded(
                   child: Text(
-                    'Announcement',
+                    'Pengumuman',
                     style: TextStyle(
                       fontSize: 15,
                       color: Color(0xFF202020),
@@ -490,21 +389,20 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ),
                 ),
+
                 InkWell(
                   borderRadius: BorderRadius.circular(6),
                   onTap: () {
                     Navigator.of(context).push(
                       MaterialPageRoute<void>(
-                        builder: (BuildContext context) {
-                          return const AnnouncementPage();
-                        },
+                        builder: (_) => const AnnouncementPage(),
                       ),
                     );
                   },
                   child: const Padding(
                     padding: EdgeInsets.symmetric(horizontal: 6, vertical: 4),
                     child: Text(
-                      'Read More',
+                      'Lihat Semua',
                       style: TextStyle(
                         fontSize: 12,
                         color: Color(0xFF168DE2),
@@ -519,9 +417,7 @@ class _HomePageState extends State<HomePage> {
 
           const SizedBox(height: 6),
 
-          // ===============================================
-          // LOADING
-          // ===============================================
+          // Saat pengumuman sedang dimuat.
           if (_isLoadingAnnouncement)
             Container(
               width: double.infinity,
@@ -539,9 +435,7 @@ class _HomePageState extends State<HomePage> {
                 child: CircularProgressIndicator(strokeWidth: 2),
               ),
             )
-          // ===============================================
-          // ERROR
-          // ===============================================
+          // Saat gagal mengambil pengumuman.
           else if (_announcementLoadError)
             Container(
               width: double.infinity,
@@ -562,9 +456,7 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
             )
-          // ===============================================
-          // KOSONG
-          // ===============================================
+          // Saat belum ada pengumuman.
           else if (_announcements.isEmpty)
             Container(
               width: double.infinity,
@@ -580,9 +472,7 @@ class _HomePageState extends State<HomePage> {
                 style: TextStyle(color: Color(0xFF555555), fontSize: 10.5),
               ),
             )
-          // ===============================================
-          // CAROUSEL ANNOUNCEMENT
-          // ===============================================
+          // Daftar pengumuman dalam carousel.
           else
             Column(
               children: [
@@ -591,6 +481,7 @@ class _HomePageState extends State<HomePage> {
                   child: PageView.builder(
                     controller: _announcementPageController,
                     itemCount: _announcements.length,
+
                     onPageChanged: (int index) {
                       if (!mounted) {
                         return;
@@ -600,6 +491,7 @@ class _HomePageState extends State<HomePage> {
                         _currentAnnouncementIndex = index;
                       });
                     },
+
                     itemBuilder: (BuildContext context, int index) {
                       final AnnouncementData announcement =
                           _announcements[index];
@@ -610,10 +502,11 @@ class _HomePageState extends State<HomePage> {
                           color: Colors.transparent,
                           child: InkWell(
                             borderRadius: BorderRadius.circular(10),
+
                             onTap: () {
                               Navigator.of(context).push(
                                 MaterialPageRoute<void>(
-                                  builder: (BuildContext context) {
+                                  builder: (_) {
                                     return AnnouncementDetailPage(
                                       announcement: announcement,
                                     );
@@ -621,6 +514,7 @@ class _HomePageState extends State<HomePage> {
                                 ),
                               );
                             },
+
                             child: Container(
                               width: double.infinity,
                               padding: const EdgeInsets.fromLTRB(
@@ -644,6 +538,7 @@ class _HomePageState extends State<HomePage> {
                                   width: 0.8,
                                 ),
                               ),
+
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
@@ -658,7 +553,9 @@ class _HomePageState extends State<HomePage> {
                                       fontWeight: FontWeight.w600,
                                     ),
                                   ),
+
                                   const SizedBox(height: 9),
+
                                   Expanded(
                                     child: ClipRect(
                                       child: SingleChildScrollView(
@@ -676,7 +573,9 @@ class _HomePageState extends State<HomePage> {
                                       ),
                                     ),
                                   ),
+
                                   const SizedBox(height: 8),
+
                                   Text(
                                     announcement.formattedDate,
                                     style: const TextStyle(
@@ -694,8 +593,11 @@ class _HomePageState extends State<HomePage> {
                     },
                   ),
                 ),
+
+                // Indikator halaman pengumuman.
                 if (_announcements.length > 1) ...[
                   const SizedBox(height: 8),
+
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: List.generate(_announcements.length, (int index) {
@@ -723,175 +625,74 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // MENU LAYANAN
+  // =========================================================
+  // MENU UTAMA: AKADEMIK, ULT, PENGADUAN
+  // =========================================================
 
-  Widget _buildServiceMenu({
-    required BuildContext context,
+  Widget _buildServiceMenu(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(8, 12, 8, 0),
+      child: Column(
+        children: [
+          _HomeServiceTile(
+            title: 'Akademik',
+            description: 'Layanan akademik untuk mahasiswa.',
+            icon: Icons.school_rounded,
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(builder: (_) => const AkademikPage()),
+              );
+            },
+          ),
 
-    required List<ServiceData> services,
-  }) {
-    return Container(
-      width: double.infinity,
+          const SizedBox(height: 10),
 
-      margin: const EdgeInsets.fromLTRB(8, 12, 8, 0),
+          _HomeServiceTile(
+            title: 'ULT',
+            description: 'Unit Layanan Terpadu. Ambil nomor antrean layanan.',
+            icon: Icons.confirmation_number_rounded,
+            onTap: () {
+              Navigator.of(
+                context,
+              ).push(MaterialPageRoute<void>(builder: (_) => const UltPage()));
+            },
+          ),
 
-      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 12),
+          const SizedBox(height: 10),
 
-      decoration: BoxDecoration(
-        color: Colors.white,
-
-        borderRadius: BorderRadius.circular(12),
-
-        border: Border.all(color: const Color(0xFFD6E9F7), width: 0.8),
-
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x12000000),
-
-            blurRadius: 6,
-
-            offset: Offset(0, 2),
+          _HomeServiceTile(
+            title: 'Pengaduan',
+            description: 'Laporkan kendala layanan atau fasilitas kampus.',
+            icon: Icons.campaign_rounded,
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(builder: (_) => const PengaduanPage()),
+              );
+            },
           ),
         ],
-      ),
-
-      child: GridView.builder(
-        itemCount: services.length,
-
-        shrinkWrap: true,
-
-        physics: const NeverScrollableScrollPhysics(),
-
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 3,
-
-          childAspectRatio: 0.95,
-
-          crossAxisSpacing: 5,
-
-          mainAxisSpacing: 7,
-        ),
-
-        itemBuilder: (BuildContext context, int index) {
-          final ServiceData service = services[index];
-
-          return ServiceMenuItem(
-            service: service,
-
-            onTap: () {
-              // PERMINTAAN DATA
-
-              if (index == 0) {
-                Navigator.of(context).push(
-                  MaterialPageRoute<void>(
-                    builder: (BuildContext context) {
-                      return const PermintaanDataPage();
-                    },
-                  ),
-                );
-
-                return;
-              }
-
-              // 1. WIFI / INTERNET
-
-              if (index == 1) {
-                Navigator.of(context).push(
-                  MaterialPageRoute<void>(
-                    builder: (BuildContext context) {
-                      return const WifiInternetPage();
-                    },
-                  ),
-                );
-
-                return;
-              }
-
-              // 2. APLIKASI
-
-              if (index == 2) {
-                Navigator.of(context).push(
-                  MaterialPageRoute<void>(
-                    builder: (BuildContext context) {
-                      return const AplikasiPage();
-                    },
-                  ),
-                );
-
-                return;
-              }
-
-              // 3. WEBSITE
-
-              if (index == 3) {
-                Navigator.of(context).push(
-                  MaterialPageRoute<void>(
-                    builder: (BuildContext context) {
-                      return const WebsitePage();
-                    },
-                  ),
-                );
-
-                return;
-              }
-
-              // 4. FASILITAS RUANGAN
-
-              if (index == 4) {
-                Navigator.of(context).push(
-                  MaterialPageRoute<void>(
-                    builder: (BuildContext context) {
-                      return const FasilitasRuanganPage();
-                    },
-                  ),
-                );
-
-                return;
-              }
-
-              // 5. ANTRIAN TIKET
-
-              if (index == 5) {
-                Navigator.of(context).push(
-                  MaterialPageRoute<void>(
-                    builder: (BuildContext context) {
-                      return const AntrianTiketPage();
-                    },
-                  ),
-                );
-
-                return;
-              }
-            },
-          );
-        },
       ),
     );
   }
 
+  // =========================================================
   // CEK STATUS
+  // =========================================================
 
   Widget _buildQueueStatus(BuildContext context) {
     return Container(
       width: double.infinity,
-
       height: 76,
-
       margin: const EdgeInsets.fromLTRB(8, 14, 8, 0),
 
       decoration: BoxDecoration(
         color: Colors.white,
-
         borderRadius: BorderRadius.circular(12),
-
         border: Border.all(color: const Color(0xFFD6E9F7), width: 0.8),
-
         boxShadow: const [
           BoxShadow(
             color: Color(0x16000000),
-
             blurRadius: 6,
-
             offset: Offset(0, 2),
           ),
         ],
@@ -899,42 +700,29 @@ class _HomePageState extends State<HomePage> {
 
       child: Material(
         color: Colors.transparent,
-
         child: InkWell(
           borderRadius: BorderRadius.circular(12),
 
-          // BUKA HALAMAN CEK STATUS
           onTap: () {
             Navigator.of(context).push(
-              MaterialPageRoute<void>(
-                builder: (BuildContext context) {
-                  return const CekStatusPage();
-                },
-              ),
+              MaterialPageRoute<void>(builder: (_) => const CekStatusPage()),
             );
           },
 
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 15),
-
             child: Row(
               children: [
                 Container(
                   width: 56,
-
                   height: 48,
-
                   padding: const EdgeInsets.all(3),
-
                   decoration: BoxDecoration(
                     color: const Color(0xFFEAF7FF),
-
                     borderRadius: BorderRadius.circular(7),
                   ),
-
                   child: Image.asset(
                     'assets/images/card.jpeg',
-
                     fit: BoxFit.cover,
                   ),
                 ),
@@ -944,12 +732,9 @@ class _HomePageState extends State<HomePage> {
                 const Expanded(
                   child: Text(
                     'Cek Status',
-
                     style: TextStyle(
                       color: Color(0xFF202020),
-
                       fontSize: 18,
-
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -957,9 +742,7 @@ class _HomePageState extends State<HomePage> {
 
                 const Icon(
                   Icons.arrow_forward_ios_rounded,
-
                   color: Color(0xFF3AA7F5),
-
                   size: 18,
                 ),
               ],
@@ -971,78 +754,87 @@ class _HomePageState extends State<HomePage> {
   }
 }
 
-// ITEM MENU
+// =========================================================
+// KARTU LAYANAN UTAMA
+// =========================================================
 
-class ServiceMenuItem extends StatelessWidget {
-  const ServiceMenuItem({
-    required this.service,
-
+class _HomeServiceTile extends StatelessWidget {
+  const _HomeServiceTile({
+    required this.title,
+    required this.description,
+    required this.icon,
     required this.onTap,
-
-    super.key,
   });
 
-  final ServiceData service;
-
+  final String title;
+  final String description;
+  final IconData icon;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Colors.transparent,
+      color: Colors.white,
+
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: const BorderSide(color: Color(0xFFD6E9F7), width: 0.8),
+      ),
+
+      clipBehavior: Clip.antiAlias,
 
       child: InkWell(
-        borderRadius: BorderRadius.circular(10),
-
         onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 16),
 
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 5),
-
-          decoration: BoxDecoration(borderRadius: BorderRadius.circular(10)),
-
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-
+          child: Row(
             children: [
               Container(
-                width: 53,
-
-                height: 53,
-
-                padding: const EdgeInsets.all(2),
-
+                width: 52,
+                height: 52,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF5FBFF),
-
-                  borderRadius: BorderRadius.circular(9),
+                  color: const Color(0xFFEAF7FF),
+                  borderRadius: BorderRadius.circular(10),
                 ),
+                child: Icon(icon, color: const Color(0xFF168DE2), size: 28),
+              ),
 
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(7),
+              const SizedBox(width: 14),
 
-                  child: Image.asset(service.imagePath, fit: BoxFit.cover),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        color: Color(0xFF202020),
+                        fontSize: 17,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+
+                    const SizedBox(height: 4),
+
+                    Text(
+                      description,
+                      style: const TextStyle(
+                        color: Color(0xFF666666),
+                        fontSize: 12.5,
+                        height: 1.35,
+                      ),
+                    ),
+                  ],
                 ),
               ),
 
-              const SizedBox(height: 5),
+              const SizedBox(width: 10),
 
-              Text(
-                service.title,
-
-                textAlign: TextAlign.center,
-
-                maxLines: 2,
-
-                style: const TextStyle(
-                  color: Color(0xFF202020),
-
-                  fontSize: 11,
-
-                  height: 1.1,
-
-                  fontWeight: FontWeight.w500,
-                ),
+              const Icon(
+                Icons.arrow_forward_ios_rounded,
+                color: Color(0xFF3AA7F5),
+                size: 18,
               ),
             ],
           ),
@@ -1050,14 +842,4 @@ class ServiceMenuItem extends StatelessWidget {
       ),
     );
   }
-}
-
-// DATA MENU
-
-class ServiceData {
-  const ServiceData({required this.title, required this.imagePath});
-
-  final String title;
-
-  final String imagePath;
 }

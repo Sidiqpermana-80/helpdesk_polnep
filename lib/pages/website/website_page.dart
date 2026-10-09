@@ -23,20 +23,12 @@ class _WebsitePageState extends State<WebsitePage> {
 
   bool _hasWebsiteLoadError = false;
 
-  // =========================================================
-  // INIT
-  // =========================================================
-
   @override
   void initState() {
     super.initState();
 
     _loadWebsites();
   }
-
-  // =========================================================
-  // LOAD WEBSITE DARI API
-  // =========================================================
 
   Future<void> _loadWebsites() async {
     if (mounted) {
@@ -114,10 +106,6 @@ class _WebsitePageState extends State<WebsitePage> {
     }
   }
 
-  // =========================================================
-  // BUILD
-  // =========================================================
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -188,9 +176,7 @@ class _WebsitePageState extends State<WebsitePage> {
 
                     const SizedBox(height: 21),
 
-                    // ===========================================
-                    // LOGO / HERO
-                    // ===========================================
+                    // LOGO
                     SizedBox(
                       width: double.infinity,
 
@@ -262,9 +248,7 @@ class _WebsitePageState extends State<WebsitePage> {
                 ),
               ),
 
-              // ===============================================
               // DAFTAR WEBSITE
-              // ===============================================
               Expanded(child: _buildWebsiteContent()),
             ],
           ),
@@ -273,15 +257,7 @@ class _WebsitePageState extends State<WebsitePage> {
     );
   }
 
-  // =========================================================
-  // WEBSITE CONTENT
-  // =========================================================
-
   Widget _buildWebsiteContent() {
-    // =========================================================
-    // LOADING
-    // =========================================================
-
     if (_isLoadingWebsites) {
       return const Center(
         child: CircularProgressIndicator(

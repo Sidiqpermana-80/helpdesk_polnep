@@ -6,16 +6,16 @@ import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 
 import '../../config/api_config.dart';
-import 'antrian_tiket_success_page.dart';
+import 'ult_success_page.dart';
 
-class AntrianTiketPage extends StatefulWidget {
-  const AntrianTiketPage({super.key});
+class UltPage extends StatefulWidget {
+  const UltPage({super.key});
 
   @override
-  State<AntrianTiketPage> createState() => _AntrianTiketPageState();
+  State<UltPage> createState() => _UltPageState();
 }
 
-class _AntrianTiketPageState extends State<AntrianTiketPage> {
+class _UltPageState extends State<UltPage> {
   // =========================================================
   // FORM
   // =========================================================
@@ -587,7 +587,7 @@ class _AntrianTiketPageState extends State<AntrianTiketPage> {
                       const SizedBox(width: 10),
 
                       const Text(
-                        'Antrian Tiket',
+                        'ULT',
                         style: TextStyle(
                           color: Color(0xFF111111),
                           fontSize: 16,
@@ -2486,7 +2486,7 @@ class _AntrianTiketPageState extends State<AntrianTiketPage> {
         Navigator.of(context).pushReplacement(
           MaterialPageRoute<void>(
             builder: (BuildContext context) {
-              return AntrianTiketSuccessPage(
+              return UltSuccessPage(
                 queueNumber: data['queue_number']?.toString() ?? '-',
 
                 requestNumber: data['request_number']?.toString() ?? '-',

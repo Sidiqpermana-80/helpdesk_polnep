@@ -7,7 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 
 import '../../config/api_config.dart';
-import 'permintaan_data_success_page.dart';
+import 'akademik_success_page.dart';
 
 class RequestFormWidget extends StatefulWidget {
   const RequestFormWidget({
@@ -274,7 +274,7 @@ class _RequestFormWidgetState extends State<RequestFormWidget> {
             // JUDUL
             // =================================================
             Text(
-              'Permintaan Data ${widget.categoryName}',
+              'Akademik ${widget.categoryName}',
               style: const TextStyle(
                 color: Color(0xFF202020),
                 fontSize: 13.5,
@@ -288,7 +288,7 @@ class _RequestFormWidgetState extends State<RequestFormWidget> {
             // BREADCRUMB
             // =================================================
             Text(
-              'Home / Permintaan Data / ${widget.categoryName}',
+              'Home / Akademik / ${widget.categoryName}',
               style: const TextStyle(
                 color: Color(0xFF168DE2),
                 fontSize: 10.5,
@@ -333,7 +333,7 @@ class _RequestFormWidgetState extends State<RequestFormWidget> {
                     // HEADER FORM
                     // =========================================
                     const Text(
-                      'INPUT PERMINTAAN DATA',
+                      'FORM LAYANAN AKADEMIK',
                       style: TextStyle(
                         color: Color(0xFF202020),
                         fontSize: 12,
@@ -344,7 +344,7 @@ class _RequestFormWidgetState extends State<RequestFormWidget> {
                     const SizedBox(height: 7),
 
                     const Text(
-                      'Lengkapi data berikut sesuai dengan data yang ingin diminta:',
+                      'Lengkapi data berikut untuk mengajukan layanan akademik:',
                       style: TextStyle(
                         color: Color(0xFF202020),
                         fontSize: 10.5,
@@ -584,7 +584,7 @@ class _RequestFormWidgetState extends State<RequestFormWidget> {
                     // KATEGORI PERMINTAAN
                     // =========================================
                     _buildLabeledField(
-                      label: 'Kategori\nPermintaan',
+                      label: 'Kategori\nLayanan',
 
                       child: DropdownButtonFormField<String>(
                         key: ValueKey('kategori-$_formVersion'),
@@ -663,7 +663,7 @@ class _RequestFormWidgetState extends State<RequestFormWidget> {
                     ),
 
                     _buildLabeledField(
-                      label: 'Alasan\nPermintaan',
+                      label: 'Alasan\nLayanan',
 
                       child: SizedBox(
                         height: 135,
@@ -682,12 +682,12 @@ class _RequestFormWidgetState extends State<RequestFormWidget> {
                           textAlignVertical: TextAlignVertical.top,
 
                           decoration: _fieldDecoration(
-                            hintText: 'Tuliskan alasan permintaan',
+                            hintText: 'Tuliskan alasan pengajuan',
                           ),
 
                           validator: (String? value) {
                             if (value == null || value.trim().isEmpty) {
-                              return 'Alasan permintaan wajib diisi';
+                              return 'Alasan pengajuan wajib diisi';
                             }
 
                             return null;
@@ -810,7 +810,7 @@ class _RequestFormWidgetState extends State<RequestFormWidget> {
                                     ),
                                   )
                                 : const Text(
-                                    'Kirim Data',
+                                    'Kirim Pengajuan',
                                     style: TextStyle(
                                       fontSize: 10,
                                       fontWeight: FontWeight.w500,
@@ -1256,21 +1256,14 @@ class _RequestFormWidgetState extends State<RequestFormWidget> {
         Navigator.of(context).push(
           MaterialPageRoute<void>(
             builder: (BuildContext context) {
-              return PermintaanDataSuccessPage(
+              return AkademikSuccessPage(
                 categoryName: widget.categoryName,
-
                 identifierLabel: widget.identifierLabel,
-
                 identifierValue: identifierValue,
-
                 requestCategory: requestCategory,
-
                 requestNumber: requestNumber,
-
                 status: status,
-
                 estimatedResponse: estimatedResponse,
-
                 unitKerja: unitKerja,
               );
             },

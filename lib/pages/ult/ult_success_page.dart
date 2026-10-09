@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../cek_status/cek_status_page.dart';
 
-class AntrianTiketSuccessPage extends StatelessWidget {
-  const AntrianTiketSuccessPage({
+class UltSuccessPage extends StatelessWidget {
+  const UltSuccessPage({
     super.key,
     required this.queueNumber,
     required this.requestNumber,
@@ -184,7 +184,7 @@ class AntrianTiketSuccessPage extends StatelessWidget {
                 // JUDUL
                 // ===============================================
                 const Text(
-                  'Antrian Tiket',
+                  'ULT',
 
                   style: TextStyle(
                     color: Color(0xFF202020),
@@ -199,7 +199,7 @@ class AntrianTiketSuccessPage extends StatelessWidget {
                 // BREADCRUMB
                 // ===============================================
                 const Text(
-                  'Home / Antrian Tiket',
+                  'Home / ULT',
 
                   style: TextStyle(
                     color: Color(0xFF168DE2),
