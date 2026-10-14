@@ -7,6 +7,8 @@ import 'package:http/http.dart' as http;
 
 import '../../config/api_config.dart';
 import 'ult_success_page.dart';
+import 'ult_queue_time_field.dart';
+import '../../services/ult_notification_service.dart';
 
 class UltPage extends StatefulWidget {
   const UltPage({super.key});
@@ -16,122 +18,63 @@ class UltPage extends StatefulWidget {
 }
 
 class _UltPageState extends State<UltPage> {
-  // =========================================================
   // FORM
-  // =========================================================
-
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
-  // =========================================================
   // FIELD BERSAMA
-  // =========================================================
-
   final TextEditingController _nameController = TextEditingController();
-
   final TextEditingController _phoneController = TextEditingController();
-
   final TextEditingController _emailController = TextEditingController();
-
   final TextEditingController _descriptionController = TextEditingController();
 
-  // =========================================================
   // FIELD MAHASISWA
-  // =========================================================
-
   final TextEditingController _identifierController = TextEditingController();
-
   final TextEditingController _departmentController = TextEditingController();
 
   String? _selectedSemester;
-
   String? _selectedService;
 
-  // =========================================================
   // FIELD UMUM
-  // =========================================================
-
   final TextEditingController _originController = TextEditingController();
-
   final TextEditingController _destinationController = TextEditingController();
 
   String? _selectedGeneralService;
-
-  // =========================================================
-  // KATEGORI
-  // =========================================================
-
   String? _selectedCategory;
 
-  // =========================================================
-  // JENIS ANTRIAN
-  //
-  // langsung = hari ini
-  // booking  = pilih tanggal
-  // =========================================================
+  // TANGGAL DAN JAM ANTRIAN
+  DateTime _selectedQueueDate = DateUtils.dateOnly(UltQueueSchedule.now());
 
-  String? _selectedQueueType;
+  int? _selectedQueueMinute;
 
-  DateTime? _selectedBookingDate;
+  bool _isQueueDatePickerOpen = false;
 
-  // =========================================================
-  // MASTER DATA DINAMIS
-  // =========================================================
-
+  // MASTER DATA
   List<String> _semesterOptions = <String>[];
-
   List<String> _studentServices = <String>[];
-
   List<String> _generalServices = <String>[];
-
-  // =========================================================
-  // NOTIFIKASI LAYANAN MAHASISWA
-  //
-  // key   = nama layanan
-  // value = notification_text dari Laravel
-  // =========================================================
 
   final Map<String, String> _studentServiceNotifications = <String, String>{};
 
-  // =========================================================
-  // LOADING MASTER DATA
-  // =========================================================
-
+  // LOADING
   bool _isLoadingSemesters = true;
-
   bool _isLoadingStudentServices = true;
-
   bool _isLoadingGeneralServices = true;
 
-  // =========================================================
   // ERROR MASTER DATA
-  // =========================================================
-
   bool _semesterLoadError = false;
-
   bool _studentServiceLoadError = false;
-
   bool _generalServiceLoadError = false;
-
-  // =========================================================
-  // LAINNYA
-  // =========================================================
 
   bool _isSubmitting = false;
 
   int _formVersion = 0;
-
-  // =========================================================
-  // INIT
-  // =========================================================
 
   @override
   void initState() {
     super.initState();
 
     _loadSemesterOptions();
-
     _loadStudentServices();
-
     _loadGeneralServices();
   }
 
@@ -143,35 +86,23 @@ class _UltPageState extends State<UltPage> {
     ]);
   }
 
-  // =========================================================
-  // DISPOSE
-  // =========================================================
-
   @override
   void dispose() {
     _nameController.dispose();
-
     _phoneController.dispose();
-
     _emailController.dispose();
-
     _descriptionController.dispose();
 
     _identifierController.dispose();
-
     _departmentController.dispose();
 
     _originController.dispose();
-
     _destinationController.dispose();
 
     super.dispose();
   }
 
-  // =========================================================
-  // GET NOTIFIKASI LAYANAN MAHASISWA TERPILIH
-  // =========================================================
-
+  // NOTIFIKASI LAYANAN MAHASISWA
   String? get _selectedStudentServiceNotification {
     final String service = _selectedService?.trim() ?? '';
 
@@ -189,32 +120,21 @@ class _UltPageState extends State<UltPage> {
     return notification;
   }
 
-  // =========================================================
-  // APAKAH ANTRIAN LANGSUNG HARUS DINONAKTIFKAN
-  //
-  // Jika:
-  // - kategori Mahasiswa
-  // - layanan memiliki notification_text
-  //
-  // maka Langsung tidak boleh digunakan.
-  // =========================================================
-
+  // Mengikuti aturan layanan sebelumnya:
+  // layanan mahasiswa dengan pemberitahuan admin
+  // tidak dapat mengambil antrean hari ini.
   bool get _isDirectQueueDisabled {
     return _selectedCategory == 'Mahasiswa' &&
         _selectedStudentServiceNotification != null;
   }
 
-  // =========================================================
   // FETCH MASTER DATA
-  // =========================================================
-
   Future<List<Map<String, dynamic>>> _fetchMasterOptionItems(String url) async {
     final http.Response response = await http
         .get(Uri.parse(url))
         .timeout(const Duration(seconds: 20));
 
     debugPrint('ANTRIAN MASTER STATUS: ${response.statusCode}');
-
     debugPrint('ANTRIAN MASTER RESPONSE: ${response.body}');
 
     final dynamic decoded = jsonDecode(response.body);
@@ -234,15 +154,11 @@ class _UltPageState extends State<UltPage> {
     return rawData.whereType<Map<String, dynamic>>().toList();
   }
 
-  // =========================================================
   // LOAD SEMESTER
-  // =========================================================
-
   Future<void> _loadSemesterOptions() async {
     if (mounted) {
       setState(() {
         _isLoadingSemesters = true;
-
         _semesterLoadError = false;
       });
     }
@@ -273,7 +189,6 @@ class _UltPageState extends State<UltPage> {
         }
 
         _isLoadingSemesters = false;
-
         _semesterLoadError = false;
       });
     } on TimeoutException {
@@ -285,9 +200,7 @@ class _UltPageState extends State<UltPage> {
 
       setState(() {
         _semesterOptions = <String>[];
-
         _isLoadingSemesters = false;
-
         _semesterLoadError = true;
       });
     } catch (e) {
@@ -299,25 +212,17 @@ class _UltPageState extends State<UltPage> {
 
       setState(() {
         _semesterOptions = <String>[];
-
         _isLoadingSemesters = false;
-
         _semesterLoadError = true;
       });
     }
   }
 
-  // =========================================================
   // LOAD LAYANAN MAHASISWA
-  //
-  // Termasuk notification_text dari Laravel.
-  // =========================================================
-
   Future<void> _loadStudentServices() async {
     if (mounted) {
       setState(() {
         _isLoadingStudentServices = true;
-
         _studentServiceLoadError = false;
       });
     }
@@ -328,7 +233,6 @@ class _UltPageState extends State<UltPage> {
       );
 
       final List<String> services = <String>[];
-
       final Map<String, String> notifications = <String, String>{};
 
       for (final Map<String, dynamic> item in items) {
@@ -364,8 +268,9 @@ class _UltPageState extends State<UltPage> {
           _selectedService = null;
         }
 
-        _isLoadingStudentServices = false;
+        _adjustQueueDateForService();
 
+        _isLoadingStudentServices = false;
         _studentServiceLoadError = false;
       });
     } on TimeoutException {
@@ -377,11 +282,9 @@ class _UltPageState extends State<UltPage> {
 
       setState(() {
         _studentServices = <String>[];
-
         _studentServiceNotifications.clear();
 
         _isLoadingStudentServices = false;
-
         _studentServiceLoadError = true;
       });
     } catch (e) {
@@ -393,25 +296,19 @@ class _UltPageState extends State<UltPage> {
 
       setState(() {
         _studentServices = <String>[];
-
         _studentServiceNotifications.clear();
 
         _isLoadingStudentServices = false;
-
         _studentServiceLoadError = true;
       });
     }
   }
 
-  // =========================================================
   // LOAD LAYANAN UMUM
-  // =========================================================
-
   Future<void> _loadGeneralServices() async {
     if (mounted) {
       setState(() {
         _isLoadingGeneralServices = true;
-
         _generalServiceLoadError = false;
       });
     }
@@ -442,7 +339,6 @@ class _UltPageState extends State<UltPage> {
         }
 
         _isLoadingGeneralServices = false;
-
         _generalServiceLoadError = false;
       });
     } on TimeoutException {
@@ -454,9 +350,7 @@ class _UltPageState extends State<UltPage> {
 
       setState(() {
         _generalServices = <String>[];
-
         _isLoadingGeneralServices = false;
-
         _generalServiceLoadError = true;
       });
     } catch (e) {
@@ -468,54 +362,38 @@ class _UltPageState extends State<UltPage> {
 
       setState(() {
         _generalServices = <String>[];
-
         _isLoadingGeneralServices = false;
-
         _generalServiceLoadError = true;
       });
     }
   }
 
-  // =========================================================
   // FIELD DECORATION
-  // =========================================================
-
   InputDecoration _fieldDecoration({String? hintText, Widget? prefixIcon}) {
     return InputDecoration(
       hintText: hintText,
-
       hintStyle: const TextStyle(color: Color(0xFF888888), fontSize: 10.5),
-
       prefixIcon: prefixIcon,
-
       prefixIconConstraints: const BoxConstraints(minWidth: 38, minHeight: 42),
-
       filled: true,
-
       fillColor: const Color(0xFFF5F6FA),
-
       contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 11),
-
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(5),
         borderSide: const BorderSide(color: Color(0xFF8D8D8D), width: 0.8),
       ),
-
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(5),
         borderSide: const BorderSide(color: Color(0xFF8D8D8D), width: 0.8),
       ),
-
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(5),
         borderSide: const BorderSide(color: Color(0xFF3AA7F5), width: 1.4),
       ),
-
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(5),
         borderSide: const BorderSide(color: Colors.red, width: 1),
       ),
-
       focusedErrorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(5),
         borderSide: const BorderSide(color: Colors.red, width: 1.3),
@@ -523,20 +401,14 @@ class _UltPageState extends State<UltPage> {
     );
   }
 
-  // =========================================================
-  // BUILD
-  // =========================================================
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF0F9FF),
-
       body: SafeArea(
         child: Container(
           width: double.infinity,
           height: double.infinity,
-
           decoration: const BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topCenter,
@@ -544,48 +416,34 @@ class _UltPageState extends State<UltPage> {
               colors: [Color(0xFFF0F9FF), Color(0xFFD7EEFF), Color(0xFFB9E1FF)],
             ),
           ),
-
           child: RefreshIndicator(
             onRefresh: _refreshPage,
-
             child: SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(
                 parent: BouncingScrollPhysics(),
               ),
-
               keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-
               padding: const EdgeInsets.fromLTRB(16, 14, 16, 28),
-
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-
                 children: [
-                  // =================================================
                   // HEADER
-                  // =================================================
                   Row(
                     children: [
                       IconButton(
                         padding: EdgeInsets.zero,
-
                         constraints: const BoxConstraints(),
-
                         tooltip: 'Kembali',
-
                         onPressed: () {
                           Navigator.of(context).pop();
                         },
-
                         icon: const Icon(
                           Icons.arrow_back_ios_new_rounded,
                           size: 21,
                           color: Color(0xFF111111),
                         ),
                       ),
-
                       const SizedBox(width: 10),
-
                       const Text(
                         'ULT',
                         style: TextStyle(
@@ -599,27 +457,21 @@ class _UltPageState extends State<UltPage> {
 
                   const SizedBox(height: 22),
 
-                  // =================================================
                   // HERO
-                  // =================================================
                   SizedBox(
                     width: double.infinity,
                     height: 120,
-
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
-
                       children: [
                         const Expanded(
                           child: Padding(
                             padding: EdgeInsets.only(left: 7, top: 2),
-
                             child: Text(
                               'Isi form dibawah\n'
                               'untuk\n'
                               'mendapatkan\n'
                               'nomor antrian tiket',
-
                               style: TextStyle(
                                 color: Color(0xFF111111),
                                 fontSize: 20.5,
@@ -629,11 +481,9 @@ class _UltPageState extends State<UltPage> {
                             ),
                           ),
                         ),
-
                         SizedBox(
                           width: 155,
                           height: 115,
-
                           child: Image.asset(
                             'assets/images/antrian.png',
                             fit: BoxFit.contain,
@@ -645,24 +495,17 @@ class _UltPageState extends State<UltPage> {
 
                   const SizedBox(height: 7),
 
-                  // =================================================
-                  // CARD
-                  // =================================================
+                  // CARD FORM
                   Container(
                     width: double.infinity,
-
                     padding: const EdgeInsets.fromLTRB(10, 12, 10, 16),
-
                     decoration: BoxDecoration(
                       color: Colors.white,
-
                       borderRadius: BorderRadius.circular(10),
-
                       border: Border.all(
                         color: const Color(0xFFD6E9F7),
                         width: 0.7,
                       ),
-
                       boxShadow: const [
                         BoxShadow(
                           color: Color(0x12000000),
@@ -671,20 +514,13 @@ class _UltPageState extends State<UltPage> {
                         ),
                       ],
                     ),
-
                     child: Form(
                       key: _formKey,
-
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
-
                         children: [
-                          // =========================================
-                          // PILIH KATEGORI
-                          // =========================================
                           const Text(
                             'Pilih Kategori',
-
                             style: TextStyle(
                               color: Color(0xFF202020),
                               fontSize: 10.5,
@@ -704,9 +540,7 @@ class _UltPageState extends State<UltPage> {
                                   iconColor: const Color(0xFF6757D9),
                                 ),
                               ),
-
                               const SizedBox(width: 8),
-
                               Expanded(
                                 child: _categoryButton(
                                   title: 'Umum',
@@ -718,9 +552,6 @@ class _UltPageState extends State<UltPage> {
                             ],
                           ),
 
-                          // =========================================
-                          // FORM MUNCUL SETELAH KATEGORI
-                          // =========================================
                           if (_selectedCategory != null) ...[
                             const SizedBox(height: 18),
 
@@ -731,125 +562,29 @@ class _UltPageState extends State<UltPage> {
 
                             const SizedBox(height: 12),
 
-                            // =======================================
-                            // JENIS ANTRIAN
-                            // =======================================
-                            const Text(
-                              'Jenis Antrian',
+                            // TANGGAL ANTRIAN
+                            _fieldTitle('Tanggal Antrian'),
+                            _queueDateField(),
 
-                              style: TextStyle(
-                                color: Color(0xFF202020),
-                                fontSize: 10.5,
-                                fontWeight: FontWeight.w500,
-                              ),
+                            const SizedBox(height: 13),
+
+                            // JAM ANTRIAN
+                            _fieldTitle('Jam Antrian'),
+                            UltQueueTimeField(
+                              date: _selectedQueueDate,
+                              selectedMinute: _selectedQueueMinute,
+                              enabled:
+                                  !_isSubmitting && !_isQueueDatePickerOpen,
+                              onChanged: (int minute) {
+                                setState(() {
+                                  _selectedQueueMinute = minute;
+                                });
+                              },
                             ),
 
-                            const SizedBox(height: 7),
+                            const SizedBox(height: 8),
 
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: _queueTypeButton(
-                                    title: 'Langsung',
-
-                                    subtitle: _isDirectQueueDisabled
-                                        ? 'Tidak Tersedia'
-                                        : 'Hari Ini',
-
-                                    value: 'langsung',
-
-                                    icon: Icons.flash_on_rounded,
-
-                                    disabled: _isDirectQueueDisabled,
-                                  ),
-                                ),
-
-                                const SizedBox(width: 8),
-
-                                Expanded(
-                                  child: _queueTypeButton(
-                                    title: 'Booking',
-                                    subtitle: 'Pilih Hari',
-                                    value: 'booking',
-                                    icon: Icons.calendar_month_rounded,
-                                  ),
-                                ),
-                              ],
-                            ),
-
-                            // =======================================
-                            // INFO JIKA LANGSUNG DINONAKTIFKAN
-                            // =======================================
-                            if (_isDirectQueueDisabled) ...[
-                              const SizedBox(height: 8),
-
-                              Container(
-                                width: double.infinity,
-
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 10,
-                                  vertical: 8,
-                                ),
-
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFFFF3F3),
-
-                                  borderRadius: BorderRadius.circular(5),
-
-                                  border: Border.all(
-                                    color: const Color(0xFFFFCDD2),
-                                    width: 0.7,
-                                  ),
-                                ),
-
-                                child: const Row(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-
-                                  children: [
-                                    Icon(
-                                      Icons.info_outline_rounded,
-                                      size: 16,
-                                      color: Color(0xFFD32F2F),
-                                    ),
-
-                                    SizedBox(width: 7),
-
-                                    Expanded(
-                                      child: Text(
-                                        'Jenis antrian Langsung tidak tersedia '
-                                        'untuk layanan ini. Silakan pilih Booking.',
-
-                                        style: TextStyle(
-                                          color: Color(0xFFC62828),
-                                          fontSize: 9,
-                                          height: 1.3,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-
-                            // =======================================
-                            // LANGSUNG
-                            // =======================================
-                            if (_selectedQueueType == 'langsung') ...[
-                              const SizedBox(height: 10),
-
-                              _todayInformation(),
-                            ],
-
-                            // =======================================
-                            // BOOKING
-                            // =======================================
-                            if (_selectedQueueType == 'booking') ...[
-                              const SizedBox(height: 13),
-
-                              _fieldTitle('Tanggal Antrian'),
-
-                              _bookingDateField(),
-                            ],
+                            _queueDateInformation(),
 
                             const SizedBox(height: 18),
 
@@ -864,7 +599,6 @@ class _UltPageState extends State<UltPage> {
                               _selectedCategory == 'Mahasiswa'
                                   ? 'Silakan isi data mahasiswa berikut.'
                                   : 'Silakan isi data pengunjung berikut.',
-
                               style: const TextStyle(
                                 color: Color(0xFF333333),
                                 fontSize: 9.5,
@@ -873,26 +607,17 @@ class _UltPageState extends State<UltPage> {
 
                             const SizedBox(height: 18),
 
-                            // =======================================
                             // NAMA
-                            // =======================================
                             _fieldTitle('Nama'),
-
                             TextFormField(
                               controller: _nameController,
-
                               enabled: !_isSubmitting,
-
                               textCapitalization: TextCapitalization.words,
-
                               textInputAction: TextInputAction.next,
-
                               decoration: _fieldDecoration(
                                 hintText: 'Masukkan nama lengkap',
-
                                 prefixIcon: Padding(
                                   padding: const EdgeInsets.all(8),
-
                                   child: Image.asset(
                                     'assets/images/pp.png',
                                     width: 20,
@@ -901,7 +626,6 @@ class _UltPageState extends State<UltPage> {
                                   ),
                                 ),
                               ),
-
                               validator: (String? value) {
                                 final String name = value?.trim() ?? '';
 
@@ -919,33 +643,22 @@ class _UltPageState extends State<UltPage> {
 
                             const SizedBox(height: 13),
 
-                            // =======================================
-                            // MAHASISWA -> NIM
-                            // =======================================
+                            // NIM MAHASISWA
                             if (_selectedCategory == 'Mahasiswa') ...[
                               _fieldTitle('NIM'),
-
                               TextFormField(
                                 controller: _identifierController,
-
                                 enabled: !_isSubmitting,
-
                                 keyboardType: TextInputType.number,
-
                                 textInputAction: TextInputAction.next,
-
                                 inputFormatters: [
                                   FilteringTextInputFormatter.digitsOnly,
-
                                   LengthLimitingTextInputFormatter(30),
                                 ],
-
                                 decoration: _fieldDecoration(
                                   hintText: 'Masukkan NIM',
-
                                   prefixIcon: Padding(
                                     padding: const EdgeInsets.all(8),
-
                                     child: Image.asset(
                                       'assets/images/book.png',
                                       width: 20,
@@ -954,7 +667,6 @@ class _UltPageState extends State<UltPage> {
                                     ),
                                   ),
                                 ),
-
                                 validator: (String? value) {
                                   final String nim = value?.trim() ?? '';
 
@@ -969,35 +681,25 @@ class _UltPageState extends State<UltPage> {
                                   return null;
                                 },
                               ),
-
                               const SizedBox(height: 13),
                             ],
 
-                            // =======================================
-                            // UMUM -> DARI
-                            // =======================================
+                            // ASAL PENGUNJUNG UMUM
                             if (_selectedCategory == 'Umum') ...[
                               _fieldTitle('Dari'),
-
                               TextFormField(
                                 controller: _originController,
-
                                 enabled: !_isSubmitting,
-
                                 textCapitalization: TextCapitalization.words,
-
                                 textInputAction: TextInputAction.next,
-
                                 decoration: _fieldDecoration(
                                   hintText: 'Masukkan asal / instansi',
-
                                   prefixIcon: const Icon(
                                     Icons.business_rounded,
                                     size: 20,
                                     color: Color(0xFF6757D9),
                                   ),
                                 ),
-
                                 validator: (String? value) {
                                   final String origin = value?.trim() ?? '';
 
@@ -1008,40 +710,28 @@ class _UltPageState extends State<UltPage> {
                                   return null;
                                 },
                               ),
-
                               const SizedBox(height: 13),
                             ],
 
-                            // =======================================
-                            // NO HP
-                            // =======================================
+                            // NO. HP
                             _fieldTitle('No. HP'),
-
                             TextFormField(
                               controller: _phoneController,
-
                               enabled: !_isSubmitting,
-
                               keyboardType: TextInputType.phone,
-
                               textInputAction: TextInputAction.next,
-
                               inputFormatters: [
                                 FilteringTextInputFormatter.digitsOnly,
-
                                 LengthLimitingTextInputFormatter(13),
                               ],
-
                               decoration: _fieldDecoration(
                                 hintText: 'Masukkan nomor HP aktif',
-
                                 prefixIcon: const Icon(
                                   Icons.phone_android_rounded,
                                   size: 20,
                                   color: Color(0xFF168DE2),
                                 ),
                               ),
-
                               validator: (String? value) {
                                 final String phone = value?.trim() ?? '';
 
@@ -1059,28 +749,18 @@ class _UltPageState extends State<UltPage> {
 
                             const SizedBox(height: 13),
 
-                            // =======================================
                             // EMAIL
-                            // =======================================
                             _fieldTitle('Email'),
-
                             TextFormField(
                               controller: _emailController,
-
                               enabled: !_isSubmitting,
-
                               keyboardType: TextInputType.emailAddress,
-
                               textInputAction: TextInputAction.next,
-
                               autocorrect: false,
-
                               decoration: _fieldDecoration(
                                 hintText: 'Masukkan email aktif',
-
                                 prefixIcon: Padding(
                                   padding: const EdgeInsets.all(8),
-
                                   child: Image.asset(
                                     'assets/images/email.png',
                                     width: 20,
@@ -1089,7 +769,6 @@ class _UltPageState extends State<UltPage> {
                                   ),
                                 ),
                               ),
-
                               validator: (String? value) {
                                 final String email = value?.trim() ?? '';
 
@@ -1111,34 +790,22 @@ class _UltPageState extends State<UltPage> {
 
                             const SizedBox(height: 13),
 
-                            // =======================================
-                            // MAHASISWA
-                            // =======================================
+                            // DATA MAHASISWA
                             if (_selectedCategory == 'Mahasiswa') ...[
-                              // =====================================
-                              // JURUSAN
-                              // =====================================
                               _fieldTitle('Jurusan'),
-
                               TextFormField(
                                 controller: _departmentController,
-
                                 enabled: !_isSubmitting,
-
                                 textCapitalization: TextCapitalization.words,
-
                                 textInputAction: TextInputAction.next,
-
                                 decoration: _fieldDecoration(
                                   hintText: 'Masukkan nama jurusan',
-
                                   prefixIcon: const Icon(
                                     Icons.account_balance_rounded,
                                     size: 20,
                                     color: Color(0xFF6757D9),
                                   ),
                                 ),
-
                                 validator: (String? value) {
                                   final String department = value?.trim() ?? '';
 
@@ -1152,54 +819,40 @@ class _UltPageState extends State<UltPage> {
 
                               const SizedBox(height: 13),
 
-                              // =====================================
                               // SEMESTER
-                              // =====================================
                               _fieldTitle('Semester'),
-
                               DropdownButtonFormField<String>(
                                 key: ValueKey('semester-$_formVersion'),
-
                                 initialValue: _selectedSemester,
-
                                 isExpanded: true,
-
                                 menuMaxHeight: 300,
-
                                 dropdownColor: const Color(0xFFF0F7FF),
-
                                 decoration: _fieldDecoration(
                                   hintText: _isLoadingSemesters
                                       ? 'Memuat semester...'
                                       : _semesterLoadError
                                       ? 'Gagal memuat semester'
                                       : 'Pilih Semester',
-
                                   prefixIcon: const Icon(
                                     Icons.school_rounded,
                                     size: 20,
                                     color: Color(0xFF3EA94C),
                                   ),
                                 ),
-
                                 icon: const Icon(
                                   Icons.keyboard_arrow_down_rounded,
                                   size: 20,
                                   color: Color(0xFF222222),
                                 ),
-
                                 style: const TextStyle(
                                   color: Color(0xFF202020),
                                   fontSize: 14,
                                 ),
-
                                 items: _semesterOptions.map((String semester) {
                                   return DropdownMenuItem<String>(
                                     value: semester,
-
                                     child: Text(
                                       'Semester $semester',
-
                                       style: const TextStyle(
                                         color: Color(0xFF202020),
                                         fontSize: 14,
@@ -1207,7 +860,6 @@ class _UltPageState extends State<UltPage> {
                                     ),
                                   );
                                 }).toList(),
-
                                 onChanged:
                                     _isSubmitting ||
                                         _isLoadingSemesters ||
@@ -1219,7 +871,6 @@ class _UltPageState extends State<UltPage> {
                                           _selectedSemester = value;
                                         });
                                       },
-
                                 validator: (String? value) {
                                   if (_isLoadingSemesters) {
                                     return 'Daftar semester masih dimuat';
@@ -1246,32 +897,22 @@ class _UltPageState extends State<UltPage> {
 
                               const SizedBox(height: 13),
 
-                              // =====================================
                               // LAYANAN MAHASISWA
-                              // =====================================
                               _fieldTitle('Layanan'),
-
                               DropdownButtonFormField<String>(
                                 key: ValueKey('service-$_formVersion'),
-
                                 initialValue: _selectedService,
-
                                 isExpanded: true,
-
                                 menuMaxHeight: 300,
-
                                 dropdownColor: const Color(0xFFF0F7FF),
-
                                 decoration: _fieldDecoration(
                                   hintText: _isLoadingStudentServices
                                       ? 'Memuat layanan...'
                                       : _studentServiceLoadError
                                       ? 'Gagal memuat layanan'
                                       : 'Pilih Layanan',
-
                                   prefixIcon: Padding(
                                     padding: const EdgeInsets.all(7),
-
                                     child: Image.asset(
                                       'assets/images/layanan.png',
                                       width: 21,
@@ -1280,25 +921,20 @@ class _UltPageState extends State<UltPage> {
                                     ),
                                   ),
                                 ),
-
                                 icon: const Icon(
                                   Icons.keyboard_arrow_down_rounded,
                                   size: 20,
                                   color: Color(0xFF222222),
                                 ),
-
                                 style: const TextStyle(
                                   color: Color(0xFF202020),
                                   fontSize: 14,
                                 ),
-
                                 items: _studentServices.map((String service) {
                                   return DropdownMenuItem<String>(
                                     value: service,
-
                                     child: Text(
                                       service,
-
                                       style: const TextStyle(
                                         color: Color(0xFF202020),
                                         fontSize: 14,
@@ -1306,7 +942,6 @@ class _UltPageState extends State<UltPage> {
                                     ),
                                   );
                                 }).toList(),
-
                                 onChanged:
                                     _isSubmitting ||
                                         _isLoadingStudentServices ||
@@ -1314,40 +949,23 @@ class _UltPageState extends State<UltPage> {
                                         _studentServices.isEmpty
                                     ? null
                                     : (String? value) {
-                                        final String notification =
-                                            value == null
-                                            ? ''
-                                            : (_studentServiceNotifications[value]
-                                                      ?.trim() ??
-                                                  '');
-
-                                        final bool hasNotification =
-                                            notification.isNotEmpty;
-
-                                        final bool wasDirect =
-                                            _selectedQueueType == 'langsung';
+                                        bool dateAdjusted = false;
 
                                         setState(() {
                                           _selectedService = value;
 
-                                          // Jika layanan mempunyai
-                                          // peringatan, antrian Langsung
-                                          // tidak diperbolehkan.
-                                          if (hasNotification && wasDirect) {
-                                            _selectedQueueType = null;
-
-                                            _selectedBookingDate = null;
-                                          }
+                                          dateAdjusted =
+                                              _adjustQueueDateForService();
                                         });
 
-                                        if (hasNotification && wasDirect) {
+                                        if (dateAdjusted) {
                                           _showMessage(
-                                            'Layanan ini tidak dapat menggunakan '
-                                            'antrian Langsung. Silakan pilih Booking.',
+                                            'Layanan ini tidak tersedia hari ini. '
+                                            'Tanggal antrian disesuaikan ke besok; '
+                                            'Anda dapat memilih tanggal lain di kalender.',
                                           );
                                         }
                                       },
-
                                 validator: (String? value) {
                                   if (_isLoadingStudentServices) {
                                     return 'Daftar layanan masih dimuat';
@@ -1372,13 +990,10 @@ class _UltPageState extends State<UltPage> {
                               if (_studentServiceLoadError)
                                 _retryButton(onPressed: _loadStudentServices),
 
-                              // =====================================
-                              // PERINGATAN DARI ADMIN
-                              // =====================================
+                              // PEMBERITAHUAN ADMIN
                               if (_selectedStudentServiceNotification !=
                                   null) ...[
                                 const SizedBox(height: 8),
-
                                 _buildServiceNotification(
                                   _selectedStudentServiceNotification!,
                                 ),
@@ -1387,36 +1002,23 @@ class _UltPageState extends State<UltPage> {
                               const SizedBox(height: 13),
                             ],
 
-                            // =======================================
-                            // UMUM
-                            // =======================================
+                            // DATA PENGUNJUNG UMUM
                             if (_selectedCategory == 'Umum') ...[
-                              // =====================================
-                              // JENIS LAYANAN
-                              // =====================================
                               _fieldTitle('Jenis Layanan'),
-
                               DropdownButtonFormField<String>(
                                 key: ValueKey('general-service-$_formVersion'),
-
                                 initialValue: _selectedGeneralService,
-
                                 isExpanded: true,
-
                                 menuMaxHeight: 300,
-
                                 dropdownColor: const Color(0xFFF0F7FF),
-
                                 decoration: _fieldDecoration(
                                   hintText: _isLoadingGeneralServices
                                       ? 'Memuat jenis layanan...'
                                       : _generalServiceLoadError
                                       ? 'Gagal memuat jenis layanan'
                                       : 'Pilih Jenis Layanan',
-
                                   prefixIcon: Padding(
                                     padding: const EdgeInsets.all(7),
-
                                     child: Image.asset(
                                       'assets/images/layanan.png',
                                       width: 21,
@@ -1425,25 +1027,20 @@ class _UltPageState extends State<UltPage> {
                                     ),
                                   ),
                                 ),
-
                                 icon: const Icon(
                                   Icons.keyboard_arrow_down_rounded,
                                   size: 20,
                                   color: Color(0xFF222222),
                                 ),
-
                                 style: const TextStyle(
                                   color: Color(0xFF202020),
                                   fontSize: 14,
                                 ),
-
                                 items: _generalServices.map((String service) {
                                   return DropdownMenuItem<String>(
                                     value: service,
-
                                     child: Text(
                                       service,
-
                                       style: const TextStyle(
                                         color: Color(0xFF202020),
                                         fontSize: 14,
@@ -1451,7 +1048,6 @@ class _UltPageState extends State<UltPage> {
                                     ),
                                   );
                                 }).toList(),
-
                                 onChanged:
                                     _isSubmitting ||
                                         _isLoadingGeneralServices ||
@@ -1463,7 +1059,6 @@ class _UltPageState extends State<UltPage> {
                                           _selectedGeneralService = value;
                                         });
                                       },
-
                                 validator: (String? value) {
                                   if (_isLoadingGeneralServices) {
                                     return 'Daftar layanan masih dimuat';
@@ -1490,31 +1085,21 @@ class _UltPageState extends State<UltPage> {
 
                               const SizedBox(height: 13),
 
-                              // =====================================
-                              // UNTUK
-                              // =====================================
                               _fieldTitle('Untuk'),
-
                               TextFormField(
                                 controller: _destinationController,
-
                                 enabled: !_isSubmitting,
-
                                 textCapitalization:
                                     TextCapitalization.sentences,
-
                                 textInputAction: TextInputAction.next,
-
                                 decoration: _fieldDecoration(
                                   hintText: 'Masukkan tujuan pengajuan',
-
                                   prefixIcon: const Icon(
                                     Icons.send_rounded,
                                     size: 20,
                                     color: Color(0xFF3EA94C),
                                   ),
                                 ),
-
                                 validator: (String? value) {
                                   final String destination =
                                       value?.trim() ?? '';
@@ -1530,37 +1115,24 @@ class _UltPageState extends State<UltPage> {
                               const SizedBox(height: 13),
                             ],
 
-                            // =======================================
                             // KETERANGAN
-                            // =======================================
                             _fieldTitle('Keterangan'),
-
                             SizedBox(
                               height: 115,
-
                               child: TextFormField(
                                 controller: _descriptionController,
-
                                 enabled: !_isSubmitting,
-
                                 expands: true,
-
                                 minLines: null,
-
                                 maxLines: null,
-
                                 keyboardType: TextInputType.multiline,
-
                                 textCapitalization:
                                     TextCapitalization.sentences,
-
                                 textAlignVertical: TextAlignVertical.top,
-
                                 decoration: _fieldDecoration(
                                   hintText:
                                       'Tuliskan keterangan pengajuan Anda',
                                 ),
-
                                 validator: (String? value) {
                                   final String description =
                                       value?.trim() ?? '';
@@ -1576,45 +1148,33 @@ class _UltPageState extends State<UltPage> {
 
                             const SizedBox(height: 25),
 
-                            // =======================================
-                            // BUTTON
-                            // =======================================
+                            // TOMBOL KIRIM DAN RESET
                             Row(
                               mainAxisAlignment: MainAxisAlignment.center,
-
                               children: [
                                 SizedBox(
                                   width: 100,
                                   height: 40,
-
                                   child: ElevatedButton(
                                     onPressed: _isSubmitting
                                         ? null
                                         : _submitForm,
-
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: const Color(0xFF5868FF),
-
                                       disabledBackgroundColor: const Color(
                                         0xFFADB5F5,
                                       ),
-
                                       foregroundColor: Colors.white,
-
                                       elevation: 0,
-
                                       padding: EdgeInsets.zero,
-
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(5),
                                       ),
                                     ),
-
                                     child: _isSubmitting
                                         ? const SizedBox(
                                             width: 18,
                                             height: 18,
-
                                             child: CircularProgressIndicator(
                                               strokeWidth: 2,
                                               color: Colors.white,
@@ -1622,7 +1182,6 @@ class _UltPageState extends State<UltPage> {
                                           )
                                         : const Text(
                                             'Kirim Data',
-
                                             style: TextStyle(
                                               fontSize: 9.5,
                                               fontWeight: FontWeight.w500,
@@ -1636,29 +1195,21 @@ class _UltPageState extends State<UltPage> {
                                 SizedBox(
                                   width: 72,
                                   height: 40,
-
                                   child: ElevatedButton(
                                     onPressed: _isSubmitting
                                         ? null
                                         : _resetForm,
-
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: const Color(0xFF59C467),
-
                                       foregroundColor: Colors.white,
-
                                       elevation: 0,
-
                                       padding: EdgeInsets.zero,
-
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(5),
                                       ),
                                     ),
-
                                     child: const Text(
                                       'Reset',
-
                                       style: TextStyle(
                                         fontSize: 9.5,
                                         fontWeight: FontWeight.w500,
@@ -1686,10 +1237,7 @@ class _UltPageState extends State<UltPage> {
     );
   }
 
-  // =========================================================
-  // CATEGORY BUTTON
-  // =========================================================
-
+  // TOMBOL KATEGORI
   Widget _categoryButton({
     required String title,
     required String value,
@@ -1700,10 +1248,8 @@ class _UltPageState extends State<UltPage> {
 
     return Material(
       color: Colors.transparent,
-
       child: InkWell(
         borderRadius: BorderRadius.circular(5),
-
         onTap: _isSubmitting
             ? null
             : () {
@@ -1712,89 +1258,53 @@ class _UltPageState extends State<UltPage> {
                 }
 
                 setState(() {
-                  // =========================================
-                  // KATEGORI BARU
-                  // =========================================
-
                   _selectedCategory = value;
 
-                  // =========================================
-                  // RESET JENIS ANTRIAN
-                  // =========================================
+                  // RESET TANGGAL DAN JAM
+                  _selectedQueueDate = _today;
+                  _selectedQueueMinute = null;
 
-                  _selectedQueueType = null;
-
-                  _selectedBookingDate = null;
-
-                  // =========================================
-                  // RESET MAHASISWA
-                  // =========================================
-
+                  // RESET DATA MAHASISWA
                   _identifierController.clear();
-
                   _departmentController.clear();
-
                   _selectedSemester = null;
-
                   _selectedService = null;
 
-                  // =========================================
-                  // RESET UMUM
-                  // =========================================
-
+                  // RESET DATA UMUM
                   _originController.clear();
-
                   _destinationController.clear();
-
                   _selectedGeneralService = null;
 
-                  // =========================================
-                  // RESET KETERANGAN
-                  // =========================================
-
                   _descriptionController.clear();
-
                   _formVersion++;
                 });
 
                 _formKey.currentState?.reset();
               },
-
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 180),
-
           height: 55,
-
           padding: const EdgeInsets.symmetric(horizontal: 8),
-
           decoration: BoxDecoration(
             color: selected ? const Color(0xFFEAF5FF) : Colors.white,
-
             borderRadius: BorderRadius.circular(5),
-
             border: Border.all(
               color: selected
                   ? const Color(0xFF3AA7F5)
                   : const Color(0xFF8D8D8D),
-
               width: selected ? 1.3 : 0.8,
             ),
           ),
-
           child: Row(
             children: [
               Container(
                 width: 25,
                 height: 25,
-
                 padding: const EdgeInsets.all(4),
-
                 decoration: BoxDecoration(
                   color: iconColor,
-
                   borderRadius: BorderRadius.circular(4),
                 ),
-
                 child: Image.asset(
                   asset,
                   fit: BoxFit.contain,
@@ -1808,16 +1318,11 @@ class _UltPageState extends State<UltPage> {
               Expanded(
                 child: Text(
                   title,
-
                   maxLines: 1,
-
                   overflow: TextOverflow.ellipsis,
-
                   style: TextStyle(
                     color: const Color(0xFF202020),
-
                     fontSize: 10.5,
-
                     fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
                   ),
                 ),
@@ -1829,216 +1334,46 @@ class _UltPageState extends State<UltPage> {
     );
   }
 
-  // =========================================================
-  // JENIS ANTRIAN BUTTON
-  // =========================================================
+  // TANGGAL ANTRIAN
+  DateTime get _today => DateUtils.dateOnly(UltQueueSchedule.now());
 
-  Widget _queueTypeButton({
-    required String title,
-    required String subtitle,
-    required String value,
-    required IconData icon,
-    bool disabled = false,
-  }) {
-    final bool selected = _selectedQueueType == value;
+  DateTime get _firstAllowedQueueDate {
+    final DateTime today = _today;
 
-    final bool isDisabled = _isSubmitting || disabled;
-
-    return Material(
-      color: Colors.transparent,
-
-      child: InkWell(
-        borderRadius: BorderRadius.circular(6),
-
-        onTap: isDisabled
-            ? null
-            : () {
-                setState(() {
-                  _selectedQueueType = value;
-
-                  if (value == 'langsung') {
-                    _selectedBookingDate = null;
-                  }
-                });
-              },
-
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 180),
-
-          height: 55,
-
-          padding: const EdgeInsets.symmetric(horizontal: 10),
-
-          decoration: BoxDecoration(
-            color: disabled
-                ? const Color(0xFFF2F2F2)
-                : selected
-                ? const Color(0xFFEAF5FF)
-                : const Color(0xFFF9FAFC),
-
-            borderRadius: BorderRadius.circular(6),
-
-            border: Border.all(
-              color: disabled
-                  ? const Color(0xFFD0D0D0)
-                  : selected
-                  ? const Color(0xFF3AA7F5)
-                  : const Color(0xFFB8B8B8),
-
-              width: selected && !disabled ? 1.3 : 0.8,
-            ),
-          ),
-
-          child: Row(
-            children: [
-              Container(
-                width: 31,
-                height: 31,
-
-                decoration: BoxDecoration(
-                  color: disabled
-                      ? const Color(0xFFD8D8D8)
-                      : selected
-                      ? const Color(0xFF3AA7F5)
-                      : const Color(0xFFE1E6EC),
-
-                  borderRadius: BorderRadius.circular(5),
-                ),
-
-                child: Icon(
-                  disabled ? Icons.block_rounded : icon,
-
-                  size: 19,
-
-                  color: disabled
-                      ? const Color(0xFF888888)
-                      : selected
-                      ? Colors.white
-                      : const Color(0xFF555555),
-                ),
-              ),
-
-              const SizedBox(width: 8),
-
-              Expanded(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-
-                  crossAxisAlignment: CrossAxisAlignment.start,
-
-                  children: [
-                    Text(
-                      title,
-
-                      style: TextStyle(
-                        color: disabled
-                            ? const Color(0xFF999999)
-                            : const Color(0xFF202020),
-
-                        fontSize: 10.5,
-
-                        fontWeight: selected && !disabled
-                            ? FontWeight.w600
-                            : FontWeight.w500,
-                      ),
-                    ),
-
-                    const SizedBox(height: 2),
-
-                    Text(
-                      subtitle,
-
-                      style: TextStyle(
-                        color: disabled
-                            ? const Color(0xFFD32F2F)
-                            : const Color(0xFF777777),
-
-                        fontSize: 8.5,
-
-                        fontWeight: disabled
-                            ? FontWeight.w500
-                            : FontWeight.w400,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
+    return _isDirectQueueDisabled
+        ? DateTime(today.year, today.month, today.day + 1)
+        : today;
   }
 
-  // =========================================================
-  // INFORMASI HARI INI
-  // =========================================================
+  bool _adjustQueueDateForService() {
+    final DateTime today = _today;
 
-  Widget _todayInformation() {
-    final DateTime today = DateTime.now();
+    if (_isDirectQueueDisabled && !_selectedQueueDate.isAfter(today)) {
+      _selectedQueueDate = DateTime(today.year, today.month, today.day + 1);
 
-    return Container(
-      width: double.infinity,
+      _selectedQueueMinute = null;
 
-      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 10),
+      return true;
+    }
 
-      decoration: BoxDecoration(
-        color: const Color(0xFFF0F7FF),
-
-        borderRadius: BorderRadius.circular(6),
-
-        border: Border.all(color: const Color(0xFF9CCDF2), width: 0.7),
-      ),
-
-      child: Row(
-        children: [
-          const Icon(
-            Icons.calendar_today_rounded,
-            size: 17,
-            color: Color(0xFF168DE2),
-          ),
-
-          const SizedBox(width: 9),
-
-          Expanded(
-            child: Text(
-              'Tanggal antrian: Hari ini, '
-              '${_formatDisplayDate(today)}',
-
-              style: const TextStyle(color: Color(0xFF303030), fontSize: 9.5),
-            ),
-          ),
-        ],
-      ),
-    );
+    return false;
   }
 
-  // =========================================================
-  // BOOKING DATE
-  // =========================================================
-
-  Widget _bookingDateField() {
-    final bool hasDate = _selectedBookingDate != null;
+  Widget _queueDateField() {
+    final bool isToday = DateUtils.isSameDay(_selectedQueueDate, _today);
 
     return InkWell(
-      onTap: _isSubmitting ? null : _selectBookingDate,
-
+      onTap: _isSubmitting || _isQueueDatePickerOpen ? null : _selectQueueDate,
       borderRadius: BorderRadius.circular(5),
-
       child: Container(
         width: double.infinity,
         height: 44,
-
         padding: const EdgeInsets.symmetric(horizontal: 10),
-
         decoration: BoxDecoration(
           color: const Color(0xFFF5F6FA),
-
           borderRadius: BorderRadius.circular(5),
-
           border: Border.all(color: const Color(0xFF8D8D8D), width: 0.8),
         ),
-
         child: Row(
           children: [
             const Icon(
@@ -2051,15 +1386,10 @@ class _UltPageState extends State<UltPage> {
 
             Expanded(
               child: Text(
-                hasDate
-                    ? _formatDisplayDate(_selectedBookingDate!)
-                    : 'Pilih tanggal booking',
-
-                style: TextStyle(
-                  color: hasDate
-                      ? const Color(0xFF202020)
-                      : const Color(0xFF888888),
-
+                '${isToday ? 'Hari ini, ' : ''}'
+                '${_formatDisplayDate(_selectedQueueDate)}',
+                style: const TextStyle(
+                  color: Color(0xFF202020),
                   fontSize: 10.5,
                 ),
               ),
@@ -2076,73 +1406,129 @@ class _UltPageState extends State<UltPage> {
     );
   }
 
-  // =========================================================
-  // PILIH TANGGAL BOOKING
-  // =========================================================
+  Widget _queueDateInformation() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 10),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF0F7FF),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: const Color(0xFF9CCDF2), width: 0.7),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(
+            Icons.info_outline_rounded,
+            size: 17,
+            color: Color(0xFF168DE2),
+          ),
 
-  Future<void> _selectBookingDate() async {
-    final DateTime now = DateTime.now();
+          const SizedBox(width: 9),
 
-    final DateTime today = DateTime(now.year, now.month, now.day);
-
-    final DateTime firstBookingDate = today.add(const Duration(days: 1));
-
-    final DateTime lastBookingDate = DateTime(now.year + 1, 12, 31);
-
-    final DateTime? selected = await showDatePicker(
-      context: context,
-
-      initialDate: _selectedBookingDate ?? firstBookingDate,
-
-      firstDate: firstBookingDate,
-
-      lastDate: lastBookingDate,
-
-      helpText: 'Pilih Tanggal Antrian',
-
-      cancelText: 'Batal',
-
-      confirmText: 'Pilih',
+          Expanded(
+            child: Text(
+              _isDirectQueueDisabled
+                  ? 'Layanan ini tidak tersedia hari ini. '
+                        'Pilih tanggal mulai '
+                        '${_formatDisplayDate(_firstAllowedQueueDate)}.'
+                  : 'Tanggal awal adalah hari ini. Tekan kalender untuk '
+                        'memilih tanggal kedatangan lain.',
+              style: const TextStyle(
+                color: Color(0xFF303030),
+                fontSize: 9.5,
+                height: 1.35,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
+  }
 
-    if (selected == null) {
+  // PILIH TANGGAL
+  Future<void> _selectQueueDate() async {
+    if (_isSubmitting || _isQueueDatePickerOpen) {
       return;
     }
 
-    if (!mounted) {
-      return;
+    FocusScope.of(context).unfocus();
+
+    final DateTime today = _today;
+    final DateTime firstDate = _firstAllowedQueueDate;
+
+    final DateTime lastDate = DateTime(today.year + 1, 12, 31);
+
+    DateTime initialDate = _selectedQueueDate;
+
+    if (initialDate.isBefore(firstDate)) {
+      initialDate = firstDate;
+    }
+
+    if (initialDate.isAfter(lastDate)) {
+      initialDate = lastDate;
     }
 
     setState(() {
-      _selectedBookingDate = DateTime(
-        selected.year,
-        selected.month,
-        selected.day,
-      );
+      _isQueueDatePickerOpen = true;
     });
+
+    try {
+      final DateTime? selected = await showDatePicker(
+        context: context,
+        initialDate: initialDate,
+        firstDate: firstDate,
+        lastDate: lastDate,
+        initialEntryMode: DatePickerEntryMode.calendar,
+        helpText: 'Pilih Tanggal Antrian',
+        cancelText: 'Batal',
+        confirmText: 'Pilih',
+      );
+
+      if (!mounted || selected == null) {
+        return;
+      }
+
+      final DateTime date = DateUtils.dateOnly(selected);
+
+      if (date.isBefore(_firstAllowedQueueDate)) {
+        _showMessage(
+          'Tanggal tersebut sudah tidak tersedia. '
+          'Silakan pilih ulang.',
+        );
+
+        return;
+      }
+
+      setState(() {
+        // Mengganti tanggal mengosongkan pilihan jam.
+        if (!DateUtils.isSameDay(_selectedQueueDate, date)) {
+          _selectedQueueMinute = null;
+        }
+
+        _selectedQueueDate = date;
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isQueueDatePickerOpen = false;
+        });
+      }
+    }
   }
 
-  // =========================================================
-  // PERINGATAN LAYANAN DARI ADMIN
-  // =========================================================
-
+  // PEMBERITAHUAN ADMIN
   Widget _buildServiceNotification(String message) {
     return Container(
       width: double.infinity,
-
       padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 10),
-
       decoration: BoxDecoration(
         color: const Color(0xFFFFEBEE),
-
         borderRadius: BorderRadius.circular(6),
-
         border: Border.all(color: const Color(0xFFE53935), width: 0.8),
       ),
-
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
-
         children: [
           const Icon(
             Icons.error_outline_rounded,
@@ -2155,7 +1541,6 @@ class _UltPageState extends State<UltPage> {
           Expanded(
             child: Text(
               message,
-
               style: const TextStyle(
                 color: Color(0xFFC62828),
                 fontSize: 9.5,
@@ -2169,37 +1554,24 @@ class _UltPageState extends State<UltPage> {
     );
   }
 
-  // =========================================================
-  // RETRY BUTTON
-  // =========================================================
-
   Widget _retryButton({required Future<void> Function() onPressed}) {
     return Align(
       alignment: Alignment.centerRight,
-
       child: TextButton.icon(
         onPressed: () {
           onPressed();
         },
-
         icon: const Icon(Icons.refresh_rounded, size: 14),
-
         label: const Text('Coba Lagi', style: TextStyle(fontSize: 9)),
       ),
     );
   }
 
-  // =========================================================
-  // FIELD TITLE
-  // =========================================================
-
   Widget _fieldTitle(String title) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 5),
-
       child: Text(
         title,
-
         style: const TextStyle(
           color: Color(0xFF202020),
           fontSize: 10.5,
@@ -2208,10 +1580,6 @@ class _UltPageState extends State<UltPage> {
       ),
     );
   }
-
-  // =========================================================
-  // FORMAT DISPLAY DATE
-  // =========================================================
 
   String _formatDisplayDate(DateTime date) {
     const List<String> months = [
@@ -2234,10 +1602,6 @@ class _UltPageState extends State<UltPage> {
         '${date.year}';
   }
 
-  // =========================================================
-  // FORMAT API DATE
-  // =========================================================
-
   String _formatApiDate(DateTime date) {
     final String month = date.month.toString().padLeft(2, '0');
 
@@ -2246,34 +1610,9 @@ class _UltPageState extends State<UltPage> {
     return '${date.year}-$month-$day';
   }
 
-  // =========================================================
-  // ACTIVE QUEUE DATE
-  // =========================================================
-
-  DateTime? get _activeQueueDate {
-    if (_selectedQueueType == 'langsung') {
-      final DateTime now = DateTime.now();
-
-      return DateTime(now.year, now.month, now.day);
-    }
-
-    if (_selectedQueueType == 'booking') {
-      return _selectedBookingDate;
-    }
-
-    return null;
-  }
-
-  // =========================================================
   // SUBMIT
-  // =========================================================
-
   Future<void> _submitForm() async {
     FocusScope.of(context).unfocus();
-
-    // =======================================================
-    // KATEGORI
-    // =======================================================
 
     if (_selectedCategory == null) {
       _showMessage('Silakan pilih kategori terlebih dahulu.');
@@ -2281,55 +1620,61 @@ class _UltPageState extends State<UltPage> {
       return;
     }
 
-    // =======================================================
-    // JENIS ANTRIAN
-    // =======================================================
-
-    if (_selectedQueueType == null) {
-      if (_isDirectQueueDisabled) {
-        _showMessage(
-          'Layanan ini hanya dapat menggunakan '
-          'jenis antrian Booking.',
-        );
-      } else {
-        _showMessage('Silakan pilih jenis antrian.');
-      }
-
+    if (_isSubmitting || _isQueueDatePickerOpen) {
       return;
     }
 
-    // =======================================================
-    // PROTEKSI LANGSUNG
-    // =======================================================
+    final DateTime today = _today;
 
-    if (_isDirectQueueDisabled && _selectedQueueType == 'langsung') {
-      setState(() {
-        _selectedQueueType = null;
+    final DateTime queueDate = DateUtils.dateOnly(_selectedQueueDate);
 
-        _selectedBookingDate = null;
-      });
-
+    if (queueDate.isBefore(today)) {
       _showMessage(
-        'Layanan ini tidak dapat menggunakan '
-        'antrian Langsung. Silakan pilih Booking.',
+        'Tanggal antrian sudah lewat. '
+        'Silakan pilih ulang di kalender.',
       );
 
       return;
     }
 
-    // =======================================================
-    // BOOKING
-    // =======================================================
-
-    if (_selectedQueueType == 'booking' && _selectedBookingDate == null) {
-      _showMessage('Silakan pilih tanggal booking.');
+    if (queueDate.isAfter(DateTime(today.year + 1, 12, 31))) {
+      _showMessage(
+        'Tanggal antrian melewati batas kalender. '
+        'Silakan pilih ulang.',
+      );
 
       return;
     }
 
-    // =======================================================
-    // VALIDASI FORM
-    // =======================================================
+    if (_isDirectQueueDisabled && DateUtils.isSameDay(queueDate, today)) {
+      _showMessage(
+        'Layanan ini tidak tersedia hari ini. '
+        'Pilih tanggal setelah hari ini.',
+      );
+
+      return;
+    }
+
+    final String queueType = DateUtils.isSameDay(queueDate, today)
+        ? 'langsung'
+        : 'booking';
+
+    final int? queueMinute = _selectedQueueMinute;
+
+    if (queueMinute == null) {
+      _showMessage('Silakan pilih jam antrian.');
+
+      return;
+    }
+
+    if (!UltQueueSchedule.isSelectable(queueDate, queueMinute)) {
+      _showMessage(
+        'Jam antrian sudah lewat atau di luar jam layanan. '
+        'Silakan pilih ulang tanggal dan jam.',
+      );
+
+      return;
+    }
 
     final bool valid = _formKey.currentState?.validate() ?? false;
 
@@ -2339,84 +1684,70 @@ class _UltPageState extends State<UltPage> {
       return;
     }
 
-    if (_isSubmitting) {
-      return;
-    }
-
-    final DateTime? queueDate = _activeQueueDate;
-
-    if (queueDate == null) {
-      _showMessage('Tanggal antrian tidak valid.');
-
-      return;
-    }
-
     setState(() {
       _isSubmitting = true;
     });
 
     try {
-      // =====================================================
-      // ENDPOINT
-      // =====================================================
+      // Ambil token perangkat jika notifikasi diizinkan.
+      final String? fcmToken = await UltNotificationService.instance
+          .tokenForSubmission();
+
+      if (!mounted) {
+        return;
+      }
+
+      // Pengambilan token dapat memerlukan waktu.
+      // Periksa kembali agar jam yang lewat tidak terkirim.
+      if (!UltQueueSchedule.isSelectable(queueDate, queueMinute)) {
+        _showMessage(
+          'Jam antrian sudah lewat. '
+          'Silakan pilih ulang jam antrian.',
+        );
+
+        return;
+      }
 
       final Uri uri = Uri.parse(ApiConfig.createAntrianTiket);
 
       final http.MultipartRequest request = http.MultipartRequest('POST', uri);
 
-      // =====================================================
-      // DATA BERSAMA
-      // =====================================================
-
       request.fields.addAll({
         'full_name': _nameController.text.trim(),
-
         'phone': _phoneController.text.trim(),
-
         'email': _emailController.text.trim(),
-
         'category': _selectedCategory!.trim().toLowerCase(),
-
-        'queue_type': _selectedQueueType!,
-
+        'queue_type': queueType,
         'queue_date': _formatApiDate(queueDate),
-
+        'queue_time': UltQueueSchedule.formatMinute(
+          queueMinute,
+          separator: ':',
+        ),
         'description': _descriptionController.text.trim(),
       });
 
-      // =====================================================
-      // MAHASISWA
-      // =====================================================
+      // Laravel nanti menyimpan token ini bersama tiket.
+      if (fcmToken != null && fcmToken.isNotEmpty) {
+        request.fields['fcm_token'] = fcmToken;
+        request.fields['device_platform'] = 'android';
+      }
 
       if (_selectedCategory == 'Mahasiswa') {
         request.fields.addAll({
           'identifier_value': _identifierController.text.trim(),
-
           'department': _departmentController.text.trim(),
-
           'semester': _selectedSemester!,
-
           'service': _selectedService!,
         });
       }
 
-      // =====================================================
-      // UMUM
-      // =====================================================
-
       if (_selectedCategory == 'Umum') {
         request.fields.addAll({
           'origin': _originController.text.trim(),
-
           'service': _selectedGeneralService!,
-
           'destination': _destinationController.text.trim(),
         });
       }
-
-      // =====================================================
-      // KIRIM
-      // =====================================================
 
       final http.StreamedResponse streamedResponse = await request.send();
 
@@ -2424,19 +1755,9 @@ class _UltPageState extends State<UltPage> {
         streamedResponse,
       );
 
-      debugPrint(
-        'ANTRIAN STATUS: '
-        '${response.statusCode}',
-      );
+      debugPrint('ANTRIAN STATUS: ${response.statusCode}');
 
-      debugPrint(
-        'ANTRIAN RESPONSE: '
-        '${response.body}',
-      );
-
-      // =====================================================
-      // PARSE JSON
-      // =====================================================
+      debugPrint('ANTRIAN RESPONSE: ${response.body}');
 
       Map<String, dynamic> jsonResponse;
 
@@ -2457,10 +1778,6 @@ class _UltPageState extends State<UltPage> {
 
         return;
       }
-
-      // =====================================================
-      // SUCCESS
-      // =====================================================
 
       final bool success = jsonResponse['success'] == true;
 
@@ -2488,59 +1805,44 @@ class _UltPageState extends State<UltPage> {
             builder: (BuildContext context) {
               return UltSuccessPage(
                 queueNumber: data['queue_number']?.toString() ?? '-',
-
                 requestNumber: data['request_number']?.toString() ?? '-',
-
-                queueType:
-                    data['queue_type']?.toString() ?? _selectedQueueType!,
-
+                queueType: data['queue_type']?.toString() ?? queueType,
                 queueDateLabel:
                     data['queue_date_label']?.toString() ??
                     _formatDisplayDate(queueDate),
-
                 fullName:
                     data['full_name']?.toString() ??
                     _nameController.text.trim(),
-
                 phone:
                     data['phone']?.toString() ?? _phoneController.text.trim(),
-
                 category:
                     data['category_label']?.toString() ?? _selectedCategory!,
-
                 service:
                     data['service']?.toString() ??
                     (_selectedCategory == 'Mahasiswa'
                         ? (_selectedService ?? '-')
                         : (_selectedGeneralService ?? '-')),
-
                 identifierValue: _selectedCategory == 'Mahasiswa'
                     ? (data['identifier_value']?.toString() ??
                           _identifierController.text.trim())
                     : null,
-
                 department: _selectedCategory == 'Mahasiswa'
                     ? (data['department']?.toString() ??
                           _departmentController.text.trim())
                     : null,
-
                 semester: _selectedCategory == 'Mahasiswa'
                     ? (data['semester']?.toString() ?? _selectedSemester)
                     : null,
-
                 origin: _selectedCategory == 'Umum'
                     ? (data['origin']?.toString() ??
                           _originController.text.trim())
                     : null,
-
                 destination: _selectedCategory == 'Umum'
                     ? (data['destination']?.toString() ??
                           _destinationController.text.trim())
                     : null,
-
                 email:
                     data['email']?.toString() ?? _emailController.text.trim(),
-
                 emailSent: data['email_sent'] == true,
               );
             },
@@ -2549,10 +1851,6 @@ class _UltPageState extends State<UltPage> {
 
         return;
       }
-
-      // =====================================================
-      // ERROR BACKEND
-      // =====================================================
 
       if (!mounted) {
         return;
@@ -2585,38 +1883,28 @@ class _UltPageState extends State<UltPage> {
     }
   }
 
-  // =========================================================
   // CLEAR FORM
-  // =========================================================
-
   void _clearForm() {
     _nameController.clear();
-
     _phoneController.clear();
-
     _emailController.clear();
-
     _descriptionController.clear();
 
     _identifierController.clear();
-
     _departmentController.clear();
 
     _originController.clear();
-
     _destinationController.clear();
 
     setState(() {
       _selectedCategory = null;
 
-      _selectedQueueType = null;
-
-      _selectedBookingDate = null;
+      // RESET TANGGAL DAN JAM
+      _selectedQueueDate = _today;
+      _selectedQueueMinute = null;
 
       _selectedSemester = null;
-
       _selectedService = null;
-
       _selectedGeneralService = null;
 
       _formVersion++;
@@ -2625,10 +1913,7 @@ class _UltPageState extends State<UltPage> {
     _formKey.currentState?.reset();
   }
 
-  // =========================================================
   // RESET
-  // =========================================================
-
   void _resetForm() {
     FocusScope.of(context).unfocus();
 
@@ -2637,14 +1922,10 @@ class _UltPageState extends State<UltPage> {
     }
 
     _clearForm();
-
     _showMessage('Form berhasil dikosongkan.');
   }
 
-  // =========================================================
   // MESSAGE
-  // =========================================================
-
   void _showMessage(String message) {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()

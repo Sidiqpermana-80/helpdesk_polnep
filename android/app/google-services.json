@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "165078191106",
+    "project_id": "helpdesk-polnep-app",
+    "storage_bucket": "helpdesk-polnep-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:165078191106:android:1be26a3bc44ffc6977ab1b",
+        "android_client_info": {
+          "package_name": "com.example.helpdesk_polnep"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBJ_LTdFHHZwh0n5Pu-vCNflbbfy5GgtQM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
