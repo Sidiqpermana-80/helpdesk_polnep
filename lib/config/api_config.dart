@@ -45,6 +45,8 @@ class ApiConfig {
   static String get antrianGeneralServiceOptions =>
       '$baseUrl/master-options/antrian_tiket/general_service';
 
+  static String get ultDeviceToken => '$baseUrl/ult/device-token';
+
   static String get cekStatus => '$baseUrl/cek-status';
 
   static String get requestStatus => '$baseUrl/status/requests';

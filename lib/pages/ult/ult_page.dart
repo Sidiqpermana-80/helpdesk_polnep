@@ -4,7 +4,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
-
+import '../../services/ult_device_sync_service.dart';
 import '../../config/api_config.dart';
 import 'ult_success_page.dart';
 import 'ult_queue_time_field.dart';
@@ -1757,7 +1757,6 @@ class _UltPageState extends State<UltPage> {
 
       debugPrint('ANTRIAN STATUS: ${response.statusCode}');
 
-      debugPrint('ANTRIAN RESPONSE: ${response.body}');
 
       Map<String, dynamic> jsonResponse;
 
@@ -1796,6 +1795,21 @@ class _UltPageState extends State<UltPage> {
 
         final Map<String, dynamic> data = rawData;
 
+        final ticketId = int.tryParse(data['id']?.toString() ?? '');
+
+        final syncKey = data['device_sync_key']?.toString() ?? '';
+
+        if (ticketId != null && syncKey.isNotEmpty) {
+          try {
+            await UltDeviceSyncService.instance.rememberTicket(
+              id: ticketId,
+              key: syncKey,
+            );
+          } catch (_) {
+            debugPrint('ULT: kunci sinkronisasi belum berhasil disimpan.');
+          }
+        }
+
         if (!mounted) {
           return;
         }
@@ -1805,44 +1819,62 @@ class _UltPageState extends State<UltPage> {
             builder: (BuildContext context) {
               return UltSuccessPage(
                 queueNumber: data['queue_number']?.toString() ?? '-',
+
                 requestNumber: data['request_number']?.toString() ?? '-',
+
                 queueType: data['queue_type']?.toString() ?? queueType,
+
                 queueDateLabel:
                     data['queue_date_label']?.toString() ??
                     _formatDisplayDate(queueDate),
+
+                queueTimeLabel:
+                    data['queue_time_label']?.toString() ??
+                    UltQueueSchedule.estimate(queueMinute),
+
                 fullName:
                     data['full_name']?.toString() ??
                     _nameController.text.trim(),
+
                 phone:
                     data['phone']?.toString() ?? _phoneController.text.trim(),
+
                 category:
                     data['category_label']?.toString() ?? _selectedCategory!,
+
                 service:
                     data['service']?.toString() ??
                     (_selectedCategory == 'Mahasiswa'
                         ? (_selectedService ?? '-')
                         : (_selectedGeneralService ?? '-')),
+
                 identifierValue: _selectedCategory == 'Mahasiswa'
                     ? (data['identifier_value']?.toString() ??
                           _identifierController.text.trim())
                     : null,
+
                 department: _selectedCategory == 'Mahasiswa'
                     ? (data['department']?.toString() ??
                           _departmentController.text.trim())
                     : null,
+
                 semester: _selectedCategory == 'Mahasiswa'
                     ? (data['semester']?.toString() ?? _selectedSemester)
                     : null,
+
                 origin: _selectedCategory == 'Umum'
                     ? (data['origin']?.toString() ??
                           _originController.text.trim())
                     : null,
+
                 destination: _selectedCategory == 'Umum'
                     ? (data['destination']?.toString() ??
                           _destinationController.text.trim())
                     : null,
+
                 email:
                     data['email']?.toString() ?? _emailController.text.trim(),
+
                 emailSent: data['email_sent'] == true,
               );
             },

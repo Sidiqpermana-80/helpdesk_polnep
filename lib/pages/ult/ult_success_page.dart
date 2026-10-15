@@ -9,6 +9,7 @@ class UltSuccessPage extends StatelessWidget {
     required this.requestNumber,
     required this.queueType,
     required this.queueDateLabel,
+    this.queueTimeLabel,
     required this.fullName,
     required this.phone,
     required this.category,
@@ -33,6 +34,8 @@ class UltSuccessPage extends StatelessWidget {
   final String queueType;
 
   final String queueDateLabel;
+
+  final String? queueTimeLabel;
 
   final String fullName;
 
@@ -708,6 +711,28 @@ class UltSuccessPage extends StatelessWidget {
             iconColor: const Color(0xFF168DE2),
           ),
 
+          if (queueTimeLabel?.trim().isNotEmpty == true) ...[
+            const SizedBox(height: 15),
+
+            _summaryRow(
+              icon: Icons.schedule_rounded,
+              label: 'Jam Pilihan',
+              value: queueTimeLabel!,
+              iconColor: const Color(0xFF168DE2),
+            ),
+
+            const SizedBox(height: 6),
+
+            const Text(
+              'Jam pilihan merupakan perkiraan; giliran mengikuti petugas.',
+              style: TextStyle(
+                color: Color(0xFF666666),
+                fontSize: 8,
+                height: 1.35,
+              ),
+            ),
+          ],
+
           // ===============================================
           // MAHASISWA -> JURUSAN
           // ===============================================
@@ -1051,7 +1076,7 @@ class UltSuccessPage extends StatelessWidget {
               Navigator.of(context).push(
                 MaterialPageRoute<void>(
                   builder: (BuildContext context) {
-                    return const CekStatusPage();
+                    return CekStatusPage(initialKeyword: requestNumber);
                   },
                 ),
               );

@@ -3,11 +3,19 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-
+import 'package:flutter/foundation.dart';
 import '../../config/api_config.dart';
 
 class CekStatusPage extends StatefulWidget {
-  const CekStatusPage({super.key});
+  const CekStatusPage({
+    super.key,
+    this.initialKeyword = '',
+    this.notificationKeyword,
+  });
+
+  final String initialKeyword;
+
+  final ValueListenable<String?>? notificationKeyword;
 
   @override
   State<CekStatusPage> createState() => _CekStatusPageState();
@@ -20,6 +28,8 @@ class _CekStatusPageState extends State<CekStatusPage> {
 
   bool _isLoading = false;
 
+  int _searchVersion = 0;
+
   bool _hasSearched = false;
 
   List<StatusTicketData> _results = [];
@@ -30,10 +40,57 @@ class _CekStatusPageState extends State<CekStatusPage> {
   void initState() {
     super.initState();
 
+    _keywordController.text = widget.initialKeyword.trim();
+
+    widget.notificationKeyword?.addListener(_onNotificationKeyword);
+
     _countdownTimer = Timer.periodic(const Duration(seconds: 30), (_) {
       if (mounted && _results.isNotEmpty) {
         setState(() {});
       }
+    });
+  }
+
+  @override
+  void didUpdateWidget(covariant CekStatusPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (oldWidget.notificationKeyword != widget.notificationKeyword) {
+      oldWidget.notificationKeyword?.removeListener(_onNotificationKeyword);
+
+      widget.notificationKeyword?.addListener(_onNotificationKeyword);
+    }
+
+    if (oldWidget.initialKeyword != widget.initialKeyword) {
+      _applyNotificationKeyword(widget.initialKeyword);
+    }
+  }
+
+  void _onNotificationKeyword() {
+    _applyNotificationKeyword(widget.notificationKeyword?.value ?? '');
+  }
+
+  void _applyNotificationKeyword(String value) {
+    final String keyword = value.trim();
+
+    if (!mounted || keyword.isEmpty) {
+      return;
+    }
+
+    // Abaikan respons pencarian lama ketika tiket yang dituju berubah.
+    _searchVersion++;
+
+    _formKey.currentState?.reset();
+
+    _keywordController.value = TextEditingValue(
+      text: keyword,
+      selection: TextSelection.collapsed(offset: keyword.length),
+    );
+
+    setState(() {
+      _isLoading = false;
+      _hasSearched = false;
+      _results = [];
     });
   }
 
@@ -49,6 +106,10 @@ class _CekStatusPageState extends State<CekStatusPage> {
 
   @override
   void dispose() {
+    widget.notificationKeyword?.removeListener(_onNotificationKeyword);
+
+    _searchVersion++;
+
     _countdownTimer?.cancel();
 
     _keywordController.dispose();
@@ -65,6 +126,10 @@ class _CekStatusPageState extends State<CekStatusPage> {
       return;
     }
 
+    final int requestVersion = ++_searchVersion;
+
+    final String keyword = _keywordController.text.trim();
+
     setState(() {
       _isLoading = true;
       _hasSearched = false;
@@ -72,21 +137,19 @@ class _CekStatusPageState extends State<CekStatusPage> {
     });
 
     try {
-      final http.Response response = await http.post(
-        Uri.parse(ApiConfig.cekStatus),
-        headers: const {'Accept': 'application/json'},
-        body: {'keyword': _keywordController.text.trim()},
-      );
+      final http.Response response = await http
+          .post(
+            Uri.parse(ApiConfig.cekStatus),
+            headers: const {'Accept': 'application/json'},
+            body: {'keyword': keyword},
+          )
+          .timeout(const Duration(seconds: 20));
 
-      final dynamic decoded = jsonDecode(response.body);
-
-      if (!mounted) {
+      if (!mounted || requestVersion != _searchVersion) {
         return;
       }
 
-      // =====================================================
-      // BERHASIL
-      // =====================================================
+      final dynamic decoded = jsonDecode(response.body);
 
       if (response.statusCode == 200 &&
           decoded is Map<String, dynamic> &&
@@ -122,18 +185,25 @@ class _CekStatusPageState extends State<CekStatusPage> {
       }
 
       _showMessage(message);
-    } catch (e) {
-      if (!mounted) {
+    } on TimeoutException {
+      if (!mounted || requestVersion != _searchVersion) {
         return;
       }
 
+      _showMessage('Layanan belum merespons. Silakan coba kembali.');
+    } catch (error) {
+      if (!mounted || requestVersion != _searchVersion) {
+        return;
+      }
+
+      debugPrint('CEK STATUS ERROR: $error');
+
       _showMessage(
-        'Tidak dapat terhubung ke server. '
-        'Pastikan Laravel aktif dan perangkat '
-        'terhubung ke jaringan yang sama.',
+        'Tidak dapat terhubung ke layanan. '
+        'Periksa koneksi dan coba kembali.',
       );
     } finally {
-      if (mounted) {
+      if (mounted && requestVersion == _searchVersion) {
         setState(() {
           _isLoading = false;
         });
@@ -758,6 +828,19 @@ class _CekStatusPageState extends State<CekStatusPage> {
 
           const SizedBox(height: 8),
 
+          if (ticket.type == 'antrian_tiket') ...[
+            _resultRow('Jam Pilihan', ticket.queueTimeLabel ?? '-'),
+
+            const SizedBox(height: 8),
+
+            if (ticket.status == 'menunggu_antrian' &&
+                ticket.peopleAhead != null) ...[
+              _resultRow('Di Depan', '${ticket.peopleAhead} orang'),
+
+              const SizedBox(height: 8),
+            ],
+          ],
+
           _resultRow('Estimasi', ticket.estimatedStart ?? '-'),
 
           if (ticket.estimatedStartTime != null) ...[
@@ -973,6 +1056,8 @@ class StatusTicketData {
     this.queueNumber,
     this.estimatedStart,
     this.estimatedStartTime,
+    this.peopleAhead,
+    this.queueTimeLabel,
   });
 
   final String requestNumber;
@@ -989,6 +1074,10 @@ class StatusTicketData {
 
   final String dateLabel;
 
+  final int? peopleAhead;
+
+  final String? queueTimeLabel;
+
   // ANTRIAN
   final String? queueNumber;
 
@@ -998,6 +1087,10 @@ class StatusTicketData {
 
   factory StatusTicketData.fromJson(Map<String, dynamic> json) {
     return StatusTicketData(
+      peopleAhead: int.tryParse(json['people_ahead']?.toString() ?? ''),
+
+      queueTimeLabel: json['queue_time_label']?.toString(),
+
       requestNumber: json['request_number']?.toString() ?? '-',
 
       type: json['type']?.toString() ?? '',

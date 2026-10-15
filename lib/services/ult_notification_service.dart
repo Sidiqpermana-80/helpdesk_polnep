@@ -8,11 +8,14 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
+import 'ult_device_sync_service.dart';
 import '../firebase_options.dart';
 import '../pages/cek_status/cek_status_page.dart';
 
-// EMPAT JENIS PENGINGAT
+// =========================================================
+// JENIS PENGINGAT ULT
+// =========================================================
+
 enum UltReminderKind {
   time15('time_15', 15, true),
   time5('time_5', 5, true),
@@ -26,7 +29,10 @@ enum UltReminderKind {
   final bool isTime;
 }
 
+// =========================================================
 // CHANNEL NOTIFIKASI ANDROID
+// =========================================================
+
 const AndroidNotificationChannel _ultChannel = AndroidNotificationChannel(
   'ult_queue_reminders',
   'Pengingat Antrian ULT',
@@ -34,7 +40,10 @@ const AndroidNotificationChannel _ultChannel = AndroidNotificationChannel(
   importance: Importance.high,
 );
 
-// DATA PENGINGAT
+// =========================================================
+// DATA PESAN PENGINGAT
+// =========================================================
+
 class _UltAlert {
   const _UltAlert(
     this.kind,
@@ -52,15 +61,23 @@ class _UltAlert {
 
   String get key => 'ult_${ticketId}_${kind.code}';
 
-  String get title => kind.isTime
-      ? 'Pengingat ULT: ${kind.threshold} menit'
-      : 'Pengingat ULT: ${peopleAhead ?? kind.threshold} orang';
+  String get title {
+    if (kind.isTime) {
+      return 'Pengingat ULT: ${kind.threshold} menit';
+    }
 
-  String get body => kind.isTime
-      ? 'Giliran $requestNumber diperkirakan sekitar '
-            '${kind.threshold} menit lagi. Silakan bersiap.'
-      : 'Tersisa ${peopleAhead ?? kind.threshold} orang '
-            'sebelum giliran $requestNumber. Silakan bersiap.';
+    return 'Pengingat ULT: ${peopleAhead ?? kind.threshold} orang';
+  }
+
+  String get body {
+    if (kind.isTime) {
+      return 'Giliran $requestNumber diperkirakan sekitar '
+          '${kind.threshold} menit lagi. Silakan bersiap.';
+    }
+
+    return 'Tersisa ${peopleAhead ?? kind.threshold} orang '
+        'sebelum giliran $requestNumber. Silakan bersiap.';
+  }
 
   static _UltAlert? fromData(Map<String, dynamic> data) {
     UltReminderKind? kind;
@@ -68,6 +85,7 @@ class _UltAlert {
     for (final UltReminderKind item in UltReminderKind.values) {
       if (item.code == data['event']?.toString()) {
         kind = item;
+        break;
       }
     }
 
@@ -93,7 +111,10 @@ class _UltAlert {
   }
 }
 
-// MENYIAPKAN PLUGIN NOTIFIKASI LOKAL
+// =========================================================
+// PERSIAPAN NOTIFIKASI LOKAL
+// =========================================================
+
 Future<void> _prepareLocalNotifications(
   FlutterLocalNotificationsPlugin plugin, {
   DidReceiveNotificationResponseCallback? onTap,
@@ -112,7 +133,10 @@ Future<void> _prepareLocalNotifications(
       ?.createNotificationChannel(_ultChannel);
 }
 
+// =========================================================
 // MENAMPILKAN PESAN
+// =========================================================
+
 Future<void> _displayMessage(
   RemoteMessage message,
   FlutterLocalNotificationsPlugin plugin,
@@ -122,13 +146,16 @@ Future<void> _displayMessage(
   final SharedPreferencesAsync prefs = SharedPreferencesAsync();
 
   if (alert != null) {
-    // Abaikan pesan yang sudah kedaluwarsa.
-    if (alert.expiresAt != null && !alert.expiresAt!.isAfter(DateTime.now())) {
+    final DateTime? expiry = alert.expiresAt;
+
+    if (expiry != null && !expiry.isAfter(DateTime.now())) {
       return;
     }
 
-    // Membantu mencegah tampilan lokal berulang.
-    if (await prefs.getBool('shown_${alert.key}') == true) {
+    final bool alreadyShown =
+        await prefs.getBool('shown_${alert.key}') ?? false;
+
+    if (alreadyShown) {
       return;
     }
   }
@@ -170,18 +197,20 @@ Future<void> _displayMessage(
   }
 }
 
-// HANDLER BACKGROUND HARUS BERADA DI LUAR CLASS
+// =========================================================
+// HANDLER BACKGROUND
+// =========================================================
+
 @pragma('vm:entry-point')
 Future<void> ultFirebaseBackgroundHandler(RemoteMessage message) async {
-  // Pesan notification + data ditampilkan Android otomatis
-  // ketika aplikasi berada di background.
-  // Hindari menampilkannya dua kali.
+  // Pesan notification ditampilkan Android ketika di background.
+  // Hindari menampilkannya lagi melalui notifikasi lokal.
   if (message.notification != null) {
     return;
   }
 
-  // Untuk pesan data-only.
   WidgetsFlutterBinding.ensureInitialized();
+
   DartPluginRegistrant.ensureInitialized();
 
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
@@ -190,18 +219,21 @@ Future<void> ultFirebaseBackgroundHandler(RemoteMessage message) async {
       FlutterLocalNotificationsPlugin();
 
   await _prepareLocalNotifications(plugin);
+
   await _displayMessage(message, plugin);
 }
 
-class UltNotificationService {
+// =========================================================
+// LAYANAN NOTIFIKASI ULT
+// =========================================================
+
+class UltNotificationService with WidgetsBindingObserver {
   UltNotificationService._();
 
   static final UltNotificationService instance = UltNotificationService._();
 
   final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
-  // Perubahan token dapat digunakan untuk sinkronisasi
-  // dengan Laravel pada tahap integrasi berikutnya.
   final ValueNotifier<String?> token = ValueNotifier<String?>(null);
 
   final FlutterLocalNotificationsPlugin _local =
@@ -209,14 +241,33 @@ class UltNotificationService {
 
   final SharedPreferencesAsync _prefs = SharedPreferencesAsync();
 
+  final ValueNotifier<String?> _statusKeyword = ValueNotifier<String?>(null);
+
   bool _initialized = false;
+  bool _permissionAllowed = false;
+
   bool _pendingOpen = false;
   bool _statusPageOpen = false;
 
+  String? _pendingRequestNumber;
+
+  int _tokenGeneration = 0;
+
+  DateTime? _nextTokenRefreshAt;
+
+  Future<String?>? _tokenCycle;
+  Future<String?>? _nativeTokenRequest;
+  Future<bool>? _permissionRequest;
+
   Future<void> _foregroundQueue = Future<void>.value();
 
-  bool get supported =>
-      !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
+  bool get supported {
+    return !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
+  }
+
+  // =======================================================
+  // INITIALIZE
+  // =======================================================
 
   Future<void> initialize() async {
     if (!supported || _initialized) {
@@ -226,15 +277,14 @@ class UltNotificationService {
     await _prepareLocalNotifications(
       _local,
       onTap: (NotificationResponse response) {
-        _rememberOpenedPayload(response.payload);
-        _requestOpen();
+        final String? requestNumber = _rememberOpenedPayload(response.payload);
+
+        _requestOpen(requestNumber);
       },
     );
 
-    // APLIKASI SEDANG TERBUKA
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      // Proses berurutan untuk menghindari dua pesan
-      // berlomba membaca dan menulis penanda.
+      // Proses pesan foreground secara berurutan.
       _foregroundQueue = _foregroundQueue
           .then((_) => _displayMessage(message, _local))
           .catchError((Object error, StackTrace stack) {
@@ -242,23 +292,17 @@ class UltNotificationService {
           });
     });
 
-    // NOTIFIKASI DITEKAN DARI BACKGROUND
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-      _rememberOpenedPayload(jsonEncode(message.data));
+      final String? requestNumber = _rememberOpenedPayload(
+        jsonEncode(message.data),
+      );
 
-      _requestOpen();
+      _requestOpen(requestNumber);
     });
 
-    // TOKEN PERANGKAT BERUBAH
     FirebaseMessaging.instance.onTokenRefresh.listen(
       (String value) {
-        token.value = value;
-
-        // Laravel nanti perlu menerima pembaruan token
-        // untuk tiket aktif yang terkait perangkat ini.
-        if (kDebugMode) {
-          debugPrint('ULT FCM token diperbarui: $value');
-        }
+        unawaited(_handleTokenRefresh(value));
       },
       onError: (Object error) {
         debugPrint('ULT token refresh error: $error');
@@ -267,60 +311,117 @@ class UltNotificationService {
 
     _initialized = true;
 
-    // APLIKASI DIBUKA DARI KONDISI TERTUTUP
+    WidgetsBinding.instance.addObserver(this);
+
+    // Notifikasi Firebase yang membuka aplikasi saat tertutup.
     try {
       final RemoteMessage? initial = await FirebaseMessaging.instance
           .getInitialMessage();
 
       if (initial != null) {
-        _rememberOpenedPayload(jsonEncode(initial.data));
-
-        _pendingOpen = true;
-      }
-
-      final NotificationAppLaunchDetails? launch = await _local
-          .getNotificationAppLaunchDetails();
-
-      if (launch?.didNotificationLaunchApp == true) {
-        _rememberOpenedPayload(launch?.notificationResponse?.payload);
+        _pendingRequestNumber = _rememberOpenedPayload(
+          jsonEncode(initial.data),
+        );
 
         _pendingOpen = true;
       }
     } catch (error) {
-      debugPrint('ULT notification launch error: $error');
+      debugPrint('ULT Firebase launch error: $error');
+    }
+
+    // Notifikasi lokal yang membuka aplikasi saat tertutup.
+    try {
+      final NotificationAppLaunchDetails? launch = await _local
+          .getNotificationAppLaunchDetails();
+
+      if (launch?.didNotificationLaunchApp == true) {
+        _pendingRequestNumber = _rememberOpenedPayload(
+          launch?.notificationResponse?.payload,
+        );
+
+        _pendingOpen = true;
+      }
+    } catch (error) {
+      debugPrint('ULT local notification launch error: $error');
     }
   }
 
-  // MEMINTA IZIN NOTIFIKASI
-  Future<bool> enableNotifications() async {
+  // =======================================================
+  // APLIKASI KEMBALI AKTIF
+  // =======================================================
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (_initialized && state == AppLifecycleState.resumed) {
+      // Memeriksa ulang tanpa menampilkan dialog izin lagi.
+      unawaited(tokenForSubmission());
+    }
+  }
+
+  // =======================================================
+  // IZIN NOTIFIKASI
+  // =======================================================
+
+  Future<bool> enableNotifications() {
     if (!_initialized) {
+      return Future<bool>.value(false);
+    }
+
+    final Future<bool>? active = _permissionRequest;
+
+    if (active != null) {
+      return active;
+    }
+
+    final Future<bool> request = _enableNotifications();
+
+    _permissionRequest = request;
+
+    unawaited(
+      request.then<void>((_) {
+        if (identical(_permissionRequest, request)) {
+          _permissionRequest = null;
+        }
+      }),
+    );
+
+    return request;
+  }
+
+  Future<bool> _enableNotifications() async {
+    try {
+      NotificationSettings settings = await FirebaseMessaging.instance
+          .getNotificationSettings()
+          .timeout(const Duration(seconds: 5));
+
+      final bool asked =
+          await _prefs.getBool('ult_notification_permission_asked') ?? false;
+
+      if (!_allowed(settings) && !asked) {
+        await _prefs.setBool('ult_notification_permission_asked', true);
+
+        settings = await FirebaseMessaging.instance.requestPermission(
+          alert: true,
+          badge: true,
+          sound: true,
+        );
+      }
+
+      _setPermission(settings);
+
+      if (!_permissionAllowed) {
+        return false;
+      }
+
+      // Pengambilan token berlangsung di belakang.
+      unawaited(_startTokenRefresh());
+
+      return true;
+    } catch (error) {
+      debugPrint('ULT notification permission error: $error');
+
       return false;
     }
-
-    NotificationSettings settings = await FirebaseMessaging.instance
-        .getNotificationSettings();
-
-    final bool asked =
-        await _prefs.getBool('ult_notification_permission_asked') ?? false;
-
-    if (!_allowed(settings) && !asked) {
-      await _prefs.setBool('ult_notification_permission_asked', true);
-
-      settings = await FirebaseMessaging.instance.requestPermission(
-        alert: true,
-        badge: true,
-        sound: true,
-      );
-    }
-
-    if (!_allowed(settings)) {
-      token.value = null;
-      return false;
-    }
-
-    await tokenForSubmission();
-
-    return true;
   }
 
   bool _allowed(NotificationSettings settings) {
@@ -328,79 +429,285 @@ class UltNotificationService {
         settings.authorizationStatus == AuthorizationStatus.provisional;
   }
 
-  // TOKEN UNTUK DIKIRIM BERSAMA FORM ULT
+  void _setPermission(NotificationSettings settings) {
+    _permissionAllowed = _allowed(settings);
+
+    if (!_permissionAllowed) {
+      token.value = null;
+      _nextTokenRefreshAt = null;
+    }
+  }
+
+  // =======================================================
+  // TOKEN BERUBAH DARI FIREBASE
+  // =======================================================
+
+  Future<void> _handleTokenRefresh(String value) async {
+    try {
+      final NotificationSettings settings = await FirebaseMessaging.instance
+          .getNotificationSettings()
+          .timeout(const Duration(seconds: 5));
+
+      _setPermission(settings);
+
+      if (_permissionAllowed) {
+        _storeToken(value);
+      }
+    } catch (error) {
+      debugPrint('ULT refreshed token permission error: $error');
+    }
+  }
+
+  void _storeToken(String value) {
+    final clean = value.trim();
+
+    if (clean.isEmpty) {
+      return;
+    }
+
+    token.value = clean;
+
+    _tokenGeneration++;
+
+    _nextTokenRefreshAt = DateTime.now().add(const Duration(minutes: 1));
+
+    if (kDebugMode) {
+      debugPrint('ULT FCM TOKEN: $clean');
+    }
+
+    unawaited(UltDeviceSyncService.instance.syncToken(clean));
+  }
+
+  // =======================================================
+  // TOKEN UNTUK PENGIRIMAN FORM
+  // =======================================================
+
   Future<String?> tokenForSubmission() async {
     if (!_initialized) {
       return null;
     }
 
     try {
-      final NotificationSettings settings = await FirebaseMessaging.instance
-          .getNotificationSettings()
-          .timeout(const Duration(seconds: 8));
-
-      if (!_allowed(settings)) {
-        token.value = null;
-        return null;
-      }
-
-      final String? value = await FirebaseMessaging.instance.getToken().timeout(
-        const Duration(seconds: 8),
+      // Form tidak menunggu seluruh rangkaian percobaan ulang.
+      return await _tokenForSubmission().timeout(
+        const Duration(seconds: 3),
+        onTimeout: () => null,
       );
-
-      if (value != null && value.isNotEmpty) {
-        token.value = value;
-
-        if (kDebugMode) {
-          debugPrint('ULT FCM TOKEN: $value');
-        }
-      }
     } catch (error) {
-      debugPrint('ULT get token error: $error');
+      debugPrint('ULT submission token error: $error');
+
+      return null;
     }
+  }
+
+  Future<String?> _tokenForSubmission() async {
+    final settings = await FirebaseMessaging.instance
+        .getNotificationSettings()
+        .timeout(const Duration(seconds: 5));
+
+    _setPermission(settings);
+
+    if (!_permissionAllowed) {
+      return null;
+    }
+
+    final String? availableToken = token.value;
+
+    if (availableToken != null) {
+      unawaited(UltDeviceSyncService.instance.syncToken(availableToken));
+    }
+
+    final Future<String?> refresh = _startTokenRefresh();
+
+    return token.value ?? await refresh;
+  }
+
+  // =======================================================
+  // SATU SIKLUS PENGAMBILAN TOKEN
+  // =======================================================
+
+  Future<String?> _startTokenRefresh() {
+    final Future<String?>? active = _tokenCycle;
+
+    if (active != null) {
+      return active;
+    }
+
+    final DateTime? next = _nextTokenRefreshAt;
+
+    if (next != null && DateTime.now().isBefore(next)) {
+      return Future<String?>.value(token.value);
+    }
+
+    final Future<String?> request = _fetchTokenWithRetry();
+
+    _tokenCycle = request;
+
+    unawaited(
+      request.then<void>((_) {
+        if (identical(_tokenCycle, request)) {
+          _tokenCycle = null;
+        }
+      }),
+    );
+
+    return request;
+  }
+
+  // =======================================================
+  // MAKSIMAL TIGA PERCOBAAN
+  // =======================================================
+
+  Future<String?> _fetchTokenWithRetry() async {
+    const List<Duration> delays = [
+      Duration.zero,
+      Duration(seconds: 5),
+      Duration(seconds: 15),
+    ];
+
+    final int generation = _tokenGeneration;
+
+    for (int attempt = 0; attempt < delays.length; attempt++) {
+      try {
+        if (delays[attempt] != Duration.zero) {
+          await Future<void>.delayed(delays[attempt]);
+        }
+
+        final NotificationSettings settings = await FirebaseMessaging.instance
+            .getNotificationSettings()
+            .timeout(const Duration(seconds: 5));
+
+        _setPermission(settings);
+
+        if (!_permissionAllowed) {
+          return null;
+        }
+
+        // Token mungkin sudah datang ketika sedang menunggu.
+        if (_tokenGeneration != generation && token.value != null) {
+          return token.value;
+        }
+
+        final String? value = await _getNativeToken().timeout(
+          const Duration(seconds: 8),
+        );
+
+        if (value != null && value.trim().isNotEmpty) {
+          return value;
+        }
+
+        throw StateError('Token FCM belum tersedia.');
+      } catch (error) {
+        debugPrint('ULT token attempt ${attempt + 1}/3 gagal: $error');
+      }
+    }
+
+    // Siklus berikutnya baru boleh dimulai setelah satu menit.
+    _nextTokenRefreshAt = DateTime.now().add(const Duration(minutes: 1));
+
+    debugPrint('ULT token: percobaan dihentikan sementara.');
 
     return token.value;
   }
 
-  void _rememberOpenedPayload(String? payload) {
+  // =======================================================
+  // CEGAH PERMINTAAN NATIVE BERSAMAAN
+  // =======================================================
+
+  Future<String?> _getNativeToken() {
+    final Future<String?>? active = _nativeTokenRequest;
+
+    if (active != null) {
+      return active;
+    }
+
+    // Timeout Dart tidak membatalkan operasi Firebase native.
+    // Gunakan operasi yang sama sampai operasi tersebut selesai.
+    final Future<String?> request = FirebaseMessaging.instance.getToken().then((
+      String? value,
+    ) {
+      if (!_permissionAllowed) {
+        return null;
+      }
+
+      if (value != null && value.trim().isNotEmpty) {
+        _storeToken(value);
+      }
+
+      return value;
+    });
+
+    _nativeTokenRequest = request;
+
+    unawaited(
+      request.then<void>(
+        (_) {
+          if (identical(_nativeTokenRequest, request)) {
+            _nativeTokenRequest = null;
+          }
+        },
+        onError: (Object error, StackTrace stack) {
+          if (identical(_nativeTokenRequest, request)) {
+            _nativeTokenRequest = null;
+          }
+        },
+      ),
+    );
+
+    return request;
+  }
+
+  // =======================================================
+  // DATA SAAT NOTIFIKASI DITEKAN
+  // =======================================================
+
+  String? _rememberOpenedPayload(String? payload) {
     if (payload == null || payload.isEmpty) {
-      return;
+      return null;
     }
 
     try {
-      final dynamic data = jsonDecode(payload);
+      final dynamic decoded = jsonDecode(payload);
 
-      if (data is! Map<String, dynamic>) {
-        return;
+      if (decoded is! Map<String, dynamic>) {
+        return null;
       }
 
-      final _UltAlert? alert = _UltAlert.fromData(data);
+      final _UltAlert? alert = _UltAlert.fromData(decoded);
 
-      if (alert == null) {
-        return;
+      if (alert != null) {
+        unawaited(
+          _prefs.setBool('shown_${alert.key}', true).catchError((Object error) {
+            debugPrint('ULT remember notification error: $error');
+          }),
+        );
       }
 
-      unawaited(
-        _prefs.setBool('shown_${alert.key}', true).catchError((Object error) {
-          debugPrint('ULT remember notification error: $error');
-        }),
-      );
+      final String number = decoded['request_number']?.toString().trim() ?? '';
+
+      return number.isEmpty ? null : number;
     } catch (error) {
       debugPrint('ULT notification payload error: $error');
+
+      return null;
     }
   }
 
-  void _requestOpen() {
+  void _requestOpen(String? requestNumber) {
+    _pendingRequestNumber = requestNumber;
     _pendingOpen = true;
 
-    WidgetsBinding.instance.addPostFrameCallback(
-      (_) => openPendingNotification(),
-    );
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      openPendingNotification();
+    });
 
     WidgetsBinding.instance.ensureVisualUpdate();
   }
 
-  // MEMBUKA CEK STATUS
+  // =======================================================
+  // BUKA CEK STATUS
+  // =======================================================
+
   void openPendingNotification() {
     if (!_pendingOpen) {
       return;
@@ -412,9 +719,18 @@ class UltNotificationService {
       return;
     }
 
+    final String? number = _pendingRequestNumber;
+
     _pendingOpen = false;
+    _pendingRequestNumber = null;
 
     if (_statusPageOpen) {
+      if (number != null && number.isNotEmpty) {
+        // Perbarui kode pada halaman Cek Status yang sudah terbuka.
+        _statusKeyword.value = null;
+        _statusKeyword.value = number;
+      }
+
       return;
     }
 
@@ -423,9 +739,16 @@ class UltNotificationService {
     unawaited(
       navigator
           .push<void>(
-            MaterialPageRoute<void>(builder: (_) => const CekStatusPage()),
+            MaterialPageRoute<void>(
+              builder: (_) => CekStatusPage(
+                initialKeyword: number ?? '',
+                notificationKeyword: _statusKeyword,
+              ),
+            ),
           )
-          .whenComplete(() => _statusPageOpen = false),
+          .whenComplete(() {
+            _statusPageOpen = false;
+          }),
     );
   }
 }
