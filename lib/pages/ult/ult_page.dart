@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
-
+import '../../services/ult_availability_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
@@ -571,7 +571,11 @@ class _UltPageState extends State<UltPage> {
                             // JAM ANTRIAN
                             _fieldTitle('Jam Antrian'),
                             UltQueueTimeField(
+                              key: ValueKey(
+                                '${ultDateKey(_selectedQueueDate)}_$_selectedCategory',
+                              ),
                               date: _selectedQueueDate,
+                              category: _selectedCategory!.toLowerCase(),
                               selectedMinute: _selectedQueueMinute,
                               enabled:
                                   !_isSubmitting && !_isQueueDatePickerOpen,
@@ -1454,31 +1458,45 @@ class _UltPageState extends State<UltPage> {
 
     FocusScope.of(context).unfocus();
 
-    final DateTime today = _today;
-    final DateTime firstDate = _firstAllowedQueueDate;
-
-    final DateTime lastDate = DateTime(today.year + 1, 12, 31);
-
-    DateTime initialDate = _selectedQueueDate;
-
-    if (initialDate.isBefore(firstDate)) {
-      initialDate = firstDate;
-    }
-
-    if (initialDate.isAfter(lastDate)) {
-      initialDate = lastDate;
-    }
-
-    setState(() {
-      _isQueueDatePickerOpen = true;
-    });
+    setState(() => _isQueueDatePickerOpen = true);
 
     try {
-      final DateTime? selected = await showDatePicker(
+      final calendar = await UltAvailabilityService.calendar();
+
+      if (!mounted) {
+        return;
+      }
+
+      final firstDate = _firstAllowedQueueDate.isAfter(calendar.firstDate)
+          ? _firstAllowedQueueDate
+          : calendar.firstDate;
+
+      final lastDate = calendar.lastDate;
+
+      var initialDate = _selectedQueueDate;
+
+      if (initialDate.isBefore(firstDate)) {
+        initialDate = firstDate;
+      }
+
+      if (initialDate.isAfter(lastDate)) {
+        initialDate = lastDate;
+      }
+
+      final openDate =
+          calendar.nextOpen(initialDate) ?? calendar.nextOpen(firstDate);
+
+      if (openDate == null || firstDate.isAfter(lastDate)) {
+        _showMessage('Belum ada tanggal layanan yang tersedia.');
+        return;
+      }
+
+      final selected = await showDatePicker(
         context: context,
-        initialDate: initialDate,
+        initialDate: openDate,
         firstDate: firstDate,
         lastDate: lastDate,
+        selectableDayPredicate: calendar.isOpen,
         initialEntryMode: DatePickerEntryMode.calendar,
         helpText: 'Pilih Tanggal Antrian',
         cancelText: 'Batal',
@@ -1489,30 +1507,30 @@ class _UltPageState extends State<UltPage> {
         return;
       }
 
-      final DateTime date = DateUtils.dateOnly(selected);
+      final date = DateUtils.dateOnly(selected);
 
-      if (date.isBefore(_firstAllowedQueueDate)) {
-        _showMessage(
-          'Tanggal tersebut sudah tidak tersedia. '
-          'Silakan pilih ulang.',
-        );
-
+      if (date.isBefore(_firstAllowedQueueDate) || !calendar.isOpen(date)) {
+        _showMessage('Tanggal layanan tidak tersedia. Pilih tanggal lain.');
         return;
       }
 
       setState(() {
-        // Mengganti tanggal mengosongkan pilihan jam.
         if (!DateUtils.isSameDay(_selectedQueueDate, date)) {
           _selectedQueueMinute = null;
         }
 
         _selectedQueueDate = date;
       });
+    } catch (_) {
+      if (mounted) {
+        _showMessage(
+          'Kalender layanan belum dapat dimuat. '
+          'Periksa koneksi lalu coba lagi.',
+        );
+      }
     } finally {
       if (mounted) {
-        setState(() {
-          _isQueueDatePickerOpen = false;
-        });
+        setState(() => _isQueueDatePickerOpen = false);
       }
     }
   }
@@ -1708,6 +1726,36 @@ class _UltPageState extends State<UltPage> {
         return;
       }
 
+      final daySlots = await UltAvailabilityService.slots(
+        queueDate,
+        _selectedCategory!.toLowerCase(),
+      );
+
+      if (!mounted) {
+        return;
+      }
+
+      if (!daySlots.open) {
+        _showMessage(daySlots.reason ?? 'Layanan tutup pada tanggal ini.');
+        return;
+      }
+
+      final slotAvailable = daySlots.slots.any(
+        (slot) => slot.minute == queueMinute && slot.available,
+      );
+
+      if (!slotAvailable) {
+        setState(() {
+          _selectedQueueMinute = null;
+        });
+
+        _showMessage(
+          'Jam sudah dipesan atau tidak tersedia. '
+          'Silakan pilih ulang.',
+        );
+        return;
+      }
+
       final Uri uri = Uri.parse(ApiConfig.createAntrianTiket);
 
       final http.MultipartRequest request = http.MultipartRequest('POST', uri);
@@ -1757,7 +1805,6 @@ class _UltPageState extends State<UltPage> {
 
       debugPrint('ANTRIAN STATUS: ${response.statusCode}');
 
-
       Map<String, dynamic> jsonResponse;
 
       try {
@@ -1795,18 +1842,38 @@ class _UltPageState extends State<UltPage> {
 
         final Map<String, dynamic> data = rawData;
 
-        final ticketId = int.tryParse(data['id']?.toString() ?? '');
+        final int? ticketId = int.tryParse(data['id']?.toString() ?? '');
 
-        final syncKey = data['device_sync_key']?.toString() ?? '';
+        final String syncKey = data['device_sync_key']?.toString() ?? '';
 
-        if (ticketId != null && syncKey.isNotEmpty) {
-          try {
-            await UltDeviceSyncService.instance.rememberTicket(
-              id: ticketId,
-              key: syncKey,
-            );
-          } catch (_) {
-            debugPrint('ULT: kunci sinkronisasi belum berhasil disimpan.');
+        if (ticketId != null) {
+          // Notifikasi konfirmasi pengajuan berhasil.
+          unawaited(
+            UltNotificationService.instance.showTicketCreated(
+              ticketId: ticketId,
+
+              requestNumber: data['request_number']?.toString() ?? '',
+
+              queueDateLabel:
+                  data['queue_date_label']?.toString() ??
+                  _formatDisplayDate(queueDate),
+
+              queueTimeLabel:
+                  data['queue_time_label']?.toString() ??
+                  UltQueueSchedule.estimate(queueMinute),
+            ),
+          );
+
+          // Penyimpanan kunci sinkronisasi tetap dijalankan.
+          if (syncKey.isNotEmpty) {
+            try {
+              await UltDeviceSyncService.instance.rememberTicket(
+                id: ticketId,
+                key: syncKey,
+              );
+            } catch (_) {
+              debugPrint('ULT: kunci sinkronisasi belum berhasil disimpan.');
+            }
           }
         }
 

@@ -21,7 +21,8 @@ class CekStatusPage extends StatefulWidget {
   State<CekStatusPage> createState() => _CekStatusPageState();
 }
 
-class _CekStatusPageState extends State<CekStatusPage> {
+class _CekStatusPageState extends State<CekStatusPage>
+    with WidgetsBindingObserver {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
   final TextEditingController _keywordController = TextEditingController();
@@ -36,17 +37,27 @@ class _CekStatusPageState extends State<CekStatusPage> {
 
   Timer? _countdownTimer;
 
+  String? _lastSearchedKeyword;
+  bool _autoRefreshing = false;
+
   @override
   void initState() {
     super.initState();
+
+    WidgetsBinding.instance.addObserver(this);
 
     _keywordController.text = widget.initialKeyword.trim();
 
     widget.notificationKeyword?.addListener(_onNotificationKeyword);
 
     _countdownTimer = Timer.periodic(const Duration(seconds: 30), (_) {
-      if (mounted && _results.isNotEmpty) {
-        setState(() {});
+      if (mounted &&
+          WidgetsBinding.instance.lifecycleState == AppLifecycleState.resumed) {
+        if (_results.isNotEmpty) {
+          setState(() {});
+        }
+
+        unawaited(_autoRefreshStatus());
       }
     });
   }
@@ -80,6 +91,8 @@ class _CekStatusPageState extends State<CekStatusPage> {
     // Abaikan respons pencarian lama ketika tiket yang dituju berubah.
     _searchVersion++;
 
+    _lastSearchedKeyword = null;
+
     _formKey.currentState?.reset();
 
     _keywordController.value = TextEditingValue(
@@ -105,16 +118,103 @@ class _CekStatusPageState extends State<CekStatusPage> {
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      unawaited(_autoRefreshStatus());
+    }
+  }
+
+  @override
   void dispose() {
     widget.notificationKeyword?.removeListener(_onNotificationKeyword);
 
+    WidgetsBinding.instance.removeObserver(this);
+
     _searchVersion++;
-
     _countdownTimer?.cancel();
-
     _keywordController.dispose();
 
     super.dispose();
+  }
+
+  Future<void> _autoRefreshStatus() async {
+    if (!mounted) {
+      return;
+    }
+
+    final String? keyword = _lastSearchedKeyword;
+
+    if (_isLoading ||
+        _autoRefreshing ||
+        !_hasSearched ||
+        keyword == null ||
+        keyword != _keywordController.text.trim() ||
+        WidgetsBinding.instance.lifecycleState != AppLifecycleState.resumed ||
+        ModalRoute.of(context)?.isCurrent != true) {
+      return;
+    }
+
+    final bool hasActiveUlt = _results.any(
+      (ticket) =>
+          ticket.type == 'antrian_tiket' &&
+          const [
+            'menunggu_antrian',
+            'dipanggil',
+            'sedang_dilayani',
+          ].contains(ticket.status),
+    );
+
+    if (!hasActiveUlt) {
+      return;
+    }
+
+    _autoRefreshing = true;
+
+    final int requestVersion = _searchVersion;
+
+    try {
+      final http.Response response = await http
+          .post(
+            Uri.parse(ApiConfig.cekStatus),
+            headers: const {'Accept': 'application/json'},
+            body: {'keyword': keyword},
+          )
+          .timeout(const Duration(seconds: 20));
+
+      if (!mounted ||
+          requestVersion != _searchVersion ||
+          keyword != _keywordController.text.trim()) {
+        return;
+      }
+
+      final dynamic decoded = jsonDecode(response.body);
+
+      if (response.statusCode != 200 ||
+          decoded is! Map ||
+          decoded['success'] != true ||
+          decoded['data'] is! List) {
+        return;
+      }
+
+      final List<StatusTicketData> tickets = [];
+
+      for (final dynamic item in decoded['data'] as List) {
+        if (item is Map) {
+          tickets.add(
+            StatusTicketData.fromJson(Map<String, dynamic>.from(item)),
+          );
+        }
+      }
+
+      setState(() {
+        _results = tickets;
+      });
+    } catch (_) {
+      // Pertahankan hasil terakhir jika koneksi gagal.
+      // Pemeriksaan berikutnya akan mencoba lagi.
+    } finally {
+      _autoRefreshing = false;
+    }
   }
 
   Future<void> _submitSearch() async {
@@ -172,6 +272,7 @@ class _CekStatusPageState extends State<CekStatusPage> {
 
         setState(() {
           _results = tickets;
+          _lastSearchedKeyword = keyword;
           _hasSearched = true;
         });
 
@@ -841,6 +942,14 @@ class _CekStatusPageState extends State<CekStatusPage> {
             ],
           ],
 
+          if (ticket.type == 'antrian_tiket' &&
+              ticket.status == 'dibatalkan' &&
+              (ticket.cancellationReason?.trim().isNotEmpty ?? false)) ...[
+            _resultRow('Alasan', ticket.cancellationReason!),
+
+            const SizedBox(height: 8),
+          ],
+
           _resultRow('Estimasi', ticket.estimatedStart ?? '-'),
 
           if (ticket.estimatedStartTime != null) ...[
@@ -1054,43 +1163,32 @@ class StatusTicketData {
     required this.statusLabel,
     required this.dateLabel,
     this.queueNumber,
-    this.estimatedStart,
-    this.estimatedStartTime,
     this.peopleAhead,
     this.queueTimeLabel,
+    this.estimatedStart,
+    this.estimatedStartTime,
+    this.cancellationReason,
   });
 
   final String requestNumber;
-
   final String type;
-
   final String typeLabel;
-
   final String service;
-
   final String status;
-
   final String statusLabel;
-
   final String dateLabel;
 
+  final String? queueNumber;
   final int? peopleAhead;
-
   final String? queueTimeLabel;
 
-  // ANTRIAN
-  final String? queueNumber;
-
   final String? estimatedStart;
-
   final DateTime? estimatedStartTime;
+
+  final String? cancellationReason;
 
   factory StatusTicketData.fromJson(Map<String, dynamic> json) {
     return StatusTicketData(
-      peopleAhead: int.tryParse(json['people_ahead']?.toString() ?? ''),
-
-      queueTimeLabel: json['queue_time_label']?.toString(),
-
       requestNumber: json['request_number']?.toString() ?? '-',
 
       type: json['type']?.toString() ?? '',
@@ -1107,11 +1205,17 @@ class StatusTicketData {
 
       queueNumber: json['queue_number']?.toString(),
 
+      peopleAhead: int.tryParse(json['people_ahead']?.toString() ?? ''),
+
+      queueTimeLabel: json['queue_time_label']?.toString(),
+
       estimatedStart: json['estimated_start_label']?.toString(),
 
       estimatedStartTime: _parseEstimatedStartTime(
         json['estimated_start_time'],
       ),
+
+      cancellationReason: json['cancellation_reason']?.toString(),
     );
   }
 

@@ -358,6 +358,80 @@ class UltNotificationService with WidgetsBindingObserver {
     }
   }
 
+  Future<void> showTicketCreated({
+    required int ticketId,
+    required String requestNumber,
+    String queueDateLabel = '',
+    String queueTimeLabel = '',
+  }) {
+    if (!supported ||
+        !_initialized ||
+        !_permissionAllowed ||
+        ticketId <= 0 ||
+        requestNumber.trim().isEmpty) {
+      return Future<void>.value();
+    }
+
+    _foregroundQueue = _foregroundQueue
+        .then<void>((_) async {
+          final String tag = 'ult_${ticketId}_ticket_created';
+
+          final String preferenceKey = 'shown_$tag';
+
+          // Konfirmasi untuk tiket yang sama cukup ditampilkan sekali.
+          if (await _prefs.getBool(preferenceKey) == true) {
+            return;
+          }
+
+          final String number = requestNumber.trim();
+          final String date = queueDateLabel.trim();
+          final String time = queueTimeLabel.trim();
+
+          final String body = [
+            'Tiket $number berhasil diajukan.',
+            if (date.isNotEmpty) 'Tanggal antrean: $date',
+            if (time.isNotEmpty) 'Jam pilihan: $time',
+            'Pantau giliran melalui Cek Status.',
+          ].join('\n');
+
+          await _local.show(
+            id: 0,
+            title: 'Pengajuan tiket ULT berhasil',
+            body: body,
+
+            notificationDetails: NotificationDetails(
+              android: AndroidNotificationDetails(
+                _ultChannel.id,
+                _ultChannel.name,
+                channelDescription: _ultChannel.description,
+                icon: 'ic_stat_ult',
+                importance: Importance.high,
+                priority: Priority.high,
+
+                // Tag berbeda dari empat pengingat antrean.
+                tag: tag,
+                onlyAlertOnce: true,
+
+                styleInformation: BigTextStyleInformation(body),
+              ),
+            ),
+
+            payload: jsonEncode({
+              'event': 'ticket_created',
+              'queue_ticket_id': ticketId.toString(),
+              'request_number': number,
+            }),
+          );
+
+          await _prefs.setBool(preferenceKey, true);
+        })
+        .catchError((Object error, StackTrace stack) {
+          debugPrint('ULT ticket confirmation error: ${error.runtimeType}');
+        });
+
+    return _foregroundQueue;
+  }
+
   // =======================================================
   // IZIN NOTIFIKASI
   // =======================================================
