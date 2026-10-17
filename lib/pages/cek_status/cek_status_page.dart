@@ -156,7 +156,7 @@ class _CekStatusPageState extends State<CekStatusPage>
 
     final bool hasActiveUlt = _results.any(
       (ticket) =>
-          ticket.type == 'antrian_tiket' &&
+          ticket.isQueue &&
           const [
             'menunggu_antrian',
             'dipanggil',
@@ -726,7 +726,7 @@ class _CekStatusPageState extends State<CekStatusPage>
   }
 
   Widget _buildTicketCard(StatusTicketData ticket) {
-    if (ticket.type.toLowerCase() == 'antrian_tiket') {
+    if (ticket.isQueue) {
       return _buildQueueTicketCard(ticket);
     }
 
@@ -929,24 +929,25 @@ class _CekStatusPageState extends State<CekStatusPage>
 
           const SizedBox(height: 8),
 
-          if (ticket.type == 'antrian_tiket') ...[
+          // Jam pilihan hanya digunakan pada ULT.
+          if (ticket.isQueue) ...[
             _resultRow('Jam Pilihan', ticket.queueTimeLabel ?? '-'),
-
             const SizedBox(height: 8),
-
-            if (ticket.status == 'menunggu_antrian' &&
-                ticket.peopleAhead != null) ...[
-              _resultRow('Di Depan', '${ticket.peopleAhead} orang'),
-
-              const SizedBox(height: 8),
-            ],
           ],
 
-          if (ticket.type == 'antrian_tiket' &&
+          // Jumlah orang di depan berlaku untuk kedua antrean.
+          if (ticket.isQueue &&
+              ticket.status == 'menunggu_antrian' &&
+              ticket.peopleAhead != null) ...[
+            _resultRow('Di Depan', '${ticket.peopleAhead} orang'),
+            const SizedBox(height: 8),
+          ],
+
+          // Alasan pembatalan berlaku untuk kedua antrean.
+          if (ticket.isQueue &&
               ticket.status == 'dibatalkan' &&
               (ticket.cancellationReason?.trim().isNotEmpty ?? false)) ...[
             _resultRow('Alasan', ticket.cancellationReason!),
-
             const SizedBox(height: 8),
           ],
 
@@ -1171,7 +1172,7 @@ class StatusTicketData {
   });
 
   final String requestNumber;
-  final String type;
+
   final String typeLabel;
   final String service;
   final String status;
@@ -1186,6 +1187,14 @@ class StatusTicketData {
   final DateTime? estimatedStartTime;
 
   final String? cancellationReason;
+
+  final String type;
+  bool get isQueue {
+    return const [
+      'antrian_tiket',
+      'antrian_akademik',
+    ].contains(type.trim().toLowerCase());
+  }
 
   factory StatusTicketData.fromJson(Map<String, dynamic> json) {
     return StatusTicketData(

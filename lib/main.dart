@@ -7,14 +7,15 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import 'firebase_options.dart';
 import 'pages/welcome_page.dart';
-import 'services/ult_notification_service.dart';
+import 'services/queue_notification_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await dotenv.load(fileName: '.env');
 
-  final UltNotificationService notifications = UltNotificationService.instance;
+  final QueueNotificationService notifications =
+      QueueNotificationService.instance;
 
   if (notifications.supported) {
     try {
@@ -22,7 +23,7 @@ Future<void> main() async {
         options: DefaultFirebaseOptions.currentPlatform,
       );
 
-      FirebaseMessaging.onBackgroundMessage(ultFirebaseBackgroundHandler);
+      FirebaseMessaging.onBackgroundMessage(queueFirebaseBackgroundHandler);
 
       await notifications.initialize();
     } catch (error) {
@@ -41,7 +42,7 @@ Future<void> main() async {
 
 Future<void> _requestNotificationPermission() async {
   try {
-    await UltNotificationService.instance.enableNotifications();
+    await QueueNotificationService.instance.enableNotifications();
   } catch (error) {
     debugPrint('ULT notification permission error: $error');
   }
@@ -53,7 +54,7 @@ class HelpdeskPolnepApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      navigatorKey: UltNotificationService.instance.navigatorKey,
+      navigatorKey: QueueNotificationService.instance.navigatorKey,
       title: 'Helpdesk POLNEP',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(

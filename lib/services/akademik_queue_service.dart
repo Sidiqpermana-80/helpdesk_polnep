@@ -3,6 +3,15 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import '../config/api_config.dart';
+import 'ult_availability_service.dart';
+
+typedef AkademikCalendar = UltServiceCalendarData;
+
+String akademikDateKey(DateTime date) {
+  return '${date.year.toString().padLeft(4, '0')}-'
+      '${date.month.toString().padLeft(2, '0')}-'
+      '${date.day.toString().padLeft(2, '0')}';
+}
 
 class AkademikQueueException implements Exception {
   const AkademikQueueException(this.message, {this.checkStatus = false});
@@ -39,51 +48,89 @@ class AkademikQueueOptions {
   final List<AkademikQueueOption> purposes;
 
   factory AkademikQueueOptions.fromJson(Map<String, dynamic> json) {
-    List<AkademikQueueOption> read(String key) {
+    List<AkademikQueueOption> readOptions(String key) {
       final raw = json[key];
 
       if (raw is! List) {
-        throw const FormatException('Daftar pilihan tidak sesuai.');
+        throw const FormatException('Daftar pilihan belum sesuai.');
       }
 
-      final options = <String, AkademikQueueOption>{};
+      final result = <String, AkademikQueueOption>{};
 
       for (final item in raw) {
         if (item is! Map) {
-          throw const FormatException('Pilihan layanan tidak sesuai.');
+          throw const FormatException('Pilihan layanan belum sesuai.');
         }
 
         final option = AkademikQueueOption.fromJson(
           Map<String, dynamic>.from(item),
         );
 
-        options[option.id] = option;
+        result[option.id] = option;
       }
 
-      return options.values.toList();
+      return result.values.toList();
     }
 
     return AkademikQueueOptions(
-      studentStatuses: read('student_statuses'),
-      purposes: read('purposes'),
+      studentStatuses: readOptions('student_statuses'),
+      purposes: readOptions('purposes'),
     );
   }
 }
 
+class AkademikSlotOption {
+  AkademikSlotOption(Map<String, dynamic> json)
+    : minute = json['minute'] as int,
+      state = json['state'] as String;
+
+  final int minute;
+  final String state;
+
+  bool get available => state == 'available';
+}
+
+class AkademikDaySlots {
+  AkademikDaySlots(Map<String, dynamic> json)
+    : open = json['open'] == true,
+      reason = json['reason']?.toString(),
+      slots = (json['slots'] as List)
+          .map(
+            (item) =>
+                AkademikSlotOption(Map<String, dynamic>.from(item as Map)),
+          )
+          .toList();
+
+  final bool open;
+  final String? reason;
+  final List<AkademikSlotOption> slots;
+}
+
 class AkademikQueueTicket {
   const AkademikQueueTicket({
+    required this.id,
     required this.requestNumber,
     required this.queueNumber,
     required this.queueDate,
+    required this.queueTime,
     required this.status,
+    this.deviceSyncKey,
     this.estimatedLabel,
+    this.emailSent = false,
   });
 
+  final int id;
   final String requestNumber;
   final int queueNumber;
   final DateTime queueDate;
+  final String queueTime;
   final String status;
+
+  final String? deviceSyncKey;
   final String? estimatedLabel;
+
+  // Hasil pengiriman email dari Laravel.
+  final bool emailSent;
 
   String get numberLabel {
     return queueNumber.toString().padLeft(3, '0');
@@ -95,9 +142,13 @@ class AkademikQueueTicket {
         '${queueDate.year}';
   }
 
+  String get timeLabel {
+    return '${queueTime.replaceAll(':', '.')} WIB';
+  }
+
   String get statusLabel {
-    return const {
-          'menunggu_antrian': 'Menunggu Antrean',
+    return const <String, String>{
+          'menunggu_antrian': 'Menunggu Antrian',
           'dipanggil': 'Dipanggil',
           'sedang_dilayani': 'Sedang Dilayani',
           'selesai': 'Selesai',
@@ -107,6 +158,8 @@ class AkademikQueueTicket {
   }
 
   factory AkademikQueueTicket.fromJson(Map<String, dynamic> json) {
+    final id = int.tryParse(json['id']?.toString() ?? '');
+
     final code = json['request_number']?.toString().trim() ?? '';
 
     final number = int.tryParse(json['queue_number']?.toString() ?? '');
@@ -114,30 +167,33 @@ class AkademikQueueTicket {
     final dateText = json['queue_date']?.toString() ?? '';
     final date = DateTime.tryParse(dateText);
 
+    final time = json['queue_time']?.toString() ?? '';
     final status = json['status']?.toString().trim() ?? '';
 
-    final normalizedDate = date == null
-        ? ''
-        : '${date.year.toString().padLeft(4, '0')}-'
-              '${date.month.toString().padLeft(2, '0')}-'
-              '${date.day.toString().padLeft(2, '0')}';
+    final validTime = RegExp(r'^(?:0[89]|1[01345]):[0-5][05]$').hasMatch(time);
 
-    if (code.isEmpty ||
+    if (id == null ||
+        id <= 0 ||
         number == null ||
         number < 1 ||
+        code.isEmpty ||
         date == null ||
-        !RegExp(r'^\d{4}-\d{2}-\d{2}$').hasMatch(dateText) ||
-        dateText != normalizedDate ||
+        dateText != akademikDateKey(date) ||
+        !validTime ||
         status.isEmpty) {
-      throw const FormatException('Data tiket antrean belum lengkap.');
+      throw const FormatException('Data tiket antrian belum lengkap.');
     }
 
     return AkademikQueueTicket(
+      id: id,
       requestNumber: code,
       queueNumber: number,
       queueDate: date,
+      queueTime: time,
       status: status,
+      deviceSyncKey: json['device_sync_key']?.toString(),
       estimatedLabel: json['estimated_start_label']?.toString(),
+      emailSent: json['email_sent'] == true,
     );
   }
 }
@@ -155,15 +211,14 @@ class AkademikQueueService {
   }) {
     if (response.statusCode == 404) {
       throw const AkademikQueueException(
-        'API antrean Akademik belum tersedia. '
-        'Integrasi Laravel belum dipasang.',
+        'API antrian Akademik belum tersedia.',
       );
     }
 
     if (submission && response.statusCode >= 500) {
       throw const AkademikQueueException(
-        'Server mengalami kendala. '
-        'Periksa Cek Status dengan email sebelum mengirim ulang.',
+        'Server mengalami kendala. Periksa Cek Status dengan email '
+        'sebelum mengirim ulang.',
         checkStatus: true,
       );
     }
@@ -177,7 +232,7 @@ class AkademikQueueService {
         submission
             ? 'Jawaban server belum dapat dibaca. '
                   'Periksa Cek Status sebelum mengirim ulang.'
-            : 'Data pilihan dari server belum sesuai.',
+            : 'Data dari server belum dapat dibaca.',
         checkStatus: submission,
       );
     }
@@ -227,6 +282,25 @@ class AkademikQueueService {
     return AkademikQueueOptions.fromJson(_data(response));
   }
 
+  static Future<AkademikCalendar> loadCalendar() {
+    // Kalender libur kampus digunakan bersama.
+    // Slot antrian tetap diambil dari endpoint Akademik.
+    return UltAvailabilityService.calendar();
+  }
+
+  static Future<AkademikDaySlots> slots(DateTime date) async {
+    final response = await http
+        .get(
+          _uri(
+            '/slots',
+          ).replace(queryParameters: {'date': akademikDateKey(date)}),
+          headers: const {'Accept': 'application/json'},
+        )
+        .timeout(const Duration(seconds: 15));
+
+    return AkademikDaySlots(_data(response));
+  }
+
   static Future<AkademikQueueTicket> createTicket({
     required String fullName,
     required String nim,
@@ -235,6 +309,9 @@ class AkademikQueueService {
     required String studentStatusId,
     required String purposeId,
     required String description,
+    required DateTime queueDate,
+    required String queueTime,
+    String? fcmToken,
   }) async {
     final response = await http
         .post(
@@ -251,6 +328,12 @@ class AkademikQueueService {
             'student_status_id': studentStatusId,
             'purpose_id': purposeId,
             'description': description,
+            'queue_date': akademikDateKey(queueDate),
+            'queue_time': queueTime,
+            if (fcmToken != null && fcmToken.trim().isNotEmpty) ...{
+              'fcm_token': fcmToken.trim(),
+              'device_platform': 'android',
+            },
           }),
         )
         .timeout(const Duration(seconds: 30));
@@ -258,7 +341,14 @@ class AkademikQueueService {
     final data = _data(response, submission: true);
 
     try {
-      return AkademikQueueTicket.fromJson(data);
+      final ticket = AkademikQueueTicket.fromJson(data);
+
+      if (akademikDateKey(ticket.queueDate) != akademikDateKey(queueDate) ||
+          ticket.queueTime != queueTime) {
+        throw const FormatException('Jadwal tiket berbeda.');
+      }
+
+      return ticket;
     } on FormatException {
       throw const AkademikQueueException(
         'Server merespons, tetapi data tiket belum lengkap. '

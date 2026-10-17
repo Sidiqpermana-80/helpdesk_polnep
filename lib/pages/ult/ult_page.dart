@@ -8,7 +8,7 @@ import '../../services/ult_device_sync_service.dart';
 import '../../config/api_config.dart';
 import 'ult_success_page.dart';
 import 'ult_queue_time_field.dart';
-import '../../services/ult_notification_service.dart';
+import '../../services/queue_notification_service.dart';
 
 class UltPage extends StatefulWidget {
   const UltPage({super.key});
@@ -1708,7 +1708,7 @@ class _UltPageState extends State<UltPage> {
 
     try {
       // Ambil token perangkat jika notifikasi diizinkan.
-      final String? fcmToken = await UltNotificationService.instance
+      final String? fcmToken = await QueueNotificationService.instance
           .tokenForSubmission();
 
       if (!mounted) {
@@ -1849,7 +1849,7 @@ class _UltPageState extends State<UltPage> {
         if (ticketId != null) {
           // Notifikasi konfirmasi pengajuan berhasil.
           unawaited(
-            UltNotificationService.instance.showTicketCreated(
+            QueueNotificationService.instance.showTicketCreated(
               ticketId: ticketId,
 
               requestNumber: data['request_number']?.toString() ?? '',
