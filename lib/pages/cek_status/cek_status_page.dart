@@ -730,7 +730,30 @@ class _CekStatusPageState extends State<CekStatusPage>
       return _buildQueueTicketCard(ticket);
     }
 
-    return _buildRegularTicketCard(ticket);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+
+      children: [
+        _buildRegularTicketCard(ticket),
+
+        if (ticket.type == 'wifi_access')
+          const Padding(
+            padding: EdgeInsets.fromLTRB(4, 8, 4, 2),
+
+            child: Text(
+              'Jika akses masih tidak bisa, '
+              'silakan ke ruang UPA TIK.',
+
+              style: TextStyle(
+                color: Colors.red,
+                fontSize: 9,
+                height: 1.35,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+      ],
+    );
   }
 
   Widget _buildRegularTicketCard(StatusTicketData ticket) {
@@ -1130,6 +1153,7 @@ class _CekStatusPageState extends State<CekStatusPage>
 
   Color _getStatusColor(String status) {
     switch (status.toLowerCase()) {
+      case 'diterima':
       case 'selesai':
         return const Color(0xFF39B54A);
 
@@ -1208,7 +1232,14 @@ class StatusTicketData {
 
       status: json['status']?.toString() ?? '',
 
-      statusLabel: json['status_label']?.toString() ?? '-',
+      statusLabel:
+          const [
+                'pengaduan_akademik',
+                'pengaduan_pungli',
+              ].contains(json['type']) &&
+              json['status'] == 'diterima'
+          ? 'Laporan Diterima'
+          : (json['status_label']?.toString() ?? '-'),
 
       dateLabel: json['date_label']?.toString() ?? '-',
 

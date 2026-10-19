@@ -4,6 +4,9 @@ import '../aplikasi/aplikasi_page.dart';
 import '../fasilitas_ruangan/fasilitas_ruangan_page.dart';
 import '../website/website_page.dart';
 import '../wifi_internet/wifi_internet_page.dart';
+import '../pengaduan_akademik/pengaduan_akademik_page.dart';
+import '../pungli/pungli_page.dart';
+import '../kampus_aman/kampus_aman_page.dart';
 
 class PengaduanPage extends StatelessWidget {
   const PengaduanPage({super.key});
@@ -129,6 +132,30 @@ class PengaduanPage extends StatelessWidget {
                           imagePath: 'assets/images/building.jpeg',
                           fallbackIcon: Icons.meeting_room_rounded,
                           destination: const FasilitasRuanganPage(),
+                        ),
+
+                        _ComplaintCard(
+                          width: width,
+                          title: 'Akademik',
+                          imagePath: 'assets/images/mhs.png',
+                          fallbackIcon: Icons.school_rounded,
+                          destination: const PengaduanAkademikPage(),
+                        ),
+
+                        _ComplaintCard(
+                          width: width,
+                          title: 'Pungli',
+                          imagePath: 'assets/images/doc.png',
+                          fallbackIcon: Icons.report_outlined,
+                          destination: const PungliPage(),
+                        ),
+
+                        _ComplaintCard(
+                          width: width,
+                          title: 'Kampus Aman',
+                          imagePath: 'assets/images/mhs.png',
+                          fallbackIcon: Icons.shield_outlined,
+                          destination: const KampusAmanPage(),
                         ),
                       ],
                     );

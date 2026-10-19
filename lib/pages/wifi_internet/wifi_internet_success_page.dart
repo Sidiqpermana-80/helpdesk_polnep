@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../cek_status/cek_status_page.dart';
+
 class WifiInternetSuccessPage extends StatelessWidget {
   const WifiInternetSuccessPage({
     required this.requestNumber,
@@ -10,6 +12,12 @@ class WifiInternetSuccessPage extends StatelessWidget {
     required this.status,
     required this.estimatedResponse,
     required this.submittedAt,
+    this.isAccess = false,
+    this.phone = '',
+    this.email = '',
+    this.department = '',
+    this.description = '',
+    this.emailSent = false,
     super.key,
   });
 
@@ -20,7 +28,15 @@ class WifiInternetSuccessPage extends StatelessWidget {
   final String roomName;
   final String status;
   final String estimatedResponse;
+
   final DateTime submittedAt;
+
+  final bool isAccess;
+  final String phone;
+  final String email;
+  final String department;
+  final String description;
+  final bool emailSent;
 
   String get formattedDate {
     const List<String> months = [
@@ -45,6 +61,80 @@ class WifiInternetSuccessPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final String serviceName = isAccess
+        ? 'Akses Login/Wi-Fi'
+        : 'Gangguan Jaringan';
+
+    final List<Widget> details = [
+      _buildDetailCard(
+        asset: 'assets/images/pp.png',
+        label: 'Nama Pengguna',
+        value: fullName,
+      ),
+
+      _buildDetailCard(
+        asset: 'assets/images/book.png',
+        label: isAccess ? 'NIM' : 'NIM / NIP',
+        value: identifierValue,
+      ),
+
+      if (isAccess) ...[
+        _buildDetailCard(
+          asset: 'assets/images/pp.png',
+          label: 'No. HP',
+          value: phone,
+          icon: Icons.phone_android_rounded,
+        ),
+
+        _buildDetailCard(
+          asset: 'assets/images/email.png',
+          label: 'Email',
+          value: email,
+        ),
+
+        _buildDetailCard(
+          asset: 'assets/images/mhs.png',
+          label: 'Jurusan',
+          value: department,
+        ),
+
+        _buildDetailCard(
+          asset: 'assets/images/berkas.png',
+          label: 'Keterangan',
+          value: description,
+          maxLines: null,
+        ),
+      ] else ...[
+        _buildDetailCard(
+          asset: 'assets/images/gedung.png',
+          label: 'Nama Gedung',
+          value: buildingName,
+        ),
+
+        _buildDetailCard(
+          asset: 'assets/images/door.png',
+          label: 'Ruangan',
+          value: roomName,
+        ),
+      ],
+
+      _buildDetailCard(
+        asset: 'assets/images/tanggal.png',
+        label: 'Tanggal',
+        value: formattedDate,
+        iconBackground: const Color(0xFF3C69C9),
+        imagePadding: 8,
+      ),
+
+      _buildDetailCard(
+        asset: 'assets/images/ticket.png',
+        label: 'No. Tiket',
+        value: requestNumber,
+        iconBackground: const Color(0xFF39AD4A),
+        imagePadding: 7,
+      ),
+    ];
+
     return Scaffold(
       backgroundColor: const Color(0xFFF0F9FF),
 
@@ -58,9 +148,11 @@ class WifiInternetSuccessPage extends StatelessWidget {
 
         leading: IconButton(
           tooltip: 'Kembali',
+
           onPressed: () {
             Navigator.of(context).pop();
           },
+
           icon: const Icon(
             Icons.arrow_back_ios_new_rounded,
             color: Color(0xFF202020),
@@ -88,7 +180,9 @@ class WifiInternetSuccessPage extends StatelessWidget {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
+
             colors: [Color(0xFFF0F9FF), Color(0xFFD7EEFF), Color(0xFFB9E1FF)],
+
             stops: [0.00, 0.48, 1.00],
           ),
         ),
@@ -100,11 +194,12 @@ class WifiInternetSuccessPage extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
 
             children: [
-              const Padding(
-                padding: EdgeInsets.only(left: 2),
+              Padding(
+                padding: const EdgeInsets.only(left: 2),
+
                 child: Text(
-                  'Keluhan WIFI / Internet',
-                  style: TextStyle(
+                  serviceName,
+                  style: const TextStyle(
                     color: Color(0xFF202020),
                     fontSize: 12.5,
                     fontWeight: FontWeight.w500,
@@ -116,6 +211,7 @@ class WifiInternetSuccessPage extends StatelessWidget {
 
               const Padding(
                 padding: EdgeInsets.only(left: 2),
+
                 child: Text(
                   'Home / WIFI / Internet',
                   style: TextStyle(
@@ -160,6 +256,7 @@ class WifiInternetSuccessPage extends StatelessWidget {
                     const Text(
                       'Laporan Berhasil Dikirim',
                       textAlign: TextAlign.center,
+
                       style: TextStyle(
                         color: Color(0xFF202020),
                         fontSize: 16.5,
@@ -169,13 +266,21 @@ class WifiInternetSuccessPage extends StatelessWidget {
 
                     const SizedBox(height: 7),
 
-                    const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 17),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 17),
+
                       child: Text(
-                        'Laporan Kendala WIFI / Internet anda telah kami '
-                        'terima dan akan ditindaklanjuti oleh tim Helpdesk',
+                        isAccess
+                            ? 'Permohonan akses login/Wi-Fi Anda telah '
+                                  'kami terima dan akan ditindaklanjuti '
+                                  'oleh tim Helpdesk.'
+                            : 'Laporan Kendala WIFI / Internet anda '
+                                  'telah kami terima dan akan '
+                                  'ditindaklanjuti oleh tim Helpdesk',
+
                         textAlign: TextAlign.center,
-                        style: TextStyle(
+
+                        style: const TextStyle(
                           color: Color(0xFF444444),
                           fontSize: 9,
                           height: 1.3,
@@ -219,60 +324,53 @@ class WifiInternetSuccessPage extends StatelessWidget {
 
                           const SizedBox(height: 9),
 
-                          _buildDetailCard(
-                            asset: 'assets/images/pp.png',
-                            label: 'Nama Pengguna',
-                            value: fullName,
-                            iconBackground: const Color(0xFFD6EBF8),
-                          ),
+                          for (int i = 0; i < details.length; i++) ...[
+                            details[i],
 
-                          const SizedBox(height: 4),
-
-                          _buildDetailCard(
-                            asset: 'assets/images/book.png',
-                            label: 'NIM / NIP',
-                            value: identifierValue,
-                            iconBackground: const Color(0xFFD6EBF8),
-                          ),
-
-                          const SizedBox(height: 4),
-
-                          _buildDetailCard(
-                            asset: 'assets/images/gedung.png',
-                            label: 'Nama Gedung',
-                            value: buildingName,
-                            iconBackground: const Color(0xFFD6EBF8),
-                          ),
-
-                          const SizedBox(height: 4),
-
-                          _buildDetailCard(
-                            asset: 'assets/images/door.png',
-                            label: 'Ruangan',
-                            value: roomName,
-                            iconBackground: const Color(0xFFD6EBF8),
-                          ),
-
-                          const SizedBox(height: 4),
-
-                          _buildDetailCard(
-                            asset: 'assets/images/tanggal.png',
-                            label: 'Tanggal',
-                            value: formattedDate,
-                            iconBackground: const Color(0xFF3C69C9),
-                            imagePadding: 8,
-                          ),
-
-                          const SizedBox(height: 4),
-
-                          _buildDetailCard(
-                            asset: 'assets/images/ticket.png',
-                            label: 'No. Tiket',
-                            value: requestNumber,
-                            iconBackground: const Color(0xFF39AD4A),
-                            imagePadding: 7,
-                          ),
+                            if (i < details.length - 1)
+                              const SizedBox(height: 4),
+                          ],
                         ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 10),
+
+                    Text(
+                      emailSent
+                          ? 'Informasi tiket sudah dikirim ke $email. '
+                                'Periksa juga folder Spam.'
+                          : 'Simpan nomor tiket Anda. '
+                                'Konfirmasi pengiriman email '
+                                'belum tersedia.',
+
+                      textAlign: TextAlign.center,
+
+                      style: TextStyle(
+                        color: emailSent
+                            ? const Color(0xFF29823A)
+                            : const Color(0xFF666666),
+                        fontSize: 9,
+                        height: 1.35,
+                      ),
+                    ),
+
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                            builder: (_) {
+                              return CekStatusPage(
+                                initialKeyword: requestNumber,
+                              );
+                            },
+                          ),
+                        );
+                      },
+
+                      child: const Text(
+                        'Cek Status',
+                        style: TextStyle(fontSize: 10),
                       ),
                     ),
                   ],
@@ -285,76 +383,28 @@ class WifiInternetSuccessPage extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
 
                 children: [
-                  SizedBox(
+                  _buildButton(
+                    label: 'Kembali Ke Beranda',
                     width: 105,
-                    height: 38,
+                    color: const Color(0xFF7C8CF5),
 
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.of(
-                          context,
-                        ).popUntil((Route<dynamic> route) => route.isFirst);
-                      },
-
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF7C8CF5),
-
-                        foregroundColor: Colors.white,
-
-                        elevation: 0,
-
-                        padding: EdgeInsets.zero,
-
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(5),
-                        ),
-                      ),
-
-                      child: const Text(
-                        'Kembali Ke Beranda',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 8.5,
-                          fontWeight: FontWeight.w400,
-                        ),
-                      ),
-                    ),
+                    onPressed: () {
+                      Navigator.of(
+                        context,
+                      ).popUntil((Route<dynamic> route) => route.isFirst);
+                    },
                   ),
 
                   const SizedBox(width: 28),
 
-                  SizedBox(
+                  _buildButton(
+                    label: 'Buat Pertanyaan Lagi',
                     width: 125,
-                    height: 38,
+                    color: const Color(0xFF58C761),
 
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                      },
-
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF58C761),
-
-                        foregroundColor: Colors.white,
-
-                        elevation: 0,
-
-                        padding: EdgeInsets.zero,
-
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(5),
-                        ),
-                      ),
-
-                      child: const Text(
-                        'Buat Pertanyaan Lagi',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 8.5,
-                          fontWeight: FontWeight.w400,
-                        ),
-                      ),
-                    ),
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
                   ),
                 ],
               ),
@@ -367,12 +417,49 @@ class WifiInternetSuccessPage extends StatelessWidget {
     );
   }
 
+  Widget _buildButton({
+    required String label,
+    required double width,
+    required Color color,
+    required VoidCallback onPressed,
+  }) {
+    return SizedBox(
+      width: width,
+      height: 38,
+
+      child: ElevatedButton(
+        onPressed: onPressed,
+
+        style: ElevatedButton.styleFrom(
+          backgroundColor: color,
+
+          foregroundColor: Colors.white,
+
+          elevation: 0,
+
+          padding: EdgeInsets.zero,
+
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
+        ),
+
+        child: Text(
+          label,
+          textAlign: TextAlign.center,
+
+          style: const TextStyle(fontSize: 8.5, fontWeight: FontWeight.w400),
+        ),
+      ),
+    );
+  }
+
   Widget _buildDetailCard({
     required String asset,
     required String label,
     required String value,
-    required Color iconBackground,
+    Color iconBackground = const Color(0xFFD6EBF8),
     double imagePadding = 5,
+    int? maxLines = 2,
+    IconData? icon,
   }) {
     return Container(
       width: double.infinity,
@@ -405,12 +492,21 @@ class WifiInternetSuccessPage extends StatelessWidget {
               borderRadius: BorderRadius.circular(9),
             ),
 
-            child: Image.asset(
-              asset,
-              width: double.infinity,
-              height: double.infinity,
-              fit: BoxFit.contain,
-            ),
+            child: icon != null
+                ? Icon(icon, color: const Color(0xFF1762B0))
+                : Image.asset(
+                    asset,
+                    width: double.infinity,
+                    height: double.infinity,
+                    fit: BoxFit.contain,
+
+                    errorBuilder: (context, error, stackTrace) {
+                      return const Icon(
+                        Icons.description_outlined,
+                        color: Color(0xFF1762B0),
+                      );
+                    },
+                  ),
           ),
 
           const SizedBox(width: 11),
@@ -418,6 +514,7 @@ class WifiInternetSuccessPage extends StatelessWidget {
           Expanded(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
+
               crossAxisAlignment: CrossAxisAlignment.start,
 
               children: [
@@ -436,14 +533,13 @@ class WifiInternetSuccessPage extends StatelessWidget {
                 Text(
                   value,
 
-                  maxLines: 2,
+                  maxLines: maxLines,
 
                   overflow: TextOverflow.ellipsis,
 
                   style: const TextStyle(
                     color: Color(0xFF202020),
                     fontSize: 10.5,
-                    height: 1.15,
                     fontWeight: FontWeight.w400,
                   ),
                 ),

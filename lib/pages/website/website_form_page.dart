@@ -38,7 +38,6 @@ class _WebsiteFormPageState extends State<WebsiteFormPage> {
   List<String> _issueOptions = <String>[];
 
   bool _isLoadingIssues = true;
-
   bool _hasIssueLoadError = false;
 
   @override
@@ -62,6 +61,10 @@ class _WebsiteFormPageState extends State<WebsiteFormPage> {
     super.dispose();
   }
 
+  // =========================================================
+  // NILAI JENIS KENDALA UNTUK API
+  // =========================================================
+
   String _apiIssueType() {
     final String issue = _selectedIssue?.trim() ?? '';
 
@@ -74,6 +77,10 @@ class _WebsiteFormPageState extends State<WebsiteFormPage> {
         .replaceAll(RegExp(r'[^a-z0-9]+'), '_')
         .replaceAll(RegExp(r'^_+|_+$'), '');
   }
+
+  // =========================================================
+  // MEMUAT JENIS KENDALA DARI ADMIN
+  // =========================================================
 
   Future<void> _loadIssueOptions() async {
     if (mounted) {
@@ -89,7 +96,6 @@ class _WebsiteFormPageState extends State<WebsiteFormPage> {
           .timeout(const Duration(seconds: 20));
 
       debugPrint('WEBSITE ISSUE STATUS: ${response.statusCode}');
-
       debugPrint('WEBSITE ISSUE RESPONSE: ${response.body}');
 
       final dynamic decoded = jsonDecode(response.body);
@@ -156,6 +162,10 @@ class _WebsiteFormPageState extends State<WebsiteFormPage> {
     }
   }
 
+  // =========================================================
+  // PILIH FILE PENDUKUNG
+  // =========================================================
+
   Future<void> _pickSupportFile() async {
     try {
       const XTypeGroup group = XTypeGroup(
@@ -177,7 +187,6 @@ class _WebsiteFormPageState extends State<WebsiteFormPage> {
         }
 
         _message('Ukuran file maksimal 5 MB.');
-
         return;
       }
 
@@ -199,59 +208,54 @@ class _WebsiteFormPageState extends State<WebsiteFormPage> {
     }
   }
 
+  // =========================================================
+  // DEKORASI FIELD
+  // =========================================================
+
   InputDecoration _decoration({String? hintText}) {
     return InputDecoration(
       hintText: hintText,
-
-      hintStyle: const TextStyle(color: Color(0xFF888888), fontSize: 9),
-
-      isDense: true,
-
+      hintStyle: const TextStyle(color: Color(0xFF888888), fontSize: 10.5),
+      isDense: false,
       filled: true,
-
       fillColor: const Color(0xFFF3F4F8),
-
-      contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 7),
-
+      contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 11),
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(3),
-        borderSide: const BorderSide(color: Color(0xFF8D8D8D), width: 0.7),
+        borderRadius: BorderRadius.circular(5),
+        borderSide: const BorderSide(color: Color(0xFF8D8D8D), width: 0.8),
       ),
-
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(3),
-        borderSide: const BorderSide(color: Color(0xFF8D8D8D), width: 0.7),
+        borderRadius: BorderRadius.circular(5),
+        borderSide: const BorderSide(color: Color(0xFF8D8D8D), width: 0.8),
       ),
-
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(3),
-        borderSide: const BorderSide(color: Color(0xFF3AA7F5), width: 1),
+        borderRadius: BorderRadius.circular(5),
+        borderSide: const BorderSide(color: Color(0xFF3AA7F5), width: 1.4),
       ),
-
       errorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(3),
-        borderSide: const BorderSide(color: Colors.red, width: 0.8),
-      ),
-
-      focusedErrorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(3),
+        borderRadius: BorderRadius.circular(5),
         borderSide: const BorderSide(color: Colors.red, width: 1),
       ),
-
-      errorStyle: const TextStyle(fontSize: 7.5, height: 0.9),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(5),
+        borderSide: const BorderSide(color: Colors.red, width: 1.3),
+      ),
+      errorStyle: const TextStyle(fontSize: 9),
     );
   }
+
+  // =========================================================
+  // HALAMAN
+  // =========================================================
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF0F9FF),
-
       body: SafeArea(
         child: Container(
           width: double.infinity,
           height: double.infinity,
-
           decoration: const BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topCenter,
@@ -259,19 +263,14 @@ class _WebsiteFormPageState extends State<WebsiteFormPage> {
               colors: [Color(0xFFF0F9FF), Color(0xFFD7EEFF), Color(0xFFB9E1FF)],
             ),
           ),
-
           child: RefreshIndicator(
             onRefresh: _refreshPage,
-
             child: SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(
                 parent: BouncingScrollPhysics(),
               ),
-
               keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-
               padding: const EdgeInsets.fromLTRB(16, 13, 16, 25),
-
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -282,20 +281,16 @@ class _WebsiteFormPageState extends State<WebsiteFormPage> {
                         padding: EdgeInsets.zero,
                         constraints: const BoxConstraints(),
                         tooltip: 'Kembali',
-
                         onPressed: () {
                           Navigator.of(context).pop();
                         },
-
                         icon: const Icon(
                           Icons.arrow_back_ios_new_rounded,
                           size: 20,
                           color: Color(0xFF111111),
                         ),
                       ),
-
                       const SizedBox(width: 9),
-
                       const Text(
                         'Layanan Website',
                         style: TextStyle(
@@ -312,19 +307,14 @@ class _WebsiteFormPageState extends State<WebsiteFormPage> {
                   // FORM CARD
                   Container(
                     width: double.infinity,
-
-                    padding: const EdgeInsets.fromLTRB(8, 11, 8, 16),
-
+                    padding: const EdgeInsets.fromLTRB(10, 11, 10, 16),
                     decoration: BoxDecoration(
                       color: Colors.white,
-
                       borderRadius: BorderRadius.circular(9),
-
                       border: Border.all(
                         color: const Color(0xFFD8E6F0),
                         width: 0.5,
                       ),
-
                       boxShadow: const [
                         BoxShadow(
                           color: Color(0x0D000000),
@@ -333,10 +323,8 @@ class _WebsiteFormPageState extends State<WebsiteFormPage> {
                         ),
                       ],
                     ),
-
                     child: Form(
                       key: _formKey,
-
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -344,7 +332,7 @@ class _WebsiteFormPageState extends State<WebsiteFormPage> {
                             'FORM PERTANYAAN',
                             style: TextStyle(
                               color: Color(0xFF202020),
-                              fontSize: 10.5,
+                              fontSize: 12.5,
                               fontWeight: FontWeight.w700,
                             ),
                           ),
@@ -355,28 +343,24 @@ class _WebsiteFormPageState extends State<WebsiteFormPage> {
                             'Lengkapi data berikut sesuai dengan pilihan anda:',
                             style: TextStyle(
                               color: Color(0xFF202020),
-                              fontSize: 8,
+                              fontSize: 10,
                             ),
                           ),
 
                           const SizedBox(height: 19),
 
+                          // NAMA
                           _title('Nama Lengkap'),
 
                           TextFormField(
                             controller: _nameController,
-
                             style: const TextStyle(
-                              fontSize: 9.5,
+                              fontSize: 16,
                               color: Color(0xFF202020),
                             ),
-
                             textCapitalization: TextCapitalization.words,
-
                             textInputAction: TextInputAction.next,
-
                             decoration: _decoration(),
-
                             validator: (String? value) {
                               if (value == null || value.trim().isEmpty) {
                                 return 'Nama lengkap wajib diisi';
@@ -386,30 +370,24 @@ class _WebsiteFormPageState extends State<WebsiteFormPage> {
                             },
                           ),
 
-                          const SizedBox(height: 8),
+                          const SizedBox(height: 13),
 
+                          // NIM / NIP
                           _title('NIM / NIP'),
 
                           TextFormField(
                             controller: _identifierController,
-
                             style: const TextStyle(
-                              fontSize: 9.5,
+                              fontSize: 16,
                               color: Color(0xFF202020),
                             ),
-
                             keyboardType: TextInputType.number,
-
                             textInputAction: TextInputAction.next,
-
                             inputFormatters: [
                               FilteringTextInputFormatter.digitsOnly,
-
                               LengthLimitingTextInputFormatter(30),
                             ],
-
                             decoration: _decoration(),
-
                             validator: (String? value) {
                               if (value == null || value.trim().isEmpty) {
                                 return 'NIM/NIP wajib diisi';
@@ -419,15 +397,16 @@ class _WebsiteFormPageState extends State<WebsiteFormPage> {
                             },
                           ),
 
-                          const SizedBox(height: 8),
+                          const SizedBox(height: 13),
 
+                          // EMAIL
                           _title('Email'),
 
                           TextFormField(
                             controller: _emailController,
                             keyboardType: TextInputType.emailAddress,
                             textInputAction: TextInputAction.next,
-                            style: const TextStyle(fontSize: 9.5),
+                            style: const TextStyle(fontSize: 16),
                             decoration: _decoration(
                               hintText: 'Masukkan email aktif',
                             ),
@@ -450,36 +429,33 @@ class _WebsiteFormPageState extends State<WebsiteFormPage> {
                             },
                           ),
 
+                          const SizedBox(height: 13),
+
+                          // WEBSITE TERPILIH
                           _title('Pilihan Website'),
 
                           _lockedWebsite(),
 
-                          const SizedBox(height: 8),
+                          const SizedBox(height: 13),
 
+                          // JENIS KENDALA
                           _title('Jenis Kendala'),
 
                           DropdownButtonFormField<String>(
                             key: ValueKey('issue-$_formVersion'),
-
                             initialValue: _selectedIssue,
-
                             isExpanded: true,
-
                             isDense: true,
-
                             menuMaxHeight: 220,
-
                             style: const TextStyle(
                               color: Color(0xFF202020),
-                              fontSize: 9.5,
+                              fontSize: 16,
                             ),
-
                             icon: const Icon(
                               Icons.keyboard_arrow_down_rounded,
                               size: 16,
                               color: Color(0xFF555555),
                             ),
-
                             decoration: _decoration(
                               hintText: _isLoadingIssues
                                   ? 'Memuat jenis kendala...'
@@ -487,18 +463,15 @@ class _WebsiteFormPageState extends State<WebsiteFormPage> {
                                   ? 'Gagal memuat jenis kendala'
                                   : 'Pilih jenis kendala',
                             ),
-
                             items: _issueOptions.map((String issue) {
                               return DropdownMenuItem<String>(
                                 value: issue,
-
                                 child: Text(
                                   issue,
-                                  style: const TextStyle(fontSize: 9.5),
+                                  style: const TextStyle(fontSize: 16),
                                 ),
                               );
                             }).toList(),
-
                             onChanged:
                                 _isLoadingIssues ||
                                     _hasIssueLoadError ||
@@ -509,7 +482,6 @@ class _WebsiteFormPageState extends State<WebsiteFormPage> {
                                       _selectedIssue = value;
                                     });
                                   },
-
                             validator: (String? value) {
                               if (_isLoadingIssues) {
                                 return 'Jenis kendala masih dimuat';
@@ -534,64 +506,49 @@ class _WebsiteFormPageState extends State<WebsiteFormPage> {
                           if (_hasIssueLoadError)
                             Padding(
                               padding: const EdgeInsets.only(top: 5),
-
                               child: Align(
                                 alignment: Alignment.centerRight,
-
                                 child: TextButton.icon(
                                   onPressed: _loadIssueOptions,
-
                                   icon: const Icon(
                                     Icons.refresh_rounded,
                                     size: 13,
                                   ),
-
                                   label: const Text(
                                     'Coba Lagi',
-
-                                    style: TextStyle(fontSize: 8),
+                                    style: TextStyle(fontSize: 10.5),
                                   ),
-
                                   style: TextButton.styleFrom(
                                     foregroundColor: const Color(0xFF168DE2),
-
                                     padding: const EdgeInsets.symmetric(
                                       horizontal: 5,
                                     ),
-
                                     minimumSize: const Size(0, 25),
                                   ),
                                 ),
                               ),
                             ),
 
-                          const SizedBox(height: 8),
+                          const SizedBox(height: 13),
 
+                          // DESKRIPSI
                           _title('Deskripsikan Permasalahan Anda'),
 
                           SizedBox(
-                            height: 72,
-
+                            height: 115,
                             child: TextFormField(
                               controller: _descriptionController,
-
                               style: const TextStyle(
-                                fontSize: 9.5,
+                                fontSize: 16,
                                 color: Color(0xFF202020),
                               ),
-
                               expands: true,
                               minLines: null,
                               maxLines: null,
-
                               keyboardType: TextInputType.multiline,
-
                               textCapitalization: TextCapitalization.sentences,
-
                               textAlignVertical: TextAlignVertical.top,
-
                               decoration: _decoration(),
-
                               validator: (String? value) {
                                 if (value == null || value.trim().isEmpty) {
                                   return 'Deskripsi permasalahan wajib diisi';
@@ -602,8 +559,9 @@ class _WebsiteFormPageState extends State<WebsiteFormPage> {
                             ),
                           ),
 
-                          const SizedBox(height: 9),
+                          const SizedBox(height: 13),
 
+                          // FILE PENDUKUNG
                           _title('Upload File Pendukung'),
 
                           _fileInput(),
@@ -616,7 +574,7 @@ class _WebsiteFormPageState extends State<WebsiteFormPage> {
                               textAlign: TextAlign.center,
                               style: TextStyle(
                                 color: Color(0xFF555555),
-                                fontSize: 7,
+                                fontSize: 9,
                               ),
                             ),
                           ),
@@ -631,85 +589,67 @@ class _WebsiteFormPageState extends State<WebsiteFormPage> {
 
                           const SizedBox(height: 18),
 
+                          // TOMBOL
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
-
                             children: [
-                              // KIRIM DATA
                               SizedBox(
-                                width: 84,
-                                height: 32,
-
+                                width: 100,
+                                height: 40,
                                 child: ElevatedButton(
                                   onPressed: _isSubmitting ? null : _submit,
-
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: const Color(0xFF8C99F2),
-
                                     disabledBackgroundColor: const Color(
                                       0xFFADB5F5,
                                     ),
-
                                     foregroundColor: Colors.white,
-
                                     elevation: 0,
-
                                     padding: EdgeInsets.zero,
-
                                     shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(4),
+                                      borderRadius: BorderRadius.circular(5),
                                     ),
                                   ),
-
                                   child: _isSubmitting
                                       ? const SizedBox(
-                                          width: 14,
-                                          height: 14,
-
+                                          width: 18,
+                                          height: 18,
                                           child: CircularProgressIndicator(
-                                            strokeWidth: 1.7,
+                                            strokeWidth: 2,
                                             color: Colors.white,
                                           ),
                                         )
                                       : const Text(
                                           'Kirim Data',
                                           style: TextStyle(
-                                            fontSize: 8,
-                                            fontWeight: FontWeight.w400,
+                                            fontSize: 9.5,
+                                            fontWeight: FontWeight.w500,
                                           ),
                                         ),
                                 ),
                               ),
 
-                              const SizedBox(width: 20),
+                              const SizedBox(width: 22),
 
-                              // RESET
                               SizedBox(
-                                width: 60,
-                                height: 32,
-
+                                width: 72,
+                                height: 40,
                                 child: ElevatedButton(
                                   onPressed: _isSubmitting ? null : _reset,
-
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: const Color(0xFF59C467),
-
                                     foregroundColor: Colors.white,
-
                                     elevation: 0,
-
                                     padding: EdgeInsets.zero,
-
                                     shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(4),
+                                      borderRadius: BorderRadius.circular(5),
                                     ),
                                   ),
-
                                   child: const Text(
                                     'Reset',
                                     style: TextStyle(
-                                      fontSize: 8,
-                                      fontWeight: FontWeight.w400,
+                                      fontSize: 9.5,
+                                      fontWeight: FontWeight.w500,
                                     ),
                                   ),
                                 ),
@@ -737,15 +677,13 @@ class _WebsiteFormPageState extends State<WebsiteFormPage> {
 
   Widget _title(String text) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 4),
-
+      padding: const EdgeInsets.only(bottom: 5),
       child: Text(
         text,
-
         style: const TextStyle(
           color: Color(0xFF202020),
-          fontSize: 8.5,
-          fontWeight: FontWeight.w400,
+          fontSize: 10.5,
+          fontWeight: FontWeight.w500,
         ),
       ),
     );
@@ -758,39 +696,28 @@ class _WebsiteFormPageState extends State<WebsiteFormPage> {
   Widget _lockedWebsite() {
     return Container(
       width: double.infinity,
-
-      constraints: const BoxConstraints(minHeight: 31),
-
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-
+      constraints: const BoxConstraints(minHeight: 42),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 11),
       decoration: BoxDecoration(
         color: const Color(0xFFE7F3FF),
-
-        borderRadius: BorderRadius.circular(3),
-
+        borderRadius: BorderRadius.circular(5),
         border: Border.all(color: const Color(0xFF3AA7F5), width: 0.9),
       ),
-
       child: Row(
         children: [
           Expanded(
             child: Text(
               widget.websiteName,
-
               maxLines: 1,
-
               overflow: TextOverflow.ellipsis,
-
               style: const TextStyle(
                 color: Color(0xFF1769AA),
-                fontSize: 9.5,
+                fontSize: 16,
                 fontWeight: FontWeight.w500,
               ),
             ),
           ),
-
           const SizedBox(width: 5),
-
           const Icon(
             Icons.lock_outline_rounded,
             size: 13,
@@ -809,41 +736,31 @@ class _WebsiteFormPageState extends State<WebsiteFormPage> {
     final bool hasFile = _supportFile != null;
 
     return SizedBox(
-      height: 30,
-
+      height: 42,
       child: Row(
         children: [
           Expanded(
             child: Container(
               height: double.infinity,
-
               padding: const EdgeInsets.symmetric(horizontal: 7),
-
               alignment: Alignment.centerLeft,
-
               decoration: const BoxDecoration(
                 color: Color(0xFFD7D7D7),
-
-                borderRadius: BorderRadius.horizontal(left: Radius.circular(3)),
+                borderRadius: BorderRadius.horizontal(left: Radius.circular(5)),
               ),
-
               child: Row(
                 children: [
                   Expanded(
                     child: Text(
                       hasFile ? _supportFile!.name : 'Belum ada file',
-
                       maxLines: 1,
-
                       overflow: TextOverflow.ellipsis,
-
                       style: const TextStyle(
                         color: Color(0xFF555555),
-                        fontSize: 7.5,
+                        fontSize: 10.5,
                       ),
                     ),
                   ),
-
                   if (hasFile)
                     GestureDetector(
                       onTap: () {
@@ -851,7 +768,6 @@ class _WebsiteFormPageState extends State<WebsiteFormPage> {
                           _supportFile = null;
                         });
                       },
-
                       child: const Icon(
                         Icons.close_rounded,
                         size: 13,
@@ -862,34 +778,25 @@ class _WebsiteFormPageState extends State<WebsiteFormPage> {
               ),
             ),
           ),
-
           SizedBox(
-            width: 90,
+            width: 105,
             height: double.infinity,
-
             child: ElevatedButton.icon(
               onPressed: _isSubmitting ? null : _pickSupportFile,
-
               icon: const Icon(
                 Icons.folder,
                 color: Color(0xFFFFB52D),
                 size: 15,
               ),
-
-              label: const Text('Choose File', style: TextStyle(fontSize: 7)),
-
+              label: const Text('Choose File', style: TextStyle(fontSize: 9.5)),
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF58C761),
-
                 foregroundColor: Colors.white,
-
                 elevation: 0,
-
                 padding: const EdgeInsets.symmetric(horizontal: 3),
-
                 shape: const RoundedRectangleBorder(
                   borderRadius: BorderRadius.horizontal(
-                    right: Radius.circular(3),
+                    right: Radius.circular(5),
                   ),
                 ),
               ),
@@ -917,7 +824,6 @@ class _WebsiteFormPageState extends State<WebsiteFormPage> {
 
     if (issue.isEmpty) {
       _message('Jenis kendala tidak valid.');
-
       return;
     }
 
@@ -930,7 +836,6 @@ class _WebsiteFormPageState extends State<WebsiteFormPage> {
     });
 
     final String fullName = _nameController.text.trim();
-
     final String identifier = _identifierController.text.trim();
 
     try {
@@ -941,15 +846,10 @@ class _WebsiteFormPageState extends State<WebsiteFormPage> {
 
       request.fields.addAll({
         'full_name': fullName,
-
         'identifier_value': identifier,
-
         'email': _emailController.text.trim(),
-
         'website_name': widget.websiteName,
-
         'issue_type': issue,
-
         'description': _descriptionController.text.trim(),
       });
 
@@ -970,7 +870,6 @@ class _WebsiteFormPageState extends State<WebsiteFormPage> {
       final http.Response response = await http.Response.fromStream(streamed);
 
       debugPrint('WEBSITE STATUS: ${response.statusCode}');
-
       debugPrint('WEBSITE RESPONSE: ${response.body}');
 
       final dynamic decoded = jsonDecode(response.body);
@@ -1009,15 +908,10 @@ class _WebsiteFormPageState extends State<WebsiteFormPage> {
             builder: (BuildContext context) {
               return WebsiteSuccessPage(
                 requestNumber: ticket,
-
                 fullName: fullName,
-
                 identifierValue: identifier,
-
                 websiteName: widget.websiteName,
-
                 issueType: issue,
-
                 submittedAt: submittedAt,
               );
             },

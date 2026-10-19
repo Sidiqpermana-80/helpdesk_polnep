@@ -20,7 +20,6 @@ class _WebsitePageState extends State<WebsitePage> {
   List<String> _websites = <String>[];
 
   bool _isLoadingWebsites = true;
-
   bool _hasWebsiteLoadError = false;
 
   @override
@@ -29,6 +28,10 @@ class _WebsitePageState extends State<WebsitePage> {
 
     _loadWebsites();
   }
+
+  // =========================================================
+  // MEMUAT DAFTAR WEBSITE
+  // =========================================================
 
   Future<void> _loadWebsites() async {
     if (mounted) {
@@ -44,7 +47,6 @@ class _WebsitePageState extends State<WebsitePage> {
           .timeout(const Duration(seconds: 20));
 
       debugPrint('WEBSITE STATUS: ${response.statusCode}');
-
       debugPrint('WEBSITE RESPONSE: ${response.body}');
 
       final dynamic decoded = jsonDecode(response.body);
@@ -106,68 +108,58 @@ class _WebsitePageState extends State<WebsitePage> {
     }
   }
 
+  // =========================================================
+  // HALAMAN
+  // =========================================================
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF0F9FF),
-
       body: SafeArea(
         child: Container(
           width: double.infinity,
           height: double.infinity,
-
           decoration: const BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
-              colors: [Color(0xFFF0F9FF), Color(0xFFD7EEFF), Color(0xFFB9E1FF)],
+              colors: [
+                Color(0xFFF0F9FF),
+                Color(0xFFD7EEFF),
+                Color(0xFFB9E1FF),
+              ],
             ),
           ),
-
           child: Column(
             children: [
-              // ===============================================
               // HEADER
-              // ===============================================
               Padding(
                 padding: const EdgeInsets.fromLTRB(18, 15, 18, 5),
-
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-
                   children: [
                     Row(
                       children: [
                         IconButton(
                           padding: EdgeInsets.zero,
-
                           constraints: const BoxConstraints(),
-
                           tooltip: 'Kembali',
-
                           onPressed: () {
                             Navigator.of(context).pop();
                           },
-
                           icon: const Icon(
                             Icons.arrow_back_ios_new_rounded,
-
                             size: 21,
-
                             color: Color(0xFF111111),
                           ),
                         ),
-
                         const SizedBox(width: 10),
-
                         const Text(
                           'Layanan Website',
-
                           style: TextStyle(
                             color: Color(0xFF111111),
-
                             fontSize: 16,
-
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -176,47 +168,35 @@ class _WebsitePageState extends State<WebsitePage> {
 
                     const SizedBox(height: 21),
 
-                    // LOGO
+                    // TEKS DAN GAMBAR
                     SizedBox(
                       width: double.infinity,
-
                       height: 112,
-
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
-
                         children: [
                           const Expanded(
                             child: Padding(
                               padding: EdgeInsets.only(left: 8),
-
                               child: Text(
                                 'Pilih Website dan\n'
                                 'jenis kendala yang\n'
                                 'ingin anda\n'
                                 'keluhkan',
-
                                 style: TextStyle(
                                   color: Color(0xFF111111),
-
                                   fontSize: 20,
-
                                   height: 1.05,
-
                                   fontWeight: FontWeight.w700,
                                 ),
                               ),
                             ),
                           ),
-
                           SizedBox(
                             width: 145,
-
                             height: 105,
-
                             child: Image.asset(
                               'assets/images/web.png',
-
                               fit: BoxFit.contain,
                             ),
                           ),
@@ -228,16 +208,12 @@ class _WebsitePageState extends State<WebsitePage> {
 
                     const Padding(
                       padding: EdgeInsets.only(left: 8),
-
                       child: Text(
                         'Website dan portal resmi di lingkungan '
                         'Politeknik Negeri Pontianak.',
-
                         style: TextStyle(
                           color: Color(0xFF333333),
-
-                          fontSize: 9.5,
-
+                          fontSize: 11,
                           height: 1.3,
                         ),
                       ),
@@ -249,7 +225,9 @@ class _WebsitePageState extends State<WebsitePage> {
               ),
 
               // DAFTAR WEBSITE
-              Expanded(child: _buildWebsiteContent()),
+              Expanded(
+                child: _buildWebsiteContent(),
+              ),
             ],
           ),
         ),
@@ -257,35 +235,31 @@ class _WebsitePageState extends State<WebsitePage> {
     );
   }
 
+  // =========================================================
+  // ISI DAFTAR WEBSITE
+  // =========================================================
+
   Widget _buildWebsiteContent() {
     if (_isLoadingWebsites) {
       return const Center(
         child: CircularProgressIndicator(
           strokeWidth: 2.5,
-
           color: Color(0xFF7C8CF5),
         ),
       );
     }
 
-    // =========================================================
-    // ERROR
-    // =========================================================
-
+    // GAGAL MEMUAT DATA
     if (_hasWebsiteLoadError) {
       return Center(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 35),
-
           child: Column(
             mainAxisSize: MainAxisSize.min,
-
             children: [
               const Icon(
                 Icons.cloud_off_rounded,
-
                 size: 42,
-
                 color: Color(0xFF7C8CF5),
               ),
 
@@ -293,14 +267,10 @@ class _WebsitePageState extends State<WebsitePage> {
 
               const Text(
                 'Daftar website gagal dimuat',
-
                 textAlign: TextAlign.center,
-
                 style: TextStyle(
                   color: Color(0xFF202020),
-
-                  fontSize: 11,
-
+                  fontSize: 14,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -309,14 +279,10 @@ class _WebsitePageState extends State<WebsitePage> {
 
               const Text(
                 'Periksa koneksi ke server, lalu coba kembali.',
-
                 textAlign: TextAlign.center,
-
                 style: TextStyle(
                   color: Color(0xFF666666),
-
-                  fontSize: 9.5,
-
+                  fontSize: 11,
                   height: 1.3,
                 ),
               ),
@@ -325,31 +291,22 @@ class _WebsitePageState extends State<WebsitePage> {
 
               SizedBox(
                 width: 100,
-                height: 36,
-
+                height: 40,
                 child: ElevatedButton(
                   onPressed: _loadWebsites,
-
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF7C8CF5),
-
                     foregroundColor: Colors.white,
-
                     elevation: 0,
-
                     padding: EdgeInsets.zero,
-
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(5),
                     ),
                   ),
-
                   child: const Text(
                     'Coba Lagi',
-
                     style: TextStyle(
                       fontSize: 9.5,
-
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -361,29 +318,27 @@ class _WebsitePageState extends State<WebsitePage> {
       );
     }
 
-    // =========================================================
     // DATA KOSONG
-    // =========================================================
-
     if (_websites.isEmpty) {
       return const Center(
         child: Padding(
           padding: EdgeInsets.symmetric(horizontal: 30),
-
           child: Column(
             mainAxisSize: MainAxisSize.min,
-
             children: [
-              Icon(Icons.language_rounded, size: 42, color: Color(0xFF8793FF)),
-
+              Icon(
+                Icons.language_rounded,
+                size: 42,
+                color: Color(0xFF8793FF),
+              ),
               SizedBox(height: 10),
-
               Text(
                 'Belum ada website yang tersedia.',
-
                 textAlign: TextAlign.center,
-
-                style: TextStyle(color: Color(0xFF555555), fontSize: 10.5),
+                style: TextStyle(
+                  color: Color(0xFF555555),
+                  fontSize: 12,
+                ),
               ),
             ],
           ),
@@ -391,34 +346,23 @@ class _WebsitePageState extends State<WebsitePage> {
       );
     }
 
-    // =========================================================
     // LIST WEBSITE
-    // =========================================================
-
     return RefreshIndicator(
       onRefresh: _loadWebsites,
-
       child: ListView.separated(
         physics: const AlwaysScrollableScrollPhysics(),
-
         padding: const EdgeInsets.fromLTRB(18, 0, 18, 22),
-
         itemCount: _websites.length,
-
         separatorBuilder: (BuildContext context, int index) {
-          return const SizedBox(height: 4);
+          return const SizedBox(height: 8);
         },
-
         itemBuilder: (BuildContext context, int index) {
           final String website = _websites[index];
-
           final bool selected = _selectedWebsite == website;
 
           return _buildWebsiteItem(
             website: website,
-
             selected: selected,
-
             onTap: () {
               setState(() {
                 _selectedWebsite = website;
@@ -427,7 +371,9 @@ class _WebsitePageState extends State<WebsitePage> {
               Navigator.of(context).push(
                 MaterialPageRoute<void>(
                   builder: (BuildContext context) {
-                    return WebsiteFormPage(websiteName: website);
+                    return WebsiteFormPage(
+                      websiteName: website,
+                    );
                   },
                 ),
               );
@@ -449,70 +395,57 @@ class _WebsitePageState extends State<WebsitePage> {
   }) {
     return Material(
       color: Colors.transparent,
-
       child: InkWell(
         onTap: onTap,
-
         borderRadius: BorderRadius.circular(8),
-
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 170),
-
           curve: Curves.easeInOut,
-
           width: double.infinity,
-
-          constraints: const BoxConstraints(minHeight: 45),
-
-          padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
-
+          constraints: const BoxConstraints(
+            minHeight: 55,
+          ),
+          padding: const EdgeInsets.symmetric(
+            horizontal: 15,
+            vertical: 12,
+          ),
           decoration: BoxDecoration(
-            color: selected ? const Color(0xFF8EEB91) : Colors.white,
-
+            color: selected
+                ? const Color(0xFF8EEB91)
+                : Colors.white,
             borderRadius: BorderRadius.circular(8),
-
             border: Border.all(
               color: selected
                   ? const Color(0xFF54C85A)
                   : const Color(0xFF909090),
-
               width: selected ? 1.2 : 0.8,
             ),
-
             boxShadow: const [
               BoxShadow(
                 color: Color(0x0D000000),
-
                 blurRadius: 2,
-
                 offset: Offset(0, 1),
               ),
             ],
           ),
-
           child: Row(
             children: [
               Expanded(
                 child: Text(
                   website,
-
                   style: TextStyle(
                     color: const Color(0xFF202020),
-
-                    fontSize: 11,
-
-                    fontWeight: selected ? FontWeight.w500 : FontWeight.w400,
+                    fontSize: 16,
+                    fontWeight: selected
+                        ? FontWeight.w500
+                        : FontWeight.w400,
                   ),
                 ),
               ),
-
               const SizedBox(width: 10),
-
               Icon(
                 Icons.arrow_forward_ios_rounded,
-
                 size: 16,
-
                 color: selected
                     ? const Color(0xFF45B957)
                     : const Color(0xFF8793FF),

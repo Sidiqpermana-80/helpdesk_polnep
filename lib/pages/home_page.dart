@@ -71,56 +71,45 @@ class _HomePageState extends State<HomePage> {
       if (response.statusCode != 200 ||
           decoded is! Map<String, dynamic> ||
           decoded['success'] != true) {
-        throw const FormatException(
-          'Response announcement tidak valid.',
-        );
+        throw const FormatException('Response announcement tidak valid.');
       }
 
       final dynamic rawData = decoded['data'];
 
       if (rawData is! List) {
-        throw const FormatException(
-          'Daftar announcement tidak valid.',
-        );
+        throw const FormatException('Daftar announcement tidak valid.');
       }
 
-      final List<AnnouncementData> announcements =
-          <AnnouncementData>[];
+      final List<AnnouncementData> announcements = <AnnouncementData>[];
 
       for (final dynamic item in rawData) {
         if (item is Map<String, dynamic>) {
-          announcements.add(
-            AnnouncementData.fromJson(item),
-          );
+          announcements.add(AnnouncementData.fromJson(item));
         } else if (item is Map) {
           announcements.add(
-            AnnouncementData.fromJson(
-              Map<String, dynamic>.from(item),
-            ),
+            AnnouncementData.fromJson(Map<String, dynamic>.from(item)),
           );
         }
       }
 
-      announcements.sort(
-        (AnnouncementData a, AnnouncementData b) {
-          final DateTime? dateA = a.publishedAt;
-          final DateTime? dateB = b.publishedAt;
+      announcements.sort((AnnouncementData a, AnnouncementData b) {
+        final DateTime? dateA = a.publishedAt;
+        final DateTime? dateB = b.publishedAt;
 
-          if (dateA == null && dateB == null) {
-            return 0;
-          }
+        if (dateA == null && dateB == null) {
+          return 0;
+        }
 
-          if (dateA == null) {
-            return 1;
-          }
+        if (dateA == null) {
+          return 1;
+        }
 
-          if (dateB == null) {
-            return -1;
-          }
+        if (dateB == null) {
+          return -1;
+        }
 
-          return dateB.compareTo(dateA);
-        },
-      );
+        return dateB.compareTo(dateA);
+      });
 
       if (!mounted) {
         return;
@@ -178,28 +167,25 @@ class _HomePageState extends State<HomePage> {
       return;
     }
 
-    _announcementTimer = Timer.periodic(
-      const Duration(seconds: 5),
-      (_) {
-        if (!mounted ||
-            !_announcementPageController.hasClients ||
-            _announcements.isEmpty) {
-          return;
-        }
+    _announcementTimer = Timer.periodic(const Duration(seconds: 5), (_) {
+      if (!mounted ||
+          !_announcementPageController.hasClients ||
+          _announcements.isEmpty) {
+        return;
+      }
 
-        int nextIndex = _currentAnnouncementIndex + 1;
+      int nextIndex = _currentAnnouncementIndex + 1;
 
-        if (nextIndex >= _announcements.length) {
-          nextIndex = 0;
-        }
+      if (nextIndex >= _announcements.length) {
+        nextIndex = 0;
+      }
 
-        _announcementPageController.animateToPage(
-          nextIndex,
-          duration: const Duration(milliseconds: 450),
-          curve: Curves.easeInOut,
-        );
-      },
-    );
+      _announcementPageController.animateToPage(
+        nextIndex,
+        duration: const Duration(milliseconds: 450),
+        curve: Curves.easeInOut,
+      );
+    });
   }
 
   @override
@@ -222,11 +208,7 @@ class _HomePageState extends State<HomePage> {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFFF0F9FF),
-              Color(0xFFD7EEFF),
-              Color(0xFFB9E1FF),
-            ],
+            colors: [Color(0xFFF0F9FF), Color(0xFFD7EEFF), Color(0xFFB9E1FF)],
           ),
         ),
 
@@ -279,9 +261,7 @@ class _HomePageState extends State<HomePage> {
             fit: BoxFit.cover,
             alignment: const Alignment(0, -0.1),
           ),
-          Container(
-            color: const Color(0x993AA7F5),
-          ),
+          Container(color: const Color(0x993AA7F5)),
           const DecoratedBox(
             decoration: BoxDecoration(
               gradient: LinearGradient(
@@ -326,10 +306,7 @@ class _HomePageState extends State<HomePage> {
                         height: 1.3,
                         fontWeight: FontWeight.w500,
                         shadows: [
-                          Shadow(
-                            color: Color(0x55000000),
-                            blurRadius: 2,
-                          ),
+                          Shadow(color: Color(0x55000000), blurRadius: 2),
                         ],
                       ),
                     ),
@@ -381,10 +358,7 @@ class _HomePageState extends State<HomePage> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: const Color(0xFFD6E9F7),
-          width: 0.8,
-        ),
+        border: Border.all(color: const Color(0xFFD6E9F7), width: 0.8),
         boxShadow: const [
           BoxShadow(
             color: Color(0x12000000),
@@ -422,10 +396,7 @@ class _HomePageState extends State<HomePage> {
                     );
                   },
                   child: const Padding(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 6,
-                      vertical: 4,
-                    ),
+                    padding: EdgeInsets.symmetric(horizontal: 6, vertical: 4),
                     child: Text(
                       'Lihat Semua',
                       style: TextStyle(
@@ -451,39 +422,24 @@ class _HomePageState extends State<HomePage> {
                 gradient: const LinearGradient(
                   begin: Alignment.centerLeft,
                   end: Alignment.centerRight,
-                  colors: [
-                    Color(0xFFB9E9FF),
-                    Color(0xFFEAF8FF),
-                  ],
+                  colors: [Color(0xFFB9E9FF), Color(0xFFEAF8FF)],
                 ),
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(
-                  color: const Color(0xFF90D1F7),
-                  width: 0.8,
-                ),
+                border: Border.all(color: const Color(0xFF90D1F7), width: 0.8),
               ),
               child: const Center(
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                ),
+                child: CircularProgressIndicator(strokeWidth: 2),
               ),
             )
-
           // Gagal memuat.
           else if (_announcementLoadError)
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.symmetric(
-                horizontal: 10,
-                vertical: 22,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 22),
               decoration: BoxDecoration(
                 color: const Color(0xFFEAF8FF),
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(
-                  color: const Color(0xFF90D1F7),
-                  width: 0.8,
-                ),
+                border: Border.all(color: const Color(0xFF90D1F7), width: 0.8),
               ),
               child: const Text(
                 'Pengumuman gagal dimuat. '
@@ -496,33 +452,22 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
             )
-
           // Belum ada pengumuman.
           else if (_announcements.isEmpty)
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.symmetric(
-                horizontal: 10,
-                vertical: 24,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 24),
               decoration: BoxDecoration(
                 color: const Color(0xFFEAF8FF),
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(
-                  color: const Color(0xFF90D1F7),
-                  width: 0.8,
-                ),
+                border: Border.all(color: const Color(0xFF90D1F7), width: 0.8),
               ),
               child: const Text(
                 'Belum ada pengumuman.',
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Color(0xFF555555),
-                  fontSize: 10.5,
-                ),
+                style: TextStyle(color: Color(0xFF555555), fontSize: 10.5),
               ),
             )
-
           // Carousel pengumuman.
           else
             Column(
@@ -541,17 +486,12 @@ class _HomePageState extends State<HomePage> {
                         _currentAnnouncementIndex = index;
                       });
                     },
-                    itemBuilder: (
-                      BuildContext context,
-                      int index,
-                    ) {
+                    itemBuilder: (BuildContext context, int index) {
                       final AnnouncementData announcement =
                           _announcements[index];
 
                       return Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 1,
-                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 1),
                         child: Material(
                           color: Colors.transparent,
                           child: InkWell(
@@ -591,8 +531,7 @@ class _HomePageState extends State<HomePage> {
                                 ),
                               ),
                               child: Column(
-                                crossAxisAlignment:
-                                    CrossAxisAlignment.start,
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
                                     announcement.title,
@@ -647,28 +586,22 @@ class _HomePageState extends State<HomePage> {
                   const SizedBox(height: 8),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
-                    children: List.generate(
-                      _announcements.length,
-                      (int index) {
-                        final bool isActive =
-                            index == _currentAnnouncementIndex;
+                    children: List.generate(_announcements.length, (int index) {
+                      final bool isActive = index == _currentAnnouncementIndex;
 
-                        return AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
-                          width: isActive ? 15 : 6,
-                          height: 6,
-                          margin: const EdgeInsets.symmetric(
-                            horizontal: 2,
-                          ),
-                          decoration: BoxDecoration(
-                            color: isActive
-                                ? const Color(0xFF168DE2)
-                                : const Color(0xFFB8D7EC),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        );
-                      },
-                    ),
+                      return AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        width: isActive ? 15 : 6,
+                        height: 6,
+                        margin: const EdgeInsets.symmetric(horizontal: 2),
+                        decoration: BoxDecoration(
+                          color: isActive
+                              ? const Color(0xFF168DE2)
+                              : const Color(0xFFB8D7EC),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      );
+                    }),
                   ),
                 ],
               ],
@@ -688,8 +621,7 @@ class _HomePageState extends State<HomePage> {
         children: [
           _HomeServiceTile(
             title: 'Antrian Tiket',
-            description:
-                'Pilih layanan Akademik atau Unit Layanan Terpadu.',
+            description: 'Pilih layanan Akademik atau Unit Layanan Terpadu.',
             icon: Icons.confirmation_number_rounded,
             onTap: () => Navigator.of(context).push(
               MaterialPageRoute<void>(
@@ -700,13 +632,10 @@ class _HomePageState extends State<HomePage> {
           const SizedBox(height: 10),
           _HomeServiceTile(
             title: 'Pengaduan',
-            description:
-                'Laporkan kendala layanan atau fasilitas kampus.',
+            description: 'Laporkan kendala layanan atau fasilitas kampus.',
             icon: Icons.campaign_rounded,
             onTap: () => Navigator.of(context).push(
-              MaterialPageRoute<void>(
-                builder: (_) => const PengaduanPage(),
-              ),
+              MaterialPageRoute<void>(builder: (_) => const PengaduanPage()),
             ),
           ),
         ],
@@ -724,10 +653,7 @@ class _HomePageState extends State<HomePage> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: const Color(0xFFD6E9F7),
-          width: 0.8,
-        ),
+        border: Border.all(color: const Color(0xFFD6E9F7), width: 0.8),
         boxShadow: const [
           BoxShadow(
             color: Color(0x16000000),
@@ -812,19 +738,13 @@ class _HomeServiceTile extends StatelessWidget {
       color: Colors.white,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: const BorderSide(
-          color: Color(0xFFD6E9F7),
-          width: 0.8,
-        ),
+        side: const BorderSide(color: Color(0xFFD6E9F7), width: 0.8),
       ),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 15,
-            vertical: 16,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 16),
           child: Row(
             children: [
               Container(
@@ -834,11 +754,7 @@ class _HomeServiceTile extends StatelessWidget {
                   color: const Color(0xFFEAF7FF),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: Icon(
-                  icon,
-                  color: const Color(0xFF168DE2),
-                  size: 28,
-                ),
+                child: Icon(icon, color: const Color(0xFF168DE2), size: 28),
               ),
               const SizedBox(width: 14),
               Expanded(

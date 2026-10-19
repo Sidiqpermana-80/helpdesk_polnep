@@ -26,7 +26,6 @@ class _AplikasiPageState extends State<AplikasiPage> {
     {'title': 'Tidak Bisa Login', 'asset': 'assets/images/lock.png'},
     {'title': 'Data Tidak Sesuai', 'asset': 'assets/images/doc.png'},
     {'title': 'Error Sistem', 'asset': 'assets/images/error.png'},
-    {'title': 'Permintaan Akses', 'asset': 'assets/images/key.png'},
   ];
 
   // =========================================================
@@ -186,39 +185,43 @@ class _AplikasiPageState extends State<AplikasiPage> {
                     border: Border.all(color: const Color(0xFFD6E9F7)),
                   ),
 
-                  child: GridView.builder(
-                    shrinkWrap: true,
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      const double spacing = 8;
 
-                    physics: const NeverScrollableScrollPhysics(),
+                      // Tiga kartu sejajar.
+                      // Pada area sangat sempit, kartu disusun vertikal.
+                      final int columns = constraints.maxWidth < 270 ? 1 : 3;
 
-                    itemCount: _issues.length,
+                      final double width =
+                          (constraints.maxWidth - spacing * (columns - 1)) /
+                          columns;
 
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          childAspectRatio: 2.65,
-                          crossAxisSpacing: 11,
-                          mainAxisSpacing: 13,
-                        ),
+                      return Wrap(
+                        spacing: spacing,
+                        runSpacing: spacing,
 
-                    itemBuilder: (BuildContext context, int index) {
-                      final Map<String, String> issue = _issues[index];
+                        children: _issues.map((issue) {
+                          final String title = issue['title']!;
 
-                      final String title = issue['title']!;
+                          return SizedBox(
+                            width: width,
 
-                      final String asset = issue['asset']!;
+                            child: _buildIssueItem(
+                              title: title,
 
-                      final bool selected = _selectedIssue == title;
+                              asset: issue['asset']!,
 
-                      return _buildIssueItem(
-                        title: title,
-                        asset: asset,
-                        selected: selected,
-                        onTap: () {
-                          setState(() {
-                            _selectedIssue = title;
-                          });
-                        },
+                              selected: _selectedIssue == title,
+
+                              onTap: () {
+                                setState(() {
+                                  _selectedIssue = title;
+                                });
+                              },
+                            ),
+                          );
+                        }).toList(),
                       );
                     },
                   ),
@@ -391,66 +394,79 @@ class _AplikasiPageState extends State<AplikasiPage> {
     required bool selected,
     required VoidCallback onTap,
   }) {
-    return Material(
-      color: selected ? const Color(0xFFEAF0FF) : Colors.transparent,
+    return Semantics(
+      button: true,
+      selected: selected,
 
-      borderRadius: BorderRadius.circular(9),
-
-      child: InkWell(
-        onTap: onTap,
+      child: Material(
+        color: selected ? const Color(0xFFEAF0FF) : Colors.white,
 
         borderRadius: BorderRadius.circular(9),
 
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 7),
+        clipBehavior: Clip.antiAlias,
 
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(9),
+        child: InkWell(
+          onTap: onTap,
 
-            border: selected
-                ? Border.all(color: const Color(0xFF5368FF), width: 1.2)
-                : null,
-          ),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 160),
 
-          child: Row(
-            children: [
-              // ===============================================
-              // ICON
-              // ===============================================
-              Container(
-                width: 38,
-                height: 38,
+            constraints: const BoxConstraints(minHeight: 110),
 
-                padding: const EdgeInsets.all(0.5),
+            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 12),
 
-                decoration: BoxDecoration(
-                  color: _issueBackground(title),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(9),
 
-                  borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: selected
+                    ? const Color(0xFF5368FF)
+                    : const Color(0xFFD6E9F7),
+
+                width: selected ? 1.2 : 0.8,
+              ),
+            ),
+
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+
+              mainAxisAlignment: MainAxisAlignment.center,
+
+              children: [
+                Container(
+                  width: 36,
+                  height: 36,
+
+                  padding: const EdgeInsets.all(4),
+
+                  decoration: BoxDecoration(
+                    color: _issueBackground(title),
+
+                    borderRadius: BorderRadius.circular(9),
+                  ),
+
+                  child: Image.asset(asset, fit: BoxFit.contain),
                 ),
 
-                child: Image.asset(asset, fit: BoxFit.contain),
-              ),
+                const SizedBox(height: 9),
 
-              const SizedBox(width: 10),
-
-              // ===============================================
-              // TEXT
-              // ===============================================
-              Expanded(
-                child: Text(
+                Text(
                   title,
+
+                  textAlign: TextAlign.center,
 
                   style: TextStyle(
                     color: const Color(0xFF202020),
 
-                    fontSize: 9.5,
+                    fontSize: 10.5,
+
+                    height: 1.25,
 
                     fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
