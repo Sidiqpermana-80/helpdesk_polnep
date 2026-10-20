@@ -7,6 +7,7 @@ import 'package:http/http.dart' as http;
 
 import '../../config/api_config.dart';
 import '../../services/queue_notification_service.dart';
+import '../../services/wifi_device_sync_service.dart';
 import 'wifi_internet_success_page.dart';
 
 class WifiInternetPage extends StatefulWidget {
@@ -42,6 +43,7 @@ class _WifiInternetPageState extends State<WifiInternetPage> {
   @override
   void initState() {
     super.initState();
+
     unawaited(_refreshPage());
   }
 
@@ -93,6 +95,7 @@ class _WifiInternetPageState extends State<WifiInternetPage> {
         }
 
         final id = item['id']?.toString() ?? '';
+
         final name = item['option_label']?.toString().trim() ?? '';
 
         if ((int.tryParse(id) ?? 0) > 0 && name.isNotEmpty) {
@@ -114,7 +117,9 @@ class _WifiInternetPageState extends State<WifiInternetPage> {
     _refreshing = true;
 
     if (mounted) {
-      setState(() => _loading = true);
+      setState(() {
+        _loading = true;
+      });
     }
 
     try {
@@ -162,18 +167,29 @@ class _WifiInternetPageState extends State<WifiInternetPage> {
 
     return InputDecoration(
       hintText: hint,
+
       hintStyle: const TextStyle(color: Color(0xFF888888), fontSize: 10.5),
+
       prefixIcon: icon,
+
       prefixIconConstraints: const BoxConstraints(minWidth: 38, minHeight: 42),
+
       isDense: false,
       filled: true,
       fillColor: const Color(0xFFF5F6FA),
+
       contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 11),
+
       border: border(const Color(0xFF8D8D8D), 0.8),
+
       enabledBorder: border(const Color(0xFF8D8D8D), 0.8),
+
       focusedBorder: border(const Color(0xFF3AA7F5), 1.4),
+
       errorBorder: border(Colors.red, 1),
+
       focusedErrorBorder: border(Colors.red, 1.3),
+
       errorStyle: const TextStyle(fontSize: 9),
     );
   }
@@ -217,17 +233,24 @@ class _WifiInternetPageState extends State<WifiInternetPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _title(label),
+
         TextFormField(
           controller: controller,
-          style: const TextStyle(color: Color(0xFF202020), fontSize: 16),
+
+          style: const TextStyle(fontSize: 16),
+
           keyboardType: keyboard,
           textInputAction: TextInputAction.next,
+
           textCapitalization: keyboard == TextInputType.text
               ? TextCapitalization.words
               : TextCapitalization.none,
+
           inputFormatters: formatters,
           maxLength: maxLength,
+
           decoration: _decoration(hint, icon: icon).copyWith(counterText: ''),
+
           validator:
               validator ??
               (value) {
@@ -238,6 +261,7 @@ class _WifiInternetPageState extends State<WifiInternetPage> {
                 return null;
               },
         ),
+
         const SizedBox(height: 13),
       ],
     );
@@ -252,6 +276,7 @@ class _WifiInternetPageState extends State<WifiInternetPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _title('Jenis Layanan'),
+
         Row(
           children: [
             Expanded(
@@ -262,7 +287,9 @@ class _WifiInternetPageState extends State<WifiInternetPage> {
                 iconColor: const Color(0xFF6757D9),
               ),
             ),
+
             const SizedBox(width: 8),
+
             Expanded(
               child: _serviceButton(
                 title: 'Akses Login/Wi-Fi',
@@ -273,6 +300,7 @@ class _WifiInternetPageState extends State<WifiInternetPage> {
             ),
           ],
         ),
+
         const SizedBox(height: 13),
       ],
     );
@@ -288,8 +316,10 @@ class _WifiInternetPageState extends State<WifiInternetPage> {
 
     return Material(
       color: Colors.transparent,
+
       child: InkWell(
         borderRadius: BorderRadius.circular(5),
+
         onTap: _isSubmitting
             ? null
             : () {
@@ -303,13 +333,19 @@ class _WifiInternetPageState extends State<WifiInternetPage> {
                   _isAccess = isAccess;
                 });
               },
+
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 180),
+
           height: 55,
+
           padding: const EdgeInsets.symmetric(horizontal: 8),
+
           decoration: BoxDecoration(
             color: selected ? const Color(0xFFEAF5FF) : Colors.white,
+
             borderRadius: BorderRadius.circular(5),
+
             border: Border.all(
               color: selected
                   ? const Color(0xFF3AA7F5)
@@ -317,24 +353,31 @@ class _WifiInternetPageState extends State<WifiInternetPage> {
               width: selected ? 1.3 : 0.8,
             ),
           ),
+
           child: Row(
             children: [
               Container(
                 width: 25,
                 height: 25,
+
                 padding: const EdgeInsets.all(4),
+
                 decoration: BoxDecoration(
                   color: iconColor,
                   borderRadius: BorderRadius.circular(4),
                 ),
+
                 child: Icon(icon, size: 17, color: Colors.white),
               ),
+
               const SizedBox(width: 6),
+
               Expanded(
                 child: Text(
                   title,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
+
                   style: TextStyle(
                     color: const Color(0xFF202020),
                     fontSize: 10.5,
@@ -358,16 +401,20 @@ class _WifiInternetPageState extends State<WifiInternetPage> {
   Widget build(BuildContext context) {
     return PopScope(
       canPop: !_isSubmitting,
+
       child: Scaffold(
         backgroundColor: const Color(0xFFF0F9FF),
+
         body: SafeArea(
           child: Container(
             width: double.infinity,
             height: double.infinity,
+
             decoration: const BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
+
                 colors: [
                   Color(0xFFF0F9FF),
                   Color(0xFFD7EEFF),
@@ -375,37 +422,50 @@ class _WifiInternetPageState extends State<WifiInternetPage> {
                 ],
               ),
             ),
+
             child: RefreshIndicator(
               onRefresh: _refreshPage,
+
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(
                   parent: BouncingScrollPhysics(),
                 ),
+
                 keyboardDismissBehavior:
                     ScrollViewKeyboardDismissBehavior.onDrag,
+
                 padding: const EdgeInsets.fromLTRB(16, 13, 16, 28),
+
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+
                   children: [
+                    // HEADER
                     Row(
                       children: [
                         IconButton(
                           padding: EdgeInsets.zero,
+
                           constraints: const BoxConstraints(),
+
                           onPressed: _isSubmitting
                               ? null
                               : () {
                                   Navigator.of(context).pop();
                                 },
+
                           icon: const Icon(
                             Icons.arrow_back_ios_new_rounded,
                             size: 20,
                             color: Color(0xFF111111),
                           ),
                         ),
+
                         const SizedBox(width: 9),
+
                         const Text(
                           'Wi-Fi / Internet',
+
                           style: TextStyle(
                             color: Color(0xFF111111),
                             fontSize: 16,
@@ -417,15 +477,19 @@ class _WifiInternetPageState extends State<WifiInternetPage> {
 
                     const SizedBox(height: 24),
 
+                    // PENJELASAN FORM
                     SizedBox(
                       width: double.infinity,
                       height: 108,
+
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
+
                         children: [
                           Expanded(
                             child: Padding(
                               padding: const EdgeInsets.only(left: 7, top: 3),
+
                               child: Text(
                                 _isAccess
                                     ? 'Ajukan bantuan\n'
@@ -436,6 +500,7 @@ class _WifiInternetPageState extends State<WifiInternetPage> {
                                           'jaringan pada\n'
                                           'gedung atau\n'
                                           'ruangan di POLNEP',
+
                                 style: const TextStyle(
                                   color: Color(0xFF111111),
                                   fontSize: 20.5,
@@ -445,9 +510,11 @@ class _WifiInternetPageState extends State<WifiInternetPage> {
                               ),
                             ),
                           ),
+
                           SizedBox(
                             width: 135,
                             height: 100,
+
                             child: Image.asset(
                               'assets/images/pc.png',
                               fit: BoxFit.contain,
@@ -459,28 +526,38 @@ class _WifiInternetPageState extends State<WifiInternetPage> {
 
                     const SizedBox(height: 8),
 
+                    // FORM
                     Container(
                       width: double.infinity,
+
                       padding: const EdgeInsets.fromLTRB(10, 10, 10, 13),
+
                       decoration: BoxDecoration(
                         color: Colors.white,
+
                         borderRadius: BorderRadius.circular(9),
+
                         border: Border.all(
                           color: const Color(0xFFD6E9F7),
                           width: 0.6,
                         ),
                       ),
+
                       child: AbsorbPointer(
                         absorbing: _isSubmitting,
+
                         child: Form(
                           key: _formKey,
+
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
+
                             children: [
                               _buildServiceSelection(),
 
                               const Text(
                                 'Data Pelapor',
+
                                 style: TextStyle(
                                   color: Color(0xFF24477C),
                                   fontSize: 12.5,
@@ -490,12 +567,15 @@ class _WifiInternetPageState extends State<WifiInternetPage> {
 
                               const SizedBox(height: 10),
 
+                              // NAMA
                               _text(
                                 'Nama',
                                 _name,
                                 'Masukkan nama lengkap',
+
                                 maxLength: 150,
                                 icon: _icon(Icons.person_rounded),
+
                                 validator: (value) {
                                   if ((value?.trim().length ?? 0) < 3) {
                                     return 'Nama minimal 3 karakter';
@@ -505,41 +585,54 @@ class _WifiInternetPageState extends State<WifiInternetPage> {
                                 },
                               ),
 
+                              // NIM / NIP
                               _text(
                                 _isAccess ? 'NIM' : 'NIM / NIP',
                                 _identifier,
+
                                 _isAccess
                                     ? 'Masukkan NIM'
                                     : 'Masukkan NIM atau NIP',
+
                                 keyboard: TextInputType.number,
                                 icon: _icon(Icons.menu_book_rounded),
+
                                 formatters: [
                                   FilteringTextInputFormatter.digitsOnly,
                                   LengthLimitingTextInputFormatter(30),
                                 ],
                               ),
 
+                              // NO HP KHUSUS AKSES LOGIN
                               if (_isAccess)
                                 _text(
                                   'No. HP',
                                   _phone,
                                   'Masukkan nomor HP aktif',
+
                                   keyboard: TextInputType.phone,
+
                                   icon: _icon(Icons.phone_android_rounded),
+
                                   formatters: [
                                     FilteringTextInputFormatter.allow(
                                       RegExp(r'[0-9+]'),
                                     ),
+
                                     LengthLimitingTextInputFormatter(16),
                                   ],
+
                                   validator: (value) {
                                     final valid = RegExp(
                                       r'^\+?[0-9]{10,15}$',
                                     ).hasMatch(value?.trim() ?? '');
 
-                                    return valid
-                                        ? null
-                                        : 'Nomor HP harus terdiri dari 10–15 angka';
+                                    if (!valid) {
+                                      return 'Nomor HP harus terdiri dari '
+                                          '10–15 angka';
+                                    }
+
+                                    return null;
                                   },
                                 ),
 
@@ -553,55 +646,65 @@ class _WifiInternetPageState extends State<WifiInternetPage> {
 
                               const SizedBox(height: 13),
 
+                              // EMAIL
                               _text(
                                 'Email',
                                 _email,
                                 'Masukkan email aktif',
+
                                 maxLength: 150,
                                 keyboard: TextInputType.emailAddress,
+
                                 icon: _icon(Icons.email_outlined),
+
                                 validator: (value) {
                                   final valid = RegExp(
                                     r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
                                   ).hasMatch(value?.trim() ?? '');
 
-                                  return valid
-                                      ? null
-                                      : 'Format email tidak valid';
+                                  if (!valid) {
+                                    return 'Format email tidak valid';
+                                  }
+
+                                  return null;
                                 },
                               ),
 
                               if (_isAccess) ...[
+                                // JURUSAN
                                 _title('Jurusan'),
 
                                 DropdownButtonFormField<String>(
                                   key: ValueKey('department-$_formVersion'),
+
                                   initialValue: _department,
                                   isExpanded: true,
                                   isDense: true,
+
                                   decoration: _decoration(
                                     _loading
                                         ? 'Memuat jurusan...'
                                         : 'Pilih jurusan',
+
                                     icon: _icon(Icons.school_rounded),
                                   ),
+
                                   style: const TextStyle(
                                     color: Color(0xFF202020),
                                     fontSize: 16,
                                   ),
-                                  icon: const Icon(
-                                    Icons.keyboard_arrow_down_rounded,
-                                    size: 17,
-                                  ),
+
                                   items: _departments.map((item) {
                                     return DropdownMenuItem<String>(
                                       value: item['id'],
+
                                       child: Text(
                                         item['name']!,
                                         overflow: TextOverflow.ellipsis,
                                       ),
                                     );
                                   }).toList(),
+
                                   onChanged: _loading
                                       ? null
                                       : (value) {
@@ -609,6 +712,7 @@ class _WifiInternetPageState extends State<WifiInternetPage> {
                                             _department = value;
                                           });
                                         },
+
                                   validator: (value) {
                                     if (_loading) {
                                       return 'Jurusan masih dimuat';
@@ -619,16 +723,20 @@ class _WifiInternetPageState extends State<WifiInternetPage> {
                                           'Tarik halaman untuk memuat ulang.';
                                     }
 
-                                    return value == null
-                                        ? 'Jurusan wajib dipilih'
-                                        : null;
+                                    if (value == null) {
+                                      return 'Jurusan wajib dipilih';
+                                    }
+
+                                    return null;
                                   },
                                 ),
 
                                 const SizedBox(height: 13),
                               ] else ...[
+                                // DETAIL LOKASI
                                 const Text(
                                   'Detail Lokasi',
+
                                   style: TextStyle(
                                     color: Color(0xFF24477C),
                                     fontSize: 12.5,
@@ -642,32 +750,40 @@ class _WifiInternetPageState extends State<WifiInternetPage> {
 
                                 DropdownButtonFormField<String>(
                                   key: ValueKey('building-$_formVersion'),
+
                                   initialValue: _building,
                                   isExpanded: true,
                                   isDense: true,
+
                                   decoration: _decoration(
                                     _loading
                                         ? 'Memuat nama gedung...'
                                         : 'Pilih nama gedung',
+
                                     icon: _asset('assets/images/gedung.png'),
                                   ),
+
                                   style: const TextStyle(
                                     color: Color(0xFF202020),
                                     fontSize: 16,
                                   ),
+
                                   icon: const Icon(
                                     Icons.keyboard_arrow_down_rounded,
                                     size: 17,
                                   ),
+
                                   items: _buildings.map((name) {
                                     return DropdownMenuItem<String>(
                                       value: name,
+
                                       child: Text(
                                         name,
                                         overflow: TextOverflow.ellipsis,
                                       ),
                                     );
                                   }).toList(),
+
                                   onChanged: _loading
                                       ? null
                                       : (value) {
@@ -675,6 +791,7 @@ class _WifiInternetPageState extends State<WifiInternetPage> {
                                             _building = value;
                                           });
                                         },
+
                                   validator: (value) {
                                     if (_loading) {
                                       return 'Daftar gedung masih dimuat';
@@ -684,9 +801,11 @@ class _WifiInternetPageState extends State<WifiInternetPage> {
                                       return 'Daftar gedung tidak tersedia';
                                     }
 
-                                    return value == null
-                                        ? 'Nama gedung wajib dipilih'
-                                        : null;
+                                    if (value == null) {
+                                      return 'Nama gedung wajib dipilih';
+                                    }
+
+                                    return null;
                                   },
                                 ),
 
@@ -696,39 +815,48 @@ class _WifiInternetPageState extends State<WifiInternetPage> {
                                   'Ruangan',
                                   _room,
                                   'Contoh: Lab Komputer / Ruang 203',
+
                                   maxLength: 150,
+
                                   icon: _asset('assets/images/door.png'),
                                 ),
                               ],
 
+                              // KETERANGAN / DESKRIPSI
                               _title(
                                 _isAccess ? 'Keterangan' : 'Deskripsi Keluhan',
                               ),
 
                               SizedBox(
                                 height: 115,
+
                                 child: TextFormField(
                                   controller: _description,
-                                  style: const TextStyle(
-                                    color: Color(0xFF202020),
-                                    fontSize: 16,
-                                  ),
+
+                                  style: const TextStyle(fontSize: 16),
+
                                   expands: true,
                                   minLines: null,
                                   maxLines: null,
+
                                   inputFormatters: [
                                     LengthLimitingTextInputFormatter(5000),
                                   ],
+
                                   keyboardType: TextInputType.multiline,
+
                                   textCapitalization:
                                       TextCapitalization.sentences,
+
                                   textAlignVertical: TextAlignVertical.top,
+
                                   decoration: _decoration(
                                     _isAccess
                                         ? 'Jelaskan kebutuhan akses login/Wi-Fi'
-                                        : 'Jelaskan kendala Wi-Fi / Internet '
+                                        : 'Jelaskan kendala Wifi / Internet '
                                               'yang dialami',
                                   ),
+
                                   validator: (value) {
                                     if (value?.trim().isEmpty ?? true) {
                                       return _isAccess
@@ -748,32 +876,42 @@ class _WifiInternetPageState extends State<WifiInternetPage> {
 
                     const SizedBox(height: 11),
 
+                    // INFORMASI
                     Container(
                       width: double.infinity,
+
                       padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+
                       decoration: BoxDecoration(
                         color: const Color(0xFFF0F7FF),
+
                         borderRadius: BorderRadius.circular(8),
+
                         border: Border.all(
                           color: const Color(0xFF9D8EE7),
                           width: 0.6,
                         ),
                       ),
+
                       child: Row(
                         children: [
                           SizedBox(
                             width: 31,
                             height: 31,
+
                             child: Image.asset(
                               'assets/images/seru.png',
                               fit: BoxFit.contain,
                             ),
                           ),
+
                           const SizedBox(width: 10),
+
                           const Expanded(
                             child: Text(
                               'Pastikan Data yang Anda isi sudah benar.\n'
                               'Tim Helpdesk akan menindaklanjuti laporan Anda.',
+
                               style: TextStyle(
                                 color: Color(0xFF303030),
                                 fontSize: 9,
@@ -787,30 +925,39 @@ class _WifiInternetPageState extends State<WifiInternetPage> {
 
                     const SizedBox(height: 25),
 
+                    // TOMBOL KIRIM DAN RESET
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
+
                       children: [
                         SizedBox(
                           width: 100,
                           height: 40,
+
                           child: ElevatedButton(
                             onPressed: _isSubmitting || _loading
                                 ? null
                                 : _submitForm,
+
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF8C99F2),
+                              backgroundColor: const Color(0xFF5868FF),
+
                               disabledBackgroundColor: const Color(0xFFADB5F5),
+
                               foregroundColor: Colors.white,
                               elevation: 0,
                               padding: EdgeInsets.zero,
+
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(5),
                               ),
                             ),
+
                             child: _isSubmitting
                                 ? const SizedBox(
                                     width: 18,
                                     height: 18,
+
                                     child: CircularProgressIndicator(
                                       strokeWidth: 2,
                                       color: Colors.white,
@@ -818,6 +965,7 @@ class _WifiInternetPageState extends State<WifiInternetPage> {
                                   )
                                 : const Text(
                                     'Kirim Data',
+
                                     style: TextStyle(
                                       fontSize: 9.5,
                                       fontWeight: FontWeight.w500,
@@ -831,25 +979,32 @@ class _WifiInternetPageState extends State<WifiInternetPage> {
                         SizedBox(
                           width: 72,
                           height: 40,
+
                           child: ElevatedButton(
                             onPressed: _isSubmitting
                                 ? null
                                 : () {
                                     FocusScope.of(context).unfocus();
+
                                     _clearForm();
+
                                     _message('Form berhasil dikosongkan.');
                                   },
+
                             style: ElevatedButton.styleFrom(
                               backgroundColor: const Color(0xFF59C467),
                               foregroundColor: Colors.white,
                               elevation: 0,
                               padding: EdgeInsets.zero,
+
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(5),
                               ),
                             ),
+
                             child: const Text(
                               'Reset',
+
                               style: TextStyle(
                                 fontSize: 9.5,
                                 fontWeight: FontWeight.w500,
@@ -870,7 +1025,7 @@ class _WifiInternetPageState extends State<WifiInternetPage> {
   }
 
   // =========================================================
-  // KIRIM DATA
+  // KIRIM FORM
   // =========================================================
 
   Future<void> _submitForm() async {
@@ -882,14 +1037,19 @@ class _WifiInternetPageState extends State<WifiInternetPage> {
 
     if (!(_formKey.currentState?.validate() ?? false)) {
       _message('Silakan lengkapi data yang masih kosong.');
+
       return;
     }
 
+    // Simpan nilai form sebelum proses asynchronous.
     final access = _isAccess;
+
     final name = _name.text.trim();
     final identifier = _identifier.text.trim();
     final email = _email.text.trim().toLowerCase();
+
     final phone = access ? _phone.text.trim() : '';
+
     final departmentId = _department;
 
     final department = access
@@ -898,21 +1058,37 @@ class _WifiInternetPageState extends State<WifiInternetPage> {
 
     final building = access ? '' : _building!;
     final room = access ? '' : _room.text.trim();
+
     final description = _description.text.trim();
 
-    setState(() => _isSubmitting = true);
+    setState(() {
+      _isSubmitting = true;
+    });
 
     try {
+      // Token boleh null. Pengajuan tetap dapat dilanjutkan.
+      final fcmToken = await QueueNotificationService.instance
+          .tokenForSubmission();
+
       final response = await http
           .post(
             Uri.parse(ApiConfig.createWifiInternet),
+
             headers: {'Accept': 'application/json'},
+
             body: {
               'request_kind': access ? 'access' : 'network',
+
               'full_name': name,
               'identifier_value': identifier,
               'email': email,
               'description': description,
+
+              if (fcmToken != null && fcmToken.isNotEmpty) ...{
+                'fcm_token': fcmToken,
+                'device_platform': 'android',
+              },
+
               if (access) ...{
                 'phone': phone,
                 'department_id': departmentId!,
@@ -930,8 +1106,10 @@ class _WifiInternetPageState extends State<WifiInternetPage> {
         throw const FormatException();
       }
 
-      if ((response.statusCode != 200 && response.statusCode != 201) ||
-          decoded['success'] != true) {
+      final successfulStatus =
+          response.statusCode == 200 || response.statusCode == 201;
+
+      if (!successfulStatus || decoded['success'] != true) {
         if (!mounted) {
           return;
         }
@@ -968,6 +1146,7 @@ class _WifiInternetPageState extends State<WifiInternetPage> {
       }
 
       final id = int.tryParse(data['id']?.toString() ?? '') ?? 0;
+
       final number = data['request_number']?.toString().trim() ?? '';
 
       if (id <= 0 || number.isEmpty) {
@@ -980,6 +1159,19 @@ class _WifiInternetPageState extends State<WifiInternetPage> {
           )?.toLocal() ??
           DateTime.now();
 
+      // Simpan kunci untuk pembaruan token perangkat berikutnya.
+      final syncKey = data['device_sync_key']?.toString() ?? '';
+
+      try {
+        await WifiDeviceSyncService.instance.rememberTicket(
+          id: id,
+          key: syncKey,
+        );
+      } catch (_) {
+        debugPrint('WIFI: kunci sinkronisasi belum berhasil disimpan.');
+      }
+
+      // Konfirmasi lokal setelah laporan berhasil dibuat.
       unawaited(
         QueueNotificationService.instance.showWifiTicketCreated(
           ticketId: id,
@@ -998,19 +1190,26 @@ class _WifiInternetPageState extends State<WifiInternetPage> {
         MaterialPageRoute<void>(
           builder: (_) => WifiInternetSuccessPage(
             requestNumber: number,
+
             fullName: name,
             identifierValue: identifier,
+
             buildingName: building,
             roomName: room,
+
             status: data['status']?.toString() ?? 'menunggu_verifikasi',
+
             estimatedResponse:
                 data['estimated_response']?.toString() ?? '1-2 Hari Kerja',
+
             submittedAt: submittedAt,
+
             isAccess: access,
             phone: phone,
             email: email,
             department: department,
             description: description,
+
             emailSent: data['email_sent'] == true,
           ),
         ),
@@ -1024,7 +1223,9 @@ class _WifiInternetPageState extends State<WifiInternetPage> {
       }
     } finally {
       if (mounted) {
-        setState(() => _isSubmitting = false);
+        setState(() {
+          _isSubmitting = false;
+        });
       }
     }
   }
@@ -1050,6 +1251,7 @@ class _WifiInternetPageState extends State<WifiInternetPage> {
     setState(() {
       _building = null;
       _department = null;
+
       _formVersion++;
     });
   }
@@ -1060,7 +1262,9 @@ class _WifiInternetPageState extends State<WifiInternetPage> {
       ..showSnackBar(
         SnackBar(
           content: Text(text),
+
           behavior: SnackBarBehavior.floating,
+
           duration: const Duration(seconds: 5),
         ),
       );

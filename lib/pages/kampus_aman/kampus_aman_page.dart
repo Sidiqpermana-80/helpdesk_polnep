@@ -71,19 +71,19 @@ class _KampusAmanPageState extends State<KampusAmanPage> {
   }
 
   List<TextEditingController> get _identityControllers => [
-        _name,
-        _identifier,
-        _phone,
-        _email,
-      ];
+    _name,
+    _identifier,
+    _phone,
+    _email,
+  ];
 
   List<TextEditingController> get _controllers => [
-        ..._identityControllers,
-        _location,
-        _time,
-        _party,
-        _description,
-      ];
+    ..._identityControllers,
+    _location,
+    _time,
+    _party,
+    _description,
+  ];
 
   @override
   void dispose() {
@@ -98,44 +98,25 @@ class _KampusAmanPageState extends State<KampusAmanPage> {
   // DEKORASI FIELD
   // =========================================================
 
-  InputDecoration _decoration(
-    String hint, {
-    IconData? icon,
-  }) {
+  InputDecoration _decoration(String hint, {IconData? icon}) {
     OutlineInputBorder border(Color color, double width) {
       return OutlineInputBorder(
         borderRadius: BorderRadius.circular(5),
-        borderSide: BorderSide(
-          color: color,
-          width: width,
-        ),
+        borderSide: BorderSide(color: color, width: width),
       );
     }
 
     return InputDecoration(
       hintText: hint,
-      hintStyle: const TextStyle(
-        color: Color(0xFF888888),
-        fontSize: 10.5,
-      ),
+      hintStyle: const TextStyle(color: Color(0xFF888888), fontSize: 10.5),
       prefixIcon: icon == null
           ? null
-          : Icon(
-              icon,
-              size: 18,
-              color: const Color(0xFF168DE2),
-            ),
-      prefixIconConstraints: const BoxConstraints(
-        minWidth: 38,
-        minHeight: 42,
-      ),
+          : Icon(icon, size: 18, color: const Color(0xFF168DE2)),
+      prefixIconConstraints: const BoxConstraints(minWidth: 38, minHeight: 42),
       isDense: false,
       filled: true,
       fillColor: const Color(0xFFF5F6FA),
-      contentPadding: const EdgeInsets.symmetric(
-        horizontal: 10,
-        vertical: 11,
-      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 11),
       border: border(const Color(0xFF8D8D8D), 0.8),
       enabledBorder: border(const Color(0xFF8D8D8D), 0.8),
       focusedBorder: border(const Color(0xFF3AA7F5), 1.4),
@@ -174,24 +155,18 @@ class _KampusAmanPageState extends State<KampusAmanPage> {
         _title(label),
         TextFormField(
           controller: controller,
-          style: const TextStyle(
-            fontSize: 16,
-            color: Color(0xFF202020),
-          ),
+          style: const TextStyle(fontSize: 16, color: Color(0xFF202020)),
           keyboardType: keyboard,
           textInputAction: TextInputAction.next,
           textCapitalization: keyboard == TextInputType.text
               ? TextCapitalization.sentences
               : TextCapitalization.none,
           maxLength: 200,
-          decoration: _decoration(
-            hint,
-            icon: icon,
-          ).copyWith(counterText: ''),
-          validator: validator ??
+          decoration: _decoration(hint, icon: icon).copyWith(counterText: ''),
+          validator:
+              validator ??
               (value) {
-                if (requiredField &&
-                    (value?.trim().isEmpty ?? true)) {
+                if (requiredField && (value?.trim().isEmpty ?? true)) {
                   return '$label wajib diisi';
                 }
 
@@ -235,12 +210,10 @@ class _KampusAmanPageState extends State<KampusAmanPage> {
               children: [
                 LayoutBuilder(
                   builder: (context, constraints) {
-                    final count =
-                        constraints.maxWidth < 260 ? 1 : columns;
+                    final count = constraints.maxWidth < 260 ? 1 : columns;
 
                     final width =
-                        (constraints.maxWidth - (count - 1) * 8) /
-                            count;
+                        (constraints.maxWidth - (count - 1) * 8) / count;
 
                     return Wrap(
                       spacing: 8,
@@ -259,8 +232,7 @@ class _KampusAmanPageState extends State<KampusAmanPage> {
                                   color: value == entry.key
                                       ? const Color(0xFF3AA7F5)
                                       : const Color(0xFF8D8D8D),
-                                  width:
-                                      value == entry.key ? 1.3 : 0.8,
+                                  width: value == entry.key ? 1.3 : 0.8,
                                 ),
                               ),
                               clipBehavior: Clip.antiAlias,
@@ -268,8 +240,7 @@ class _KampusAmanPageState extends State<KampusAmanPage> {
                                 onTap: _busy
                                     ? null
                                     : () {
-                                        FocusScope.of(context)
-                                            .unfocus();
+                                        FocusScope.of(context).unfocus();
 
                                         onChanged(entry.key);
                                         field.didChange(entry.key);
@@ -304,10 +275,7 @@ class _KampusAmanPageState extends State<KampusAmanPage> {
                     padding: const EdgeInsets.only(top: 5),
                     child: Text(
                       field.errorText!,
-                      style: const TextStyle(
-                        color: Colors.red,
-                        fontSize: 9,
-                      ),
+                      style: const TextStyle(color: Colors.red, fontSize: 9),
                     ),
                   ),
               ],
@@ -397,14 +365,10 @@ class _KampusAmanPageState extends State<KampusAmanPage> {
               final text = value?.trim() ?? '';
 
               if (text.isEmpty) {
-                return _contact == 'email'
-                    ? 'Isi email untuk dihubungi'
-                    : null;
+                return _contact == 'email' ? 'Isi email untuk dihubungi' : null;
               }
 
-              return RegExp(
-                r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
-              ).hasMatch(text)
+              return RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(text)
                   ? null
                   : 'Format email tidak valid';
             },
@@ -460,9 +424,7 @@ class _KampusAmanPageState extends State<KampusAmanPage> {
         extensions: _extensions,
       );
 
-      final file = await openFile(
-        acceptedTypeGroups: [group],
-      );
+      final file = await openFile(acceptedTypeGroups: [group]);
 
       if (file == null) {
         return;
@@ -513,9 +475,7 @@ class _KampusAmanPageState extends State<KampusAmanPage> {
               padding: const EdgeInsets.symmetric(horizontal: 8),
               decoration: const BoxDecoration(
                 color: Color(0xFFD7D7D7),
-                borderRadius: BorderRadius.horizontal(
-                  left: Radius.circular(5),
-                ),
+                borderRadius: BorderRadius.horizontal(left: Radius.circular(5)),
               ),
               child: Row(
                 children: [
@@ -642,10 +602,7 @@ class _KampusAmanPageState extends State<KampusAmanPage> {
             ),
             child: const Text(
               'Reset',
-              style: TextStyle(
-                fontSize: 9.5,
-                fontWeight: FontWeight.w500,
-              ),
+              style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w500),
             ),
           ),
         ),
@@ -679,8 +636,7 @@ class _KampusAmanPageState extends State<KampusAmanPage> {
               ),
             ),
             child: SingleChildScrollView(
-              keyboardDismissBehavior:
-                  ScrollViewKeyboardDismissBehavior.onDrag,
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
               padding: const EdgeInsets.fromLTRB(16, 13, 16, 28),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -764,8 +720,7 @@ class _KampusAmanPageState extends State<KampusAmanPage> {
                           : () {
                               Navigator.of(context).push(
                                 MaterialPageRoute<void>(
-                                  builder: (_) =>
-                                      const KampusAmanStatusPage(),
+                                  builder: (_) => const KampusAmanStatusPage(),
                                 ),
                               );
                             },
@@ -995,13 +950,11 @@ class _KampusAmanPageState extends State<KampusAmanPage> {
       'location': _location.text.trim(),
       'description': _description.text.trim(),
 
-      if (_type != null) 'incident_type': _type!,
+      'incident_type': ?_type,
 
-      if (_time.text.trim().isNotEmpty)
-        'incident_time_text': _time.text.trim(),
+      if (_time.text.trim().isNotEmpty) 'incident_time_text': _time.text.trim(),
 
-      if (_party.text.trim().isNotEmpty)
-        'reported_party': _party.text.trim(),
+      if (_party.text.trim().isNotEmpty) 'reported_party': _party.text.trim(),
 
       if (identified) ...{
         'full_name': _name.text.trim(),
@@ -1009,11 +962,9 @@ class _KampusAmanPageState extends State<KampusAmanPage> {
         if (_identifier.text.trim().isNotEmpty)
           'identifier_value': _identifier.text.trim(),
 
-        if (_phone.text.trim().isNotEmpty)
-          'phone': _phone.text.trim(),
+        if (_phone.text.trim().isNotEmpty) 'phone': _phone.text.trim(),
 
-        if (_email.text.trim().isNotEmpty)
-          'email': _email.text.trim(),
+        if (_email.text.trim().isNotEmpty) 'email': _email.text.trim(),
       },
     };
 
@@ -1083,8 +1034,8 @@ class _KampusAmanPageState extends State<KampusAmanPage> {
 
       if ((response.statusCode != 200 && response.statusCode != 201) ||
           decoded['success'] != true) {
-        var message = decoded['message']?.toString() ??
-            'Laporan belum berhasil dikirim.';
+        var message =
+            decoded['message']?.toString() ?? 'Laporan belum berhasil dikirim.';
 
         final errors = decoded['errors'];
 
@@ -1114,16 +1065,15 @@ class _KampusAmanPageState extends State<KampusAmanPage> {
         throw const FormatException();
       }
 
-      final submittedAt = DateTime.tryParse(
+      final submittedAt =
+          DateTime.tryParse(
             data['submitted_at']?.toString() ?? '',
           )?.toLocal() ??
           DateTime.now();
 
-      final status =
-          data['status']?.toString() ?? 'menunggu_verifikasi';
+      final status = data['status']?.toString() ?? 'menunggu_verifikasi';
 
-      final emailSent =
-          contact == 'email' && data['email_sent'] == true;
+      final emailSent = contact == 'email' && data['email_sent'] == true;
 
       try {
         await QueueNotificationService.instance.showKampusAmanCreated(
@@ -1155,9 +1105,9 @@ class _KampusAmanPageState extends State<KampusAmanPage> {
         _message(
           sent
               ? 'Hasil pengajuan belum dapat dipastikan. '
-                  'Jangan langsung mengirim ulang.'
+                    'Jangan langsung mengirim ulang.'
               : 'File pendukung tidak dapat dibaca. '
-                  'Pilih ulang file tersebut.',
+                    'Pilih ulang file tersebut.',
         );
       }
     } finally {

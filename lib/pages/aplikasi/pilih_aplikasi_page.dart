@@ -1,4 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+
+import '../../services/application_catalog_service.dart';
 import 'aplikasi_form_page.dart';
 
 class PilihAplikasiPage extends StatefulWidget {
@@ -10,67 +14,138 @@ class PilihAplikasiPage extends StatefulWidget {
   State<PilihAplikasiPage> createState() => _PilihAplikasiPageState();
 }
 
-class _PilihAplikasiPageState extends State<PilihAplikasiPage> {
-  String? _selectedApplication;
+class _PilihAplikasiPageState extends State<PilihAplikasiPage>
+    with WidgetsBindingObserver {
+  ApplicationOption? _selectedApplication;
+
+  List<ApplicationOption> _applications = [];
+
+  bool _loading = true;
+  bool _fetching = false;
+
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+
+    WidgetsBinding.instance.addObserver(this);
+
+    unawaited(_loadApplications());
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      unawaited(_loadApplications());
+    }
+  }
 
   // =========================================================
-  // DAFTAR APLIKASI
+  // AMBIL DAFTAR APLIKASI
   // =========================================================
 
-  static const List<Map<String, String>> _applications = [
-    {'title': 'SIAKAD Polnep', 'asset': 'assets/images/toga.png'},
-    {'title': 'SIHADIR', 'asset': 'assets/images/sihadir.png'},
-    {'title': 'SIHADIR Web', 'asset': 'assets/images/logopolnep-BESAR.png'},
-    {'title': 'SIAKAD SEMIVA Polnep', 'asset': 'assets/images/semiva.png'},
-    {'title': 'Sistem Admin Jurusan Polnep', 'asset': 'assets/images/bank.png'},
-    {'title': 'Sistem Reservasi Polnep', 'asset': 'assets/images/date.png'},
-    {'title': 'HELPDESK Polnep', 'asset': 'assets/images/helpdesk.png'},
-    {'title': 'Polnep Link', 'asset': 'assets/images/weblink.png'},
-    {'title': 'SPMB Polnep', 'asset': 'assets/images/spmb.png'},
-    {'title': 'Sihadir Kepegawaian', 'asset': 'assets/images/sihadirmap.png'},
-    {'title': 'SIHADIR Android', 'asset': 'assets/images/logopolnep-BESAR.png'},
-  ];
+  Future<void> _loadApplications() async {
+    if (!mounted || _fetching) {
+      return;
+    }
+
+    _fetching = true;
+
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+
+    try {
+      final items = await ApplicationCatalogService.fetch();
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        final selectedId = _selectedApplication?.id;
+
+        _applications = items;
+        _selectedApplication = null;
+
+        for (final item in items) {
+          if (item.id == selectedId) {
+            _selectedApplication = item;
+            break;
+          }
+        }
+      });
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _applications = [];
+          _selectedApplication = null;
+
+          _error =
+              'Daftar aplikasi belum bisa dimuat. '
+              'Silakan coba lagi.';
+        });
+      }
+    } finally {
+      _fetching = false;
+
+      if (mounted) {
+        setState(() {
+          _loading = false;
+        });
+      }
+    }
+  }
 
   // =========================================================
-  // BUILD
+  // HALAMAN
   // =========================================================
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF0F9FF),
+
       body: SafeArea(
         child: Container(
           width: double.infinity,
           height: double.infinity,
 
-          // ===================================================
-          // BACKGROUND SAMA DENGAN HALAMAN LAIN
-          // ===================================================
           decoration: const BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
+
               colors: [Color(0xFFF0F9FF), Color(0xFFD7EEFF), Color(0xFFB9E1FF)],
             ),
           ),
 
           child: Column(
             children: [
-              // =================================================
               // HEADER
-              // =================================================
               Padding(
                 padding: const EdgeInsets.fromLTRB(18, 16, 18, 10),
+
                 child: Row(
                   children: [
                     IconButton(
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(),
                       tooltip: 'Kembali',
+
                       onPressed: () {
                         Navigator.of(context).pop();
                       },
+
                       icon: const Icon(
                         Icons.arrow_back_ios_new_rounded,
                         size: 21,
@@ -82,6 +157,7 @@ class _PilihAplikasiPageState extends State<PilihAplikasiPage> {
 
                     const Text(
                       'Pilih Aplikasi',
+
                       style: TextStyle(
                         color: Color(0xFF111111),
                         fontSize: 16,
@@ -94,60 +170,41 @@ class _PilihAplikasiPageState extends State<PilihAplikasiPage> {
 
               const SizedBox(height: 8),
 
-              // =================================================
               // DAFTAR APLIKASI
-              // =================================================
               Expanded(
-                child: ListView.separated(
-                  padding: const EdgeInsets.fromLTRB(18, 4, 18, 14),
-                  itemCount: _applications.length,
-                  separatorBuilder: (BuildContext context, int index) {
-                    return const SizedBox(height: 5);
-                  },
-                  itemBuilder: (BuildContext context, int index) {
-                    final Map<String, String> application =
-                        _applications[index];
-
-                    final String title = application['title']!;
-
-                    final String asset = application['asset']!;
-
-                    final bool selected = _selectedApplication == title;
-
-                    return _buildApplicationItem(
-                      title: title,
-                      asset: asset,
-                      selected: selected,
-                      onTap: () {
-                        setState(() {
-                          _selectedApplication = title;
-                        });
-                      },
-                    );
-                  },
+                child: RefreshIndicator(
+                  onRefresh: _loadApplications,
+                  child: _buildList(),
                 ),
               ),
 
-              // =================================================
-              // BUTTON AJUKAN
-              // =================================================
+              // TOMBOL LANJUT
               Padding(
                 padding: const EdgeInsets.fromLTRB(18, 8, 18, 18),
+
                 child: SizedBox(
                   width: double.infinity,
                   height: 48,
+
                   child: ElevatedButton(
-                    onPressed: _submitSelection,
+                    onPressed:
+                        _loading || _error != null || _applications.isEmpty
+                        ? null
+                        : _submitSelection,
+
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF4B48FF),
                       foregroundColor: Colors.white,
                       elevation: 0,
+
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
                       ),
                     ),
+
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
+
                       children: [
                         Image.asset(
                           'assets/images/papperplane.png',
@@ -160,6 +217,7 @@ class _PilihAplikasiPageState extends State<PilihAplikasiPage> {
 
                         const Text(
                           'Ajukan Permintaan',
+
                           style: TextStyle(
                             fontSize: 15.5,
                             fontWeight: FontWeight.w600,
@@ -178,19 +236,81 @@ class _PilihAplikasiPageState extends State<PilihAplikasiPage> {
   }
 
   // =========================================================
-  // CARD APLIKASI
+  // ISI DAFTAR / LOADING / ERROR
   // =========================================================
 
-  Widget _buildApplicationItem({
-    required String title,
-    required String asset,
-    required bool selected,
-    required VoidCallback onTap,
-  }) {
+  Widget _buildList() {
+    if (_loading || _error != null || _applications.isEmpty) {
+      return ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+
+        padding: const EdgeInsets.all(24),
+
+        children: [
+          if (_loading)
+            const Center(
+              child: SizedBox(
+                width: 24,
+                height: 24,
+
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+            )
+          else ...[
+            Text(
+              _error ?? 'Belum ada aplikasi yang tersedia.',
+              textAlign: TextAlign.center,
+
+              style: const TextStyle(fontSize: 12),
+            ),
+
+            const SizedBox(height: 8),
+
+            Center(
+              child: TextButton(
+                onPressed: _loadApplications,
+                child: const Text('Muat Ulang'),
+              ),
+            ),
+          ],
+        ],
+      );
+    }
+
+    return ListView.separated(
+      physics: const AlwaysScrollableScrollPhysics(),
+
+      padding: const EdgeInsets.fromLTRB(18, 4, 18, 14),
+
+      itemCount: _applications.length,
+
+      separatorBuilder: (_, index) {
+        return const SizedBox(height: 5);
+      },
+
+      itemBuilder: (_, index) {
+        return _buildApplicationItem(_applications[index]);
+      },
+    );
+  }
+
+  // =========================================================
+  // KARTU APLIKASI
+  // =========================================================
+
+  Widget _buildApplicationItem(ApplicationOption application) {
+    final selected = _selectedApplication?.id == application.id;
+
     return Material(
       color: Colors.transparent,
+
       child: InkWell(
-        onTap: onTap,
+        onTap: () {
+          setState(() {
+            _selectedApplication = application;
+          });
+        },
+
         borderRadius: BorderRadius.circular(9),
 
         child: AnimatedContainer(
@@ -200,7 +320,7 @@ class _PilihAplikasiPageState extends State<PilihAplikasiPage> {
 
           constraints: const BoxConstraints(minHeight: 56),
 
-          padding: const EdgeInsets.fromLTRB(7, 5, 9, 5),
+          padding: const EdgeInsets.fromLTRB(12, 5, 12, 5),
 
           decoration: BoxDecoration(
             color: selected ? const Color(0xFFF0F4FF) : Colors.white,
@@ -218,48 +338,25 @@ class _PilihAplikasiPageState extends State<PilihAplikasiPage> {
 
           child: Row(
             children: [
-              // ===============================================
-              // LOGO
-              // ===============================================
-              Container(
-                width: 44,
-                height: 44,
-
-                alignment: Alignment.center,
-
-                padding: const EdgeInsets.all(3),
-
-                decoration: BoxDecoration(
-                  color: const Color(0xFFDDF1FF),
-
-                  borderRadius: BorderRadius.circular(9),
-                ),
-
-                child: Image.asset(asset, fit: BoxFit.contain),
-              ),
-
-              const SizedBox(width: 11),
-
-              // ===============================================
-              // NAMA
-              // ===============================================
               Expanded(
                 child: Text(
-                  title,
+                  application.name,
+
                   style: TextStyle(
                     color: const Color(0xFF202020),
                     fontSize: 11,
+
                     fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
                   ),
                 ),
               ),
 
-              // ===============================================
-              // PANAH
-              // ===============================================
+              const SizedBox(width: 10),
+
               Icon(
                 Icons.arrow_forward_ios_rounded,
                 size: 16,
+
                 color: selected
                     ? const Color(0xFF4B48FF)
                     : const Color(0xFF8793FF),
@@ -272,53 +369,38 @@ class _PilihAplikasiPageState extends State<PilihAplikasiPage> {
   }
 
   // =========================================================
-  // AJUKAN PERMINTAAN
+  // MASUK FORM
   // =========================================================
 
-  void _submitSelection() {
-    // =========================================================
-    // JENIS KENDALA
-    // =========================================================
+  Future<void> _submitSelection() async {
+    final issue = widget.selectedIssue;
 
-    if (widget.selectedIssue == null) {
-      _showMessage(
-        'Jenis kendala belum dipilih. '
-        'Silakan kembali dan pilih jenis kendala.',
-      );
+    if (issue == null || issue.isEmpty) {
+      _showMessage('Silakan kembali dan pilih jenis kendala terlebih dahulu.');
 
       return;
     }
 
-    // =========================================================
-    // APLIKASI
-    // =========================================================
+    final application = _selectedApplication;
 
-    if (_selectedApplication == null) {
+    if (application == null) {
       _showMessage('Silakan pilih aplikasi terlebih dahulu.');
 
       return;
     }
 
-    // =========================================================
-    // MASUK FORM
-    // =========================================================
-
-    Navigator.of(context).push(
+    await Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (BuildContext context) {
-          return AplikasiFormPage(
-            issueType: widget.selectedIssue!,
-
-            applicationName: _selectedApplication!,
-          );
-        },
+        builder: (_) => AplikasiFormPage(
+          issueType: issue,
+          applicationId: application.id,
+          applicationName: application.name,
+        ),
       ),
     );
-  }
 
-  // =========================================================
-  // SNACKBAR
-  // =========================================================
+    await _loadApplications();
+  }
 
   void _showMessage(String message) {
     ScaffoldMessenger.of(context)
@@ -326,7 +408,9 @@ class _PilihAplikasiPageState extends State<PilihAplikasiPage> {
       ..showSnackBar(
         SnackBar(
           content: Text(message),
+
           behavior: SnackBarBehavior.floating,
+
           duration: const Duration(seconds: 2),
         ),
       );

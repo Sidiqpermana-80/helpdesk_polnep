@@ -124,11 +124,7 @@ class _WebsitePageState extends State<WebsitePage> {
             gradient: LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
-              colors: [
-                Color(0xFFF0F9FF),
-                Color(0xFFD7EEFF),
-                Color(0xFFB9E1FF),
-              ],
+              colors: [Color(0xFFF0F9FF), Color(0xFFD7EEFF), Color(0xFFB9E1FF)],
             ),
           ),
           child: Column(
@@ -225,9 +221,7 @@ class _WebsitePageState extends State<WebsitePage> {
               ),
 
               // DAFTAR WEBSITE
-              Expanded(
-                child: _buildWebsiteContent(),
-              ),
+              Expanded(child: _buildWebsiteContent()),
             ],
           ),
         ),
@@ -326,19 +320,12 @@ class _WebsitePageState extends State<WebsitePage> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
-                Icons.language_rounded,
-                size: 42,
-                color: Color(0xFF8793FF),
-              ),
+              Icon(Icons.language_rounded, size: 42, color: Color(0xFF8793FF)),
               SizedBox(height: 10),
               Text(
                 'Belum ada website yang tersedia.',
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Color(0xFF555555),
-                  fontSize: 12,
-                ),
+                style: TextStyle(color: Color(0xFF555555), fontSize: 12),
               ),
             ],
           ),
@@ -371,9 +358,7 @@ class _WebsitePageState extends State<WebsitePage> {
               Navigator.of(context).push(
                 MaterialPageRoute<void>(
                   builder: (BuildContext context) {
-                    return WebsiteFormPage(
-                      websiteName: website,
-                    );
+                    return WebsiteFormPage(websiteName: website);
                   },
                 ),
               );
@@ -402,17 +387,10 @@ class _WebsitePageState extends State<WebsitePage> {
           duration: const Duration(milliseconds: 170),
           curve: Curves.easeInOut,
           width: double.infinity,
-          constraints: const BoxConstraints(
-            minHeight: 55,
-          ),
-          padding: const EdgeInsets.symmetric(
-            horizontal: 15,
-            vertical: 12,
-          ),
+          constraints: const BoxConstraints(minHeight: 55),
+          padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 12),
           decoration: BoxDecoration(
-            color: selected
-                ? const Color(0xFF8EEB91)
-                : Colors.white,
+            color: selected ? const Color(0xFF8EEB91) : Colors.white,
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
               color: selected
@@ -436,9 +414,7 @@ class _WebsitePageState extends State<WebsitePage> {
                   style: TextStyle(
                     color: const Color(0xFF202020),
                     fontSize: 16,
-                    fontWeight: selected
-                        ? FontWeight.w500
-                        : FontWeight.w400,
+                    fontWeight: selected ? FontWeight.w500 : FontWeight.w400,
                   ),
                 ),
               ),

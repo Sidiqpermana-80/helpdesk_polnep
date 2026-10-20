@@ -13,11 +13,14 @@ class AplikasiFormPage extends StatefulWidget {
   const AplikasiFormPage({
     required this.issueType,
     required this.applicationName,
+    required this.applicationId,
     super.key,
   });
 
   final String issueType;
   final String applicationName;
+
+  final int applicationId;
 
   @override
   State<AplikasiFormPage> createState() => _AplikasiFormPageState();
@@ -79,22 +82,16 @@ class _AplikasiFormPageState extends State<AplikasiFormPage> {
   String _getApiIssueType() {
     switch (widget.issueType) {
       case 'Tidak Bisa Login':
+      case 'tidak_bisa_login':
         return 'tidak_bisa_login';
 
       case 'Data Tidak Sesuai':
+      case 'data_tidak_sesuai':
         return 'data_tidak_sesuai';
 
       case 'Error Sistem':
-        return 'error_sistem';
-
-      case 'Permintaan Akses':
-        return 'permintaan_akses';
-
-      case 'tidak_bisa_login':
-      case 'data_tidak_sesuai':
       case 'error_sistem':
-      case 'permintaan_akses':
-        return widget.issueType;
+        return 'error_sistem';
 
       default:
         return '';
@@ -810,242 +807,172 @@ class _AplikasiFormPageState extends State<AplikasiFormPage> {
   // =========================================================
 
   Future<void> _submitForm() async {
-    FocusScope.of(context).unfocus();
-
-    final bool valid = _formKey.currentState?.validate() ?? false;
-
-    if (!valid) {
-      _showMessage('Silakan lengkapi data yang masih kosong.');
-
-      return;
-    }
-
     if (_isSubmitting) {
       return;
     }
 
-    final String issueType = _getApiIssueType();
+    FocusScope.of(context).unfocus();
+
+    if (!(_formKey.currentState?.validate() ?? false)) {
+      _showMessage('Silakan lengkapi data yang masih kosong.');
+      return;
+    }
+
+    final issueType = _getApiIssueType();
 
     if (issueType.isEmpty) {
       _showMessage('Jenis kendala tidak valid.');
-
       return;
     }
+
+    // Simpan seluruh nilai sebelum form dikosongkan.
+    final fullName = _nameController.text.trim();
+
+    final identifierValue = _identifierController.text.trim();
+
+    final email = _emailController.text.trim();
+
+    final description = _descriptionController.text.trim();
+
+    final applicationName = widget.applicationName;
+
+    final file = _supportFile;
+
+    final supportFileName = file?.name ?? '';
 
     setState(() {
       _isSubmitting = true;
     });
 
-    // =======================================================
-    // SIMPAN DATA SEBELUM FORM DIBERSIHKAN
-    // =======================================================
-
-    final String fullName = _nameController.text.trim();
-
-    final String identifierValue = _identifierController.text.trim();
-
-    final String applicationName = widget.applicationName;
-
-    final String description = _descriptionController.text.trim();
-
     try {
-      // =====================================================
-      // ENDPOINT LARAVEL
-      // =====================================================
+      final request = http.MultipartRequest(
+        'POST',
+        Uri.parse(ApiConfig.createAplikasi),
+      );
 
-      final Uri url = Uri.parse(ApiConfig.createAplikasi);
-
-      // =====================================================
-      // MULTIPART REQUEST
-      // =====================================================
-
-      final http.MultipartRequest request = http.MultipartRequest('POST', url);
-
-      // =====================================================
-      // FIELD
-      // =====================================================
+      request.headers['Accept'] = 'application/json';
 
       request.fields.addAll({
         'full_name': fullName,
-
         'identifier_value': identifierValue,
-
-        'email': _emailController.text.trim(),
-
+        'email': email,
+        'application_id': widget.applicationId.toString(),
         'application_name': applicationName,
-
         'issue_type': issueType,
-
         'description': description,
       });
 
-      // =====================================================
-      // FILE PENDUKUNG
-      // =====================================================
-
-      if (_supportFile != null) {
-        final bytes = await _supportFile!.readAsBytes();
-
+      if (file != null) {
         request.files.add(
           http.MultipartFile.fromBytes(
             'support_file',
-            bytes,
-            filename: _supportFile!.name,
+            await file.readAsBytes(),
+            filename: file.name,
           ),
         );
       }
 
-      // =====================================================
-      // KIRIM
-      // =====================================================
-
-      final http.StreamedResponse streamedResponse = await request
+      final response = await request
           .send()
+          .then((streamed) => http.Response.fromStream(streamed))
           .timeout(const Duration(seconds: 30));
 
-      final http.Response response = await http.Response.fromStream(
-        streamedResponse,
-      );
-
-      debugPrint(
-        'APLIKASI STATUS: '
-        '${response.statusCode}',
-      );
-
-      debugPrint(
-        'APLIKASI RESPONSE: '
-        '${response.body}',
-      );
-
-      // =====================================================
-      // PARSE JSON
-      // =====================================================
-
-      final dynamic decoded = jsonDecode(response.body);
+      final decoded = jsonDecode(response.body);
 
       if (decoded is! Map<String, dynamic>) {
-        throw const FormatException('Response API tidak valid.');
+        throw const FormatException('Respons API tidak valid.');
       }
 
-      final Map<String, dynamic> responseData = decoded;
-
-      // =====================================================
-      // BERHASIL
-      // =====================================================
-
-      if ((response.statusCode == 200 || response.statusCode == 201) &&
-          responseData['success'] == true) {
-        final dynamic rawData = responseData['data'];
-
-        if (rawData is! Map<String, dynamic>) {
-          throw const FormatException('Data API tidak valid.');
+      if ((response.statusCode != 200 && response.statusCode != 201) ||
+          decoded['success'] != true) {
+        if (mounted) {
+          _showMessage(
+            decoded['message']?.toString() ?? 'Pengajuan belum berhasil.',
+          );
         }
 
-        final Map<String, dynamic> data = rawData;
+        return;
+      }
 
-        final String requestNumber = data['request_number']?.toString() ?? '';
+      final data = decoded['data'];
 
-        if (requestNumber.isEmpty) {
-          throw const FormatException('Nomor tiket tidak ditemukan.');
-        }
+      if (data is! Map<String, dynamic>) {
+        throw const FormatException('Data pengajuan tidak valid.');
+      }
 
-        if (!mounted) {
-          return;
-        }
+      final requestNumber = data['request_number']?.toString().trim() ?? '';
 
-        // ===================================================
-        // WAKTU PENGAJUAN
-        //
-        // Untuk sekarang memakai waktu perangkat.
-        // ===================================================
+      if (requestNumber.isEmpty) {
+        throw const FormatException('Kode tiket tidak ditemukan.');
+      }
 
-        final DateTime submittedAt = DateTime.now();
+      final submittedAt =
+          DateTime.tryParse(
+            data['submitted_at']?.toString() ?? '',
+          )?.toLocal() ??
+          DateTime.now();
 
-        // ===================================================
-        // BERSIHKAN FORM SETELAH API BERHASIL
-        // ===================================================
+      final emailSent = data['email_sent'] == true;
 
-        _clearForm();
+      // Pemeriksaan tanpa mencetak isi identitas atau deskripsi.
+      debugPrint('APLIKASI email terisi: ${email.isNotEmpty}');
 
-        // ===================================================
-        // SUCCESS PAGE
-        // ===================================================
+      debugPrint('APLIKASI deskripsi terisi: ${description.isNotEmpty}');
 
-        Navigator.of(context).push(
-          MaterialPageRoute<void>(
-            builder: (BuildContext context) {
-              return AplikasiSuccessPage(
-                requestNumber: requestNumber,
+      debugPrint('APLIKASI email_sent dari server: ${data['email_sent']}');
 
-                fullName: fullName,
+      if (!mounted) {
+        return;
+      }
 
-                identifierValue: identifierValue,
+      _clearForm();
 
-                applicationName: applicationName,
+      Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => AplikasiSuccessPage(
+            requestNumber: requestNumber,
 
-                issueType: issueType,
+            fullName: fullName,
 
-                submittedAt: submittedAt,
-              );
-            },
+            identifierValue: identifierValue,
+
+            applicationName:
+                data['application_name']?.toString() ?? applicationName,
+
+            issueType: issueType,
+
+            submittedAt: submittedAt,
+
+            email: email,
+
+            description: description,
+
+            supportFileName: supportFileName,
+
+            status: data['status']?.toString() ?? 'menunggu_verifikasi',
+
+            estimatedResponse:
+                data['estimated_response']?.toString() ?? '1-2 Hari Kerja',
+
+            emailSent: emailSent,
           ),
+        ),
+      );
+    } on TimeoutException {
+      if (mounted) {
+        _showMessage(
+          'Hasil pengajuan belum dapat dipastikan. '
+          'Cek Status dengan email $email sebelum mengirim ulang.',
         );
-
-        return;
       }
-
-      // =====================================================
-      // API MENOLAK
-      // =====================================================
-
-      final String message =
-          responseData['message']?.toString() ??
-          'Permintaan layanan aplikasi gagal dikirim.';
-
-      if (!mounted) {
-        return;
+    } catch (_) {
+      if (mounted) {
+        _showMessage(
+          'Hasil pengajuan belum dapat dipastikan. '
+          'Cek Status dengan email $email sebelum mengirim ulang.',
+        );
       }
-
-      _showMessage(message);
-    }
-    // =======================================================
-    // TIMEOUT
-    // =======================================================
-    on TimeoutException {
-      if (!mounted) {
-        return;
-      }
-
-      _showMessage('Server tidak merespon. Periksa koneksi jaringan.');
-    }
-    // =======================================================
-    // JSON ERROR
-    // =======================================================
-    on FormatException catch (e) {
-      debugPrint('FORMAT APLIKASI ERROR: $e');
-
-      if (!mounted) {
-        return;
-      }
-
-      _showMessage('Response dari server tidak valid.');
-    }
-    // =======================================================
-    // ERROR LAIN
-    // =======================================================
-    catch (e) {
-      debugPrint('APLIKASI ERROR: $e');
-
-      if (!mounted) {
-        return;
-      }
-
-      _showMessage('Tidak dapat terhubung ke server.');
-    }
-    // =======================================================
-    // SELESAI
-    // =======================================================
-    finally {
+    } finally {
       if (mounted) {
         setState(() {
           _isSubmitting = false;

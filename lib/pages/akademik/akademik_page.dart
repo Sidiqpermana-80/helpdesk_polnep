@@ -845,9 +845,13 @@ class _AkademikPageState extends State<AkademikPage> {
                                 validator: (value) {
                                   final name = value?.trim() ?? '';
 
-                                  if (name.isEmpty) return 'Nama wajib diisi';
-                                  if (name.length < 3)
+                                  if (name.isEmpty) {
+                                    return 'Nama wajib diisi';
+                                  }
+
+                                  if (name.length < 3) {
                                     return 'Nama belum sesuai';
+                                  }
 
                                   return null;
                                 },

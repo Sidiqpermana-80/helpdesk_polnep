@@ -15,6 +15,8 @@ import '../pages/cek_status/cek_status_page.dart';
 import 'akademik_device_sync_service.dart';
 import 'akademik_notification_bridge.dart';
 import 'ult_device_sync_service.dart';
+import 'wifi_device_sync_service.dart';
+import 'wifi_notification_bridge.dart';
 
 // =========================================================
 // JENIS PENGINGAT ULT
@@ -35,7 +37,6 @@ enum UltReminderKind {
 
 // =========================================================
 // CHANNEL ULT
-// Channel Akademik dibuat melalui AkademikNotificationBridge.
 // =========================================================
 
 const AndroidNotificationChannel _ultChannel = AndroidNotificationChannel(
@@ -88,7 +89,6 @@ class _UltAlert {
   }
 
   static _UltAlert? fromData(Map<String, dynamic> data) {
-    // Pesan Akademik ditangani oleh bridge Akademik.
     if (AkademikNotificationBridge.handles(data)) {
       return null;
     }
@@ -146,16 +146,22 @@ Future<void> _prepareLocalNotifications(
       ?.createNotificationChannel(_ultChannel);
 
   await AkademikNotificationBridge.createChannel(plugin);
+  await WifiNotificationBridge.createChannel(plugin);
 }
 
 // =========================================================
-// MENAMPILKAN PESAN ULT ATAU AKADEMIK
+// MENAMPILKAN PESAN FIREBASE
 // =========================================================
 
 Future<void> _displayMessage(
   RemoteMessage message,
   FlutterLocalNotificationsPlugin plugin,
 ) async {
+  if (WifiNotificationBridge.handles(message.data)) {
+    await WifiNotificationBridge.display(message, plugin);
+    return;
+  }
+
   if (AkademikNotificationBridge.handles(message.data)) {
     await AkademikNotificationBridge.display(message, plugin);
     return;
@@ -175,7 +181,6 @@ Future<void> _displayMessage(
   }
 
   final title = message.notification?.title ?? alert?.title;
-
   final body = message.notification?.body ?? alert?.body;
 
   if (title == null && body == null) {
@@ -235,230 +240,13 @@ Future<void> queueFirebaseBackgroundHandler(RemoteMessage message) async {
 }
 
 // =========================================================
-// SERVICE NOTIFIKASI ANTREAN BERSAMA
+// SERVICE NOTIFIKASI BERSAMA
 // =========================================================
 
 class QueueNotificationService with WidgetsBindingObserver {
   QueueNotificationService._();
 
   static final QueueNotificationService instance = QueueNotificationService._();
-
-  Future<void> showKampusAmanCreated({required int ticketId}) {
-    if (!supported || !_initialized || !_permissionAllowed || ticketId <= 0) {
-      return Future<void>.value();
-    }
-
-    _foregroundQueue = _foregroundQueue
-        .then<void>((_) async {
-          const channel = AndroidNotificationChannel(
-            'helpdesk_private_confirmations',
-            'Konfirmasi Laporan',
-            description: 'Konfirmasi pengiriman laporan.',
-            importance: Importance.high,
-          );
-
-          await _local
-              .resolvePlatformSpecificImplementation<
-                AndroidFlutterLocalNotificationsPlugin
-              >()
-              ?.createNotificationChannel(channel);
-
-          final tag = 'kampus_aman_${ticketId}_created';
-          final key = 'shown_$tag';
-
-          if (await _prefs.getBool(key) == true) {
-            return;
-          }
-
-          await _local.show(
-            id: 0,
-            title: 'Laporan berhasil dikirim',
-            body: 'Simpan kode tiket dan kunci akses di tempat pribadi.',
-            notificationDetails: NotificationDetails(
-              android: AndroidNotificationDetails(
-                channel.id,
-                channel.name,
-                channelDescription: channel.description,
-                icon: 'ic_stat_ult',
-                importance: Importance.high,
-                priority: Priority.high,
-                tag: tag,
-                onlyAlertOnce: true,
-              ),
-            ),
-            payload: 'kampus_aman_confirmation',
-          );
-
-          await _prefs.setBool(key, true);
-        })
-        .catchError((Object error, StackTrace stack) {
-          // Kegagalan notifikasi tidak membatalkan pengajuan.
-        });
-
-    return _foregroundQueue;
-  }
-
-  Future<void> showPungliTicketCreated({
-    required int ticketId,
-    required String requestNumber,
-  }) {
-    if (!supported ||
-        !_initialized ||
-        !_permissionAllowed ||
-        ticketId <= 0 ||
-        requestNumber.trim().isEmpty) {
-      return Future<void>.value();
-    }
-
-    _foregroundQueue = _foregroundQueue
-        .then<void>((_) async {
-          const channel = AndroidNotificationChannel(
-            'pungli_complaints',
-            'Pengaduan Pungli',
-            description: 'Konfirmasi pengajuan laporan Pungli.',
-            importance: Importance.high,
-          );
-
-          await _local
-              .resolvePlatformSpecificImplementation<
-                AndroidFlutterLocalNotificationsPlugin
-              >()
-              ?.createNotificationChannel(channel);
-
-          final tag = 'pungli_${ticketId}_created';
-          final key = 'shown_$tag';
-
-          if (await _prefs.getBool(key) == true) {
-            return;
-          }
-
-          final number = requestNumber.trim();
-
-          final body =
-              'Laporan $number berhasil dikirim. '
-              'Pantau verifikasi laporan melalui Cek Status.';
-
-          await _local.show(
-            id: 0,
-
-            title: 'Laporan Pungli berhasil dikirim',
-
-            body: body,
-
-            notificationDetails: NotificationDetails(
-              android: AndroidNotificationDetails(
-                channel.id,
-                channel.name,
-                channelDescription: channel.description,
-
-                icon: 'ic_stat_ult',
-
-                importance: Importance.high,
-                priority: Priority.high,
-
-                tag: tag,
-
-                onlyAlertOnce: true,
-
-                styleInformation: BigTextStyleInformation(body),
-              ),
-            ),
-
-            payload: jsonEncode({
-              'module': 'pengaduan_pungli',
-              'event': 'ticket_created',
-              'request_id': ticketId.toString(),
-              'request_number': number,
-            }),
-          );
-
-          await _prefs.setBool(key, true);
-        })
-        .catchError((Object error, StackTrace stack) {
-          debugPrint('PUNGLI confirmation error: ${error.runtimeType}');
-        });
-
-    return _foregroundQueue;
-  }
-
-  Future<void> showAcademicComplaintCreated({
-    required int ticketId,
-    required String requestNumber,
-  }) {
-    if (!supported ||
-        !_initialized ||
-        !_permissionAllowed ||
-        ticketId <= 0 ||
-        requestNumber.trim().isEmpty) {
-      return Future<void>.value();
-    }
-
-    _foregroundQueue = _foregroundQueue
-        .then<void>((_) async {
-          const channel = AndroidNotificationChannel(
-            'academic_complaints',
-            'Pengaduan Akademik',
-            description: 'Konfirmasi pengajuan pengaduan Akademik.',
-            importance: Importance.high,
-          );
-
-          await _local
-              .resolvePlatformSpecificImplementation<
-                AndroidFlutterLocalNotificationsPlugin
-              >()
-              ?.createNotificationChannel(channel);
-
-          final tag = 'academic_complaint_${ticketId}_created';
-          final key = 'shown_$tag';
-
-          if (await _prefs.getBool(key) == true) {
-            return;
-          }
-
-          final number = requestNumber.trim();
-
-          final body =
-              'Pengaduan $number berhasil dikirim. '
-              'Pantau verifikasi laporan melalui Cek Status.';
-
-          await _local.show(
-            id: 0,
-            title: 'Pengaduan Akademik berhasil dikirim',
-            body: body,
-
-            notificationDetails: NotificationDetails(
-              android: AndroidNotificationDetails(
-                channel.id,
-                channel.name,
-                channelDescription: channel.description,
-                icon: 'ic_stat_ult',
-                importance: Importance.high,
-                priority: Priority.high,
-                tag: tag,
-                onlyAlertOnce: true,
-                styleInformation: BigTextStyleInformation(body),
-              ),
-            ),
-
-            payload: jsonEncode({
-              'module': 'pengaduan_akademik',
-              'event': 'ticket_created',
-              'request_id': ticketId.toString(),
-              'request_number': number,
-            }),
-          );
-
-          await _prefs.setBool(key, true);
-        })
-        .catchError((Object error, StackTrace stack) {
-          debugPrint(
-            'ACADEMIC complaint confirmation error: '
-            '${error.runtimeType}',
-          );
-        });
-
-    return _foregroundQueue;
-  }
 
   final navigatorKey = GlobalKey<NavigatorState>();
 
@@ -581,7 +369,6 @@ class QueueNotificationService with WidgetsBindingObserver {
 
   // =======================================================
   // KONFIRMASI PENGAJUAN ULT
-  // Nama method dipertahankan untuk pemanggilan ULT.
   // =======================================================
 
   Future<void> showTicketCreated({
@@ -645,14 +432,17 @@ class QueueNotificationService with WidgetsBindingObserver {
           await _prefs.setBool(preferenceKey, true);
         })
         .catchError((Object error, StackTrace stack) {
-          debugPrint('ULT ticket confirmation error: ${error.runtimeType}');
+          debugPrint(
+            'ULT ticket confirmation error: '
+            '${error.runtimeType}',
+          );
         });
 
     return _foregroundQueue;
   }
 
   // =======================================================
-  // KONFIRMASI PENGAJUAN AKADEMIK
+  // KONFIRMASI ANTREAN AKADEMIK
   // =======================================================
 
   Future<void> showAcademicTicketCreated({
@@ -689,6 +479,10 @@ class QueueNotificationService with WidgetsBindingObserver {
     return _foregroundQueue;
   }
 
+  // =======================================================
+  // KONFIRMASI PENGAJUAN WI-FI / INTERNET
+  // =======================================================
+
   Future<void> showWifiTicketCreated({
     required int ticketId,
     required String requestNumber,
@@ -704,7 +498,7 @@ class QueueNotificationService with WidgetsBindingObserver {
 
     _foregroundQueue = _foregroundQueue
         .then<void>((_) async {
-          const AndroidNotificationChannel channel = AndroidNotificationChannel(
+          const channel = AndroidNotificationChannel(
             'wifi_complaints',
             'Pengaduan Wi-Fi / Internet',
             description: 'Konfirmasi pengajuan Wi-Fi / Internet.',
@@ -717,50 +511,38 @@ class QueueNotificationService with WidgetsBindingObserver {
               >()
               ?.createNotificationChannel(channel);
 
-          final String tag = 'wifi_${ticketId}_ticket_created';
+          final tag = 'wifi_${ticketId}_ticket_created';
+          final key = 'shown_$tag';
 
-          final String preferenceKey = 'shown_$tag';
-
-          if (await _prefs.getBool(preferenceKey) == true) {
+          if (await _prefs.getBool(key) == true) {
             return;
           }
 
-          final String number = requestNumber.trim();
+          final number = requestNumber.trim();
 
-          final String serviceName = isAccess
-              ? 'Akses Login/Wi-Fi'
-              : 'Gangguan Jaringan';
+          final service = isAccess ? 'Akses Login/Wi-Fi' : 'Gangguan Jaringan';
 
-          final String body =
+          final body =
               'Tiket $number berhasil diajukan. '
-              'Pantau tindak lanjut $serviceName melalui Cek Status.';
+              'Pantau tindak lanjut $service melalui Cek Status.';
 
           await _local.show(
             id: 0,
-
-            title: '$serviceName berhasil diajukan',
-
+            title: '$service berhasil diajukan',
             body: body,
-
             notificationDetails: NotificationDetails(
               android: AndroidNotificationDetails(
                 channel.id,
                 channel.name,
                 channelDescription: channel.description,
-
                 icon: 'ic_stat_ult',
-
                 importance: Importance.high,
                 priority: Priority.high,
-
                 tag: tag,
-
                 onlyAlertOnce: true,
-
                 styleInformation: BigTextStyleInformation(body),
               ),
             ),
-
             payload: jsonEncode({
               'module': 'wifi_internet',
               'event': 'ticket_created',
@@ -769,10 +551,230 @@ class QueueNotificationService with WidgetsBindingObserver {
             }),
           );
 
-          await _prefs.setBool(preferenceKey, true);
+          await _prefs.setBool(key, true);
         })
         .catchError((Object error, StackTrace stack) {
           debugPrint('WIFI confirmation error: ${error.runtimeType}');
+        });
+
+    return _foregroundQueue;
+  }
+
+  // =======================================================
+  // KONFIRMASI PENGADUAN AKADEMIK
+  // =======================================================
+
+  Future<void> showAcademicComplaintCreated({
+    required int ticketId,
+    required String requestNumber,
+  }) {
+    if (!supported ||
+        !_initialized ||
+        !_permissionAllowed ||
+        ticketId <= 0 ||
+        requestNumber.trim().isEmpty) {
+      return Future<void>.value();
+    }
+
+    _foregroundQueue = _foregroundQueue
+        .then<void>((_) async {
+          const channel = AndroidNotificationChannel(
+            'academic_complaints',
+            'Pengaduan Akademik',
+            description: 'Konfirmasi pengajuan pengaduan Akademik.',
+            importance: Importance.high,
+          );
+
+          await _local
+              .resolvePlatformSpecificImplementation<
+                AndroidFlutterLocalNotificationsPlugin
+              >()
+              ?.createNotificationChannel(channel);
+
+          final tag = 'academic_complaint_${ticketId}_created';
+          final key = 'shown_$tag';
+
+          if (await _prefs.getBool(key) == true) {
+            return;
+          }
+
+          final number = requestNumber.trim();
+
+          final body =
+              'Pengaduan $number berhasil dikirim. '
+              'Pantau verifikasi laporan melalui Cek Status.';
+
+          await _local.show(
+            id: 0,
+            title: 'Pengaduan Akademik berhasil dikirim',
+            body: body,
+            notificationDetails: NotificationDetails(
+              android: AndroidNotificationDetails(
+                channel.id,
+                channel.name,
+                channelDescription: channel.description,
+                icon: 'ic_stat_ult',
+                importance: Importance.high,
+                priority: Priority.high,
+                tag: tag,
+                onlyAlertOnce: true,
+                styleInformation: BigTextStyleInformation(body),
+              ),
+            ),
+            payload: jsonEncode({
+              'module': 'pengaduan_akademik',
+              'event': 'ticket_created',
+              'request_id': ticketId.toString(),
+              'request_number': number,
+            }),
+          );
+
+          await _prefs.setBool(key, true);
+        })
+        .catchError((Object error, StackTrace stack) {
+          debugPrint(
+            'ACADEMIC complaint confirmation error: '
+            '${error.runtimeType}',
+          );
+        });
+
+    return _foregroundQueue;
+  }
+
+  // =======================================================
+  // KONFIRMASI PENGADUAN PUNGLI
+  // =======================================================
+
+  Future<void> showPungliTicketCreated({
+    required int ticketId,
+    required String requestNumber,
+  }) {
+    if (!supported ||
+        !_initialized ||
+        !_permissionAllowed ||
+        ticketId <= 0 ||
+        requestNumber.trim().isEmpty) {
+      return Future<void>.value();
+    }
+
+    _foregroundQueue = _foregroundQueue
+        .then<void>((_) async {
+          const channel = AndroidNotificationChannel(
+            'pungli_complaints',
+            'Pengaduan Pungli',
+            description: 'Konfirmasi pengajuan laporan Pungli.',
+            importance: Importance.high,
+          );
+
+          await _local
+              .resolvePlatformSpecificImplementation<
+                AndroidFlutterLocalNotificationsPlugin
+              >()
+              ?.createNotificationChannel(channel);
+
+          final tag = 'pungli_${ticketId}_created';
+          final key = 'shown_$tag';
+
+          if (await _prefs.getBool(key) == true) {
+            return;
+          }
+
+          final number = requestNumber.trim();
+
+          final body =
+              'Laporan $number berhasil dikirim. '
+              'Pantau verifikasi laporan melalui Cek Status.';
+
+          await _local.show(
+            id: 0,
+            title: 'Laporan Pungli berhasil dikirim',
+            body: body,
+            notificationDetails: NotificationDetails(
+              android: AndroidNotificationDetails(
+                channel.id,
+                channel.name,
+                channelDescription: channel.description,
+                icon: 'ic_stat_ult',
+                importance: Importance.high,
+                priority: Priority.high,
+                tag: tag,
+                onlyAlertOnce: true,
+                styleInformation: BigTextStyleInformation(body),
+              ),
+            ),
+            payload: jsonEncode({
+              'module': 'pengaduan_pungli',
+              'event': 'ticket_created',
+              'request_id': ticketId.toString(),
+              'request_number': number,
+            }),
+          );
+
+          await _prefs.setBool(key, true);
+        })
+        .catchError((Object error, StackTrace stack) {
+          debugPrint('PUNGLI confirmation error: ${error.runtimeType}');
+        });
+
+    return _foregroundQueue;
+  }
+
+  // =======================================================
+  // KONFIRMASI KAMPUS AMAN
+  // =======================================================
+
+  Future<void> showKampusAmanCreated({required int ticketId}) {
+    if (!supported || !_initialized || !_permissionAllowed || ticketId <= 0) {
+      return Future<void>.value();
+    }
+
+    _foregroundQueue = _foregroundQueue
+        .then<void>((_) async {
+          const channel = AndroidNotificationChannel(
+            'helpdesk_private_confirmations',
+            'Konfirmasi Laporan',
+            description: 'Konfirmasi pengiriman laporan.',
+            importance: Importance.high,
+          );
+
+          await _local
+              .resolvePlatformSpecificImplementation<
+                AndroidFlutterLocalNotificationsPlugin
+              >()
+              ?.createNotificationChannel(channel);
+
+          final tag = 'kampus_aman_${ticketId}_created';
+          final key = 'shown_$tag';
+
+          if (await _prefs.getBool(key) == true) {
+            return;
+          }
+
+          await _local.show(
+            id: 0,
+            title: 'Laporan berhasil dikirim',
+            body:
+                'Simpan kode tiket dan kunci akses '
+                'di tempat pribadi.',
+            notificationDetails: NotificationDetails(
+              android: AndroidNotificationDetails(
+                channel.id,
+                channel.name,
+                channelDescription: channel.description,
+                icon: 'ic_stat_ult',
+                importance: Importance.high,
+                priority: Priority.high,
+                tag: tag,
+                onlyAlertOnce: true,
+              ),
+            ),
+            payload: 'kampus_aman_confirmation',
+          );
+
+          await _prefs.setBool(key, true);
+        })
+        .catchError((Object error, StackTrace stack) {
+          // Kegagalan konfirmasi tidak membatalkan pengajuan.
         });
 
     return _foregroundQueue;
@@ -814,8 +816,6 @@ class QueueNotificationService with WidgetsBindingObserver {
           .getNotificationSettings()
           .timeout(const Duration(seconds: 5));
 
-      // Kunci lama dipertahankan agar riwayat permintaan izin
-      // dari versi sebelumnya tetap terbaca.
       final asked =
           await _prefs.getBool('ult_notification_permission_asked') ?? false;
 
@@ -899,6 +899,8 @@ class QueueNotificationService with WidgetsBindingObserver {
     unawaited(UltDeviceSyncService.instance.syncToken(clean));
 
     unawaited(AkademikDeviceSyncService.instance.syncToken(clean));
+
+    unawaited(WifiDeviceSyncService.instance.syncToken(clean));
   }
 
   // =======================================================
@@ -939,6 +941,8 @@ class QueueNotificationService with WidgetsBindingObserver {
       unawaited(UltDeviceSyncService.instance.syncToken(current));
 
       unawaited(AkademikDeviceSyncService.instance.syncToken(current));
+
+      unawaited(WifiDeviceSyncService.instance.syncToken(current));
     }
 
     final refresh = _startTokenRefresh();
@@ -1007,8 +1011,6 @@ class QueueNotificationService with WidgetsBindingObserver {
           return null;
         }
 
-        // Token mungkin sudah datang dari onTokenRefresh
-        // atau permintaan native sebelumnya.
         if (_tokenGeneration != generation && token.value != null) {
           return token.value;
         }
@@ -1093,6 +1095,14 @@ class QueueNotificationService with WidgetsBindingObserver {
 
       if (decoded is! Map<String, dynamic>) {
         return null;
+      }
+
+      if (WifiNotificationBridge.handles(decoded)) {
+        unawaited(
+          WifiNotificationBridge.rememberOpened(
+            decoded,
+          ).catchError((Object _) {}),
+        );
       }
 
       if (AkademikNotificationBridge.handles(decoded)) {
