@@ -10,6 +10,7 @@ import '../../config/api_config.dart';
 import '../../services/queue_notification_service.dart';
 import '../cek_status/cek_status_page.dart';
 import 'pungli_success_page.dart';
+import '../../services/pungli_device_sync_service.dart';
 
 class PungliPage extends StatefulWidget {
   const PungliPage({super.key});
@@ -731,7 +732,7 @@ class _PungliPageState extends State<PungliPage> {
           child: ElevatedButton(
             onPressed: _busy || _loading ? null : _submit,
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF8C99F2),
+              backgroundColor: const Color(0xFF5868FF),
               disabledBackgroundColor: const Color(0xFFADB5F5),
               foregroundColor: Colors.white,
               elevation: 0,
@@ -1077,6 +1078,11 @@ class _PungliPageState extends State<PungliPage> {
     bool requestStarted = false;
 
     try {
+      await QueueNotificationService.instance.enableNotifications();
+
+      final fcmToken = await QueueNotificationService.instance
+          .tokenForSubmission();
+
       final request = http.MultipartRequest(
         'POST',
         Uri.parse('$_base/pengaduan/pungli'),
@@ -1085,6 +1091,13 @@ class _PungliPageState extends State<PungliPage> {
       request.headers['Accept'] = 'application/json';
 
       request.fields.addAll(fields);
+
+      if (fcmToken != null && fcmToken.isNotEmpty) {
+        request.fields.addAll({
+          'fcm_token': fcmToken,
+          'device_platform': 'android',
+        });
+      }
 
       if (file != null) {
         final bytes = await file.readAsBytes();
@@ -1183,6 +1196,19 @@ class _PungliPageState extends State<PungliPage> {
             data['submitted_at']?.toString() ?? '',
           )?.toLocal() ??
           DateTime.now();
+
+      final syncKey = data['device_sync_key']?.toString() ?? '';
+
+      if (syncKey.isNotEmpty) {
+        try {
+          await PungliDeviceSyncService.instance.rememberTicket(
+            id: id,
+            key: syncKey,
+          );
+        } catch (_) {
+          debugPrint('PUNGLI: kunci sinkronisasi belum berhasil disimpan.');
+        }
+      }
 
       unawaited(
         QueueNotificationService.instance.showPungliTicketCreated(

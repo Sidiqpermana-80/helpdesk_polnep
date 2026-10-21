@@ -8,6 +8,8 @@ import 'package:http/http.dart' as http;
 
 import '../../config/api_config.dart';
 import 'fasilitas_ruangan_success_page.dart';
+import '../../services/queue_notification_service.dart';
+import '../../services/fasilitas_device_sync_service.dart';
 
 class FasilitasRuanganPage extends StatefulWidget {
   const FasilitasRuanganPage({super.key});
@@ -938,7 +940,7 @@ class _FasilitasRuanganPageState extends State<FasilitasRuanganPage> {
                                 child: ElevatedButton(
                                   onPressed: _isSubmitting ? null : _submitForm,
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: const Color(0xFF8C99F2),
+                                    backgroundColor: const Color(0xFF5868FF),
                                     disabledBackgroundColor: const Color(
                                       0xFFADB5F5,
                                     ),
@@ -1200,15 +1202,23 @@ class _FasilitasRuanganPageState extends State<FasilitasRuanganPage> {
     final String roomName = _roomController.text.trim();
     final String facilityType = _selectedFacility!;
     final String description = _descriptionController.text.trim();
+    final String supportFileName = _supportFile?.name ?? '';
 
     setState(() {
       _isSubmitting = true;
     });
 
     try {
+      await QueueNotificationService.instance.enableNotifications();
+
+      final fcmToken = await QueueNotificationService.instance
+          .tokenForSubmission();
+
       final Uri url = Uri.parse(ApiConfig.createFasilitasRuangan);
 
       final http.MultipartRequest request = http.MultipartRequest('POST', url);
+
+      request.headers['Accept'] = 'application/json';
 
       request.fields.addAll({
         'full_name': fullName,
@@ -1220,6 +1230,13 @@ class _FasilitasRuanganPageState extends State<FasilitasRuanganPage> {
         'facility_type': facilityType,
         'description': description,
       });
+
+      if (fcmToken != null && fcmToken.isNotEmpty) {
+        request.fields.addAll({
+          'fcm_token': fcmToken,
+          'device_platform': 'android',
+        });
+      }
 
       if (_supportFile != null) {
         final bytes = await _supportFile!.readAsBytes();
@@ -1246,11 +1263,6 @@ class _FasilitasRuanganPageState extends State<FasilitasRuanganPage> {
         '${response.statusCode}',
       );
 
-      debugPrint(
-        'FASILITAS RESPONSE: '
-        '${response.body}',
-      );
-
       final dynamic decoded = jsonDecode(response.body);
 
       if (decoded is! Map<String, dynamic>) {
@@ -1273,6 +1285,37 @@ class _FasilitasRuanganPageState extends State<FasilitasRuanganPage> {
 
         if (requestNumber.isEmpty) {
           throw const FormatException('Nomor tiket tidak ditemukan.');
+        }
+
+        final ticketId = int.tryParse(data['id']?.toString() ?? '') ?? 0;
+
+        if (ticketId > 0) {
+          final syncKey = data['device_sync_key']?.toString() ?? '';
+
+          if (syncKey.isNotEmpty) {
+            try {
+              await FasilitasDeviceSyncService.instance.rememberTicket(
+                id: ticketId,
+                key: syncKey,
+              );
+            } catch (_) {
+              debugPrint(
+                'FASILITAS: kunci sinkronisasi belum berhasil disimpan.',
+              );
+            }
+          }
+
+          unawaited(
+            QueueNotificationService.instance.showFasilitasTicketCreated(
+              ticketId: ticketId,
+              requestNumber: requestNumber,
+            ),
+          );
+        } else {
+          debugPrint(
+            'FASILITAS_NOTIF: respons pengajuan tidak memuat '
+            'ID tiket yang valid.',
+          );
         }
 
         DateTime submittedAt = DateTime.now();
@@ -1301,11 +1344,23 @@ class _FasilitasRuanganPageState extends State<FasilitasRuanganPage> {
                 requestNumber: requestNumber,
                 fullName: fullName,
                 identifierValue: identifierValue,
+
                 buildingName: buildingName,
                 floor: floor,
                 roomName: roomName,
                 facilityType: facilityType,
+
                 submittedAt: submittedAt,
+
+                email: email,
+                description: description,
+                supportFileName: supportFileName,
+
+                status: data['status']?.toString() ?? 'menunggu_verifikasi',
+
+                estimatedResponse: data['estimated_response']?.toString() ?? '',
+
+                emailSent: data['email_sent'] == true,
               );
             },
           ),

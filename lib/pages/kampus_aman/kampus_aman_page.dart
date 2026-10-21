@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 
 import '../../config/api_config.dart';
+import '../../services/kampus_aman_device_sync_service.dart';
 import '../../services/queue_notification_service.dart';
 import 'kampus_aman_success_page.dart';
 
@@ -66,9 +67,7 @@ class _KampusAmanPageState extends State<KampusAmanPage> {
 
   bool get _identified => _identity == 'identified';
 
-  String get _base {
-    return ApiConfig.baseUrl.replaceAll(RegExp(r'/+$'), '');
-  }
+  String get _base => ApiConfig.baseUrl.replaceAll(RegExp(r'/+$'), '');
 
   List<TextEditingController> get _identityControllers => [
     _name,
@@ -94,10 +93,6 @@ class _KampusAmanPageState extends State<KampusAmanPage> {
     super.dispose();
   }
 
-  // =========================================================
-  // DEKORASI FIELD
-  // =========================================================
-
   InputDecoration _decoration(String hint, {IconData? icon}) {
     OutlineInputBorder border(Color color, double width) {
       return OutlineInputBorder(
@@ -113,12 +108,11 @@ class _KampusAmanPageState extends State<KampusAmanPage> {
           ? null
           : Icon(icon, size: 18, color: const Color(0xFF168DE2)),
       prefixIconConstraints: const BoxConstraints(minWidth: 38, minHeight: 42),
-      isDense: false,
       filled: true,
       fillColor: const Color(0xFFF5F6FA),
       contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 11),
-      border: border(const Color(0xFF8D8D8D), 0.8),
       enabledBorder: border(const Color(0xFF8D8D8D), 0.8),
+      border: border(const Color(0xFF8D8D8D), 0.8),
       focusedBorder: border(const Color(0xFF3AA7F5), 1.4),
       errorBorder: border(Colors.red, 1),
       focusedErrorBorder: border(Colors.red, 1.3),
@@ -177,10 +171,6 @@ class _KampusAmanPageState extends State<KampusAmanPage> {
       ],
     );
   }
-
-  // =========================================================
-  // PILIHAN BERBENTUK TOMBOL
-  // =========================================================
 
   Widget _choices(
     String label,
@@ -287,10 +277,6 @@ class _KampusAmanPageState extends State<KampusAmanPage> {
     );
   }
 
-  // =========================================================
-  // IDENTITAS PELAPOR
-  // =========================================================
-
   Widget _identityFields() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -317,7 +303,6 @@ class _KampusAmanPageState extends State<KampusAmanPage> {
           },
           requiredField: true,
         ),
-
         if (_identified) ...[
           _text(
             'Nama Lengkap',
@@ -326,14 +311,12 @@ class _KampusAmanPageState extends State<KampusAmanPage> {
             icon: Icons.person_outline_rounded,
             requiredField: true,
           ),
-
           _text(
             'NIM / NIP (Opsional)',
             _identifier,
             'Masukkan jika memiliki NIM / NIP',
             icon: Icons.badge_outlined,
           ),
-
           _text(
             'No. HP (Opsional)',
             _phone,
@@ -354,7 +337,6 @@ class _KampusAmanPageState extends State<KampusAmanPage> {
                   : 'Nomor HP harus terdiri dari 10–15 angka';
             },
           ),
-
           _text(
             'Email (Opsional)',
             _email,
@@ -373,7 +355,6 @@ class _KampusAmanPageState extends State<KampusAmanPage> {
                   : 'Format email tidak valid';
             },
           ),
-
           _choices(
             'Boleh Menghubungi Saya Melalui',
             const {
@@ -388,7 +369,6 @@ class _KampusAmanPageState extends State<KampusAmanPage> {
             columns: 3,
           ),
         ],
-
         if (_identity == 'anonymous')
           const Padding(
             padding: EdgeInsets.only(bottom: 13),
@@ -406,10 +386,6 @@ class _KampusAmanPageState extends State<KampusAmanPage> {
       ],
     );
   }
-
-  // =========================================================
-  // PILIH FILE
-  // =========================================================
 
   Future<void> _pickFile() async {
     if (_busy) {
@@ -536,10 +512,6 @@ class _KampusAmanPageState extends State<KampusAmanPage> {
     );
   }
 
-  // =========================================================
-  // TOMBOL
-  // =========================================================
-
   Widget _buttons() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -577,9 +549,7 @@ class _KampusAmanPageState extends State<KampusAmanPage> {
                   ),
           ),
         ),
-
         const SizedBox(width: 22),
-
         SizedBox(
           width: 72,
           height: 40,
@@ -588,6 +558,7 @@ class _KampusAmanPageState extends State<KampusAmanPage> {
                 ? null
                 : () {
                     FocusScope.of(context).unfocus();
+
                     _clear();
                     _message('Form berhasil dikosongkan.');
                   },
@@ -609,10 +580,6 @@ class _KampusAmanPageState extends State<KampusAmanPage> {
       ],
     );
   }
-
-  // =========================================================
-  // HALAMAN
-  // =========================================================
 
   @override
   Widget build(BuildContext context) {
@@ -668,9 +635,7 @@ class _KampusAmanPageState extends State<KampusAmanPage> {
                       ),
                     ],
                   ),
-
                   const SizedBox(height: 24),
-
                   SizedBox(
                     height: 112,
                     child: Row(
@@ -699,7 +664,7 @@ class _KampusAmanPageState extends State<KampusAmanPage> {
                           child: Image.asset(
                             'assets/images/mhs.png',
                             fit: BoxFit.contain,
-                            errorBuilder: (_, error, stack) {
+                            errorBuilder: (context, error, stackTrace) {
                               return const Icon(
                                 Icons.shield_outlined,
                                 size: 80,
@@ -711,28 +676,7 @@ class _KampusAmanPageState extends State<KampusAmanPage> {
                       ],
                     ),
                   ),
-
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: TextButton(
-                      onPressed: _busy
-                          ? null
-                          : () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute<void>(
-                                  builder: (_) => const KampusAmanStatusPage(),
-                                ),
-                              );
-                            },
-                      child: const Text(
-                        'Cek Status Kampus Aman',
-                        style: TextStyle(fontSize: 10.5),
-                      ),
-                    ),
-                  ),
-
                   const SizedBox(height: 10),
-
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.fromLTRB(10, 12, 10, 16),
@@ -759,11 +703,8 @@ class _KampusAmanPageState extends State<KampusAmanPage> {
                                 color: Color(0xFF24477C),
                               ),
                             ),
-
                             const SizedBox(height: 13),
-
                             _identityFields(),
-
                             _choices(
                               'Posisi Pelapor',
                               const {
@@ -778,9 +719,7 @@ class _KampusAmanPageState extends State<KampusAmanPage> {
                               requiredField: true,
                               columns: 3,
                             ),
-
                             _title('Jenis Kejadian (Opsional)'),
-
                             DropdownButtonFormField<String>(
                               key: ValueKey('type-$_version'),
                               initialValue: _type,
@@ -806,33 +745,31 @@ class _KampusAmanPageState extends State<KampusAmanPage> {
                                 setState(() => _type = value);
                               },
                             ),
-
                             const SizedBox(height: 13),
-
                             _text(
                               'Lokasi Kejadian',
                               _location,
-                              'Nama ruangan, area kampus, atau media daring',
+                              'Nama ruangan, area kampus, '
+                                  'atau media daring',
                               icon: Icons.location_on_outlined,
                               requiredField: true,
                             ),
-
                             _text(
                               'Waktu Kejadian (Opsional)',
                               _time,
-                              'Tanggal pasti atau perkiraan waktu',
+                              'Tanggal pasti atau '
+                                  'perkiraan waktu',
                               icon: Icons.access_time_rounded,
                             ),
-
                             _text(
-                              'Pihak yang Dilaporkan (Opsional)',
+                              'Pihak yang Dilaporkan '
+                                  '(Opsional)',
                               _party,
-                              'Nama atau keterangan pihak terkait, jika diketahui',
+                              'Nama atau keterangan pihak '
+                                  'terkait, jika diketahui',
                               icon: Icons.person_search_outlined,
                             ),
-
                             _title('Laporkan Kejadian'),
-
                             SizedBox(
                               height: 115,
                               child: TextFormField(
@@ -849,40 +786,40 @@ class _KampusAmanPageState extends State<KampusAmanPage> {
                                   LengthLimitingTextInputFormatter(5000),
                                 ],
                                 decoration: _decoration(
-                                  'Ceritakan kejadian sejauh yang Anda nyaman '
-                                  'sampaikan. Jelaskan bantuan yang dibutuhkan '
-                                  'jika ada.',
+                                  'Ceritakan kejadian sejauh '
+                                  'yang Anda nyaman sampaikan. '
+                                  'Jelaskan bantuan yang '
+                                  'dibutuhkan jika ada.',
                                 ),
                                 validator: (value) {
                                   if (value?.trim().isEmpty ?? true) {
-                                    return 'Laporan kejadian wajib diisi';
+                                    return 'Laporan kejadian '
+                                        'wajib diisi';
                                   }
 
                                   return null;
                                 },
                               ),
                             ),
-
                             const SizedBox(height: 13),
-
-                            _title('Upload File Pendukung (Opsional)'),
-
+                            _title(
+                              'Upload File Pendukung '
+                              '(Opsional)',
+                            ),
                             _fileInput(),
-
                             const SizedBox(height: 7),
-
                             const Text(
-                              'File pendukung tidak wajib. Maksimal 5 MB.\n'
-                              'Format: JPG, JPEG, PNG, PDF, DOC, DOCX, XLS, XLSX.',
+                              'File pendukung tidak wajib. '
+                              'Maksimal 5 MB.\n'
+                              'Format: JPG, JPEG, PNG, PDF, '
+                              'DOC, DOCX, XLS, XLSX.',
                               style: TextStyle(
                                 fontSize: 9,
                                 height: 1.4,
                                 color: Color(0xFF666666),
                               ),
                             ),
-
                             const SizedBox(height: 16),
-
                             Container(
                               width: double.infinity,
                               padding: const EdgeInsets.all(12),
@@ -895,9 +832,11 @@ class _KampusAmanPageState extends State<KampusAmanPage> {
                                 ),
                               ),
                               child: const Text(
-                                'Periksa kembali isi laporan dan lampiran '
-                                'sebelum mengirim. Simpan kode tiket dan '
-                                'kunci akses setelah pengajuan berhasil.',
+                                'Periksa kembali isi laporan '
+                                'dan lampiran sebelum mengirim. '
+                                'Simpan kode tiket setelah '
+                                'pengajuan berhasil untuk '
+                                'memeriksa status laporan.',
                                 style: TextStyle(
                                   fontSize: 9.5,
                                   height: 1.4,
@@ -905,9 +844,7 @@ class _KampusAmanPageState extends State<KampusAmanPage> {
                                 ),
                               ),
                             ),
-
                             const SizedBox(height: 25),
-
                             _buttons(),
                           ],
                         ),
@@ -922,10 +859,6 @@ class _KampusAmanPageState extends State<KampusAmanPage> {
       ),
     );
   }
-
-  // =========================================================
-  // KIRIM LAPORAN
-  // =========================================================
 
   Future<void> _submit() async {
     if (_busy) {
@@ -949,21 +882,14 @@ class _KampusAmanPageState extends State<KampusAmanPage> {
       'contact_preference': contact,
       'location': _location.text.trim(),
       'description': _description.text.trim(),
-
       'incident_type': ?_type,
-
       if (_time.text.trim().isNotEmpty) 'incident_time_text': _time.text.trim(),
-
       if (_party.text.trim().isNotEmpty) 'reported_party': _party.text.trim(),
-
       if (identified) ...{
         'full_name': _name.text.trim(),
-
         if (_identifier.text.trim().isNotEmpty)
           'identifier_value': _identifier.text.trim(),
-
         if (_phone.text.trim().isNotEmpty) 'phone': _phone.text.trim(),
-
         if (_email.text.trim().isNotEmpty) 'email': _email.text.trim(),
       },
     };
@@ -974,6 +900,11 @@ class _KampusAmanPageState extends State<KampusAmanPage> {
     bool sent = false;
 
     try {
+      await QueueNotificationService.instance.enableNotifications();
+
+      final fcmToken = await QueueNotificationService.instance
+          .tokenForSubmission();
+
       final request = http.MultipartRequest(
         'POST',
         Uri.parse('$_base/pengaduan/kampus-aman'),
@@ -981,6 +912,13 @@ class _KampusAmanPageState extends State<KampusAmanPage> {
 
       request.headers['Accept'] = 'application/json';
       request.fields.addAll(fields);
+
+      if (fcmToken != null && fcmToken.isNotEmpty) {
+        request.fields.addAll({
+          'fcm_token': fcmToken,
+          'device_platform': 'android',
+        });
+      }
 
       if (file != null) {
         final bytes = await file.readAsBytes();
@@ -1015,6 +953,7 @@ class _KampusAmanPageState extends State<KampusAmanPage> {
 
       if (response.statusCode == 404 || response.statusCode == 405) {
         _message('Layanan Kampus Aman belum tersedia di server.');
+
         return;
       }
 
@@ -1023,6 +962,7 @@ class _KampusAmanPageState extends State<KampusAmanPage> {
           'Hasil pengajuan belum dapat dipastikan. '
           'Jangan langsung mengirim ulang.',
         );
+
         return;
       }
 
@@ -1058,10 +998,10 @@ class _KampusAmanPageState extends State<KampusAmanPage> {
       }
 
       final id = int.tryParse(data['id']?.toString() ?? '') ?? 0;
-      final number = data['request_number']?.toString().trim() ?? '';
-      final key = data['access_key']?.toString().trim() ?? '';
 
-      if (id <= 0 || number.isEmpty || key.isEmpty) {
+      final number = data['request_number']?.toString().trim() ?? '';
+
+      if (id <= 0 || number.isEmpty) {
         throw const FormatException();
       }
 
@@ -1073,14 +1013,34 @@ class _KampusAmanPageState extends State<KampusAmanPage> {
 
       final status = data['status']?.toString() ?? 'menunggu_verifikasi';
 
-      final emailSent = contact == 'email' && data['email_sent'] == true;
+      final emailSent =
+          identified &&
+          (fields['email']?.trim().isNotEmpty ?? false) &&
+          data['email_sent'] == true;
+
+      final deviceKey = data['device_sync_key']?.toString() ?? '';
+
+      if (deviceKey.isNotEmpty) {
+        try {
+          await KampusAmanDeviceSyncService.instance.rememberTicket(
+            id: id,
+            key: deviceKey,
+          );
+        } catch (_) {
+          debugPrint(
+            'KAMPUS AMAN: sinkronisasi perangkat '
+            'belum tersimpan.',
+          );
+        }
+      }
 
       try {
         await QueueNotificationService.instance.showKampusAmanCreated(
           ticketId: id,
+          requestNumber: number,
         );
       } catch (_) {
-        // Notifikasi gagal tidak membatalkan laporan yang sudah tersimpan.
+        // Laporan tetap berhasil meskipun notifikasi gagal.
       }
 
       if (!mounted) {
@@ -1093,10 +1053,11 @@ class _KampusAmanPageState extends State<KampusAmanPage> {
         MaterialPageRoute<void>(
           builder: (_) => KampusAmanSuccessPage(
             requestNumber: number,
-            accessKey: key,
             submittedAt: submittedAt,
             status: status,
             emailSent: emailSent,
+            contactPreference: contact,
+            email: identified ? (fields['email'] ?? '') : '',
           ),
         ),
       );
@@ -1106,8 +1067,8 @@ class _KampusAmanPageState extends State<KampusAmanPage> {
           sent
               ? 'Hasil pengajuan belum dapat dipastikan. '
                     'Jangan langsung mengirim ulang.'
-              : 'File pendukung tidak dapat dibaca. '
-                    'Pilih ulang file tersebut.',
+              : 'Pengajuan belum berhasil disiapkan. '
+                    'Periksa file dan coba kembali.',
         );
       }
     } finally {
@@ -1118,10 +1079,6 @@ class _KampusAmanPageState extends State<KampusAmanPage> {
       }
     }
   }
-
-  // =========================================================
-  // RESET DAN PESAN
-  // =========================================================
 
   void _clear() {
     _formKey.currentState?.reset();

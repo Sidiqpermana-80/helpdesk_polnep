@@ -1,22 +1,31 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:ui' show DartPluginRegistrant;
-
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
 import '../firebase_options.dart';
 import '../pages/cek_status/cek_status_page.dart';
-
+import 'wifi_notification_bridge.dart';
 import 'akademik_device_sync_service.dart';
 import 'akademik_notification_bridge.dart';
 import 'ult_device_sync_service.dart';
 import 'wifi_device_sync_service.dart';
-import 'wifi_notification_bridge.dart';
+import 'website_notification_bridge.dart';
+import 'website_device_sync_service.dart';
+import 'aplikasi_notification_bridge.dart';
+import 'aplikasi_device_sync_service.dart';
+import 'fasilitas_notification_bridge.dart';
+import 'fasilitas_device_sync_service.dart';
+import 'pengaduan_akademik_notification_bridge.dart';
+import 'pengaduan_akademik_device_sync_service.dart';
+import 'pungli_notification_bridge.dart';
+import 'pungli_device_sync_service.dart';
+import 'kampus_aman_notification_bridge.dart';
+import 'kampus_aman_device_sync_service.dart';
 
 // =========================================================
 // JENIS PENGINGAT ULT
@@ -147,6 +156,12 @@ Future<void> _prepareLocalNotifications(
 
   await AkademikNotificationBridge.createChannel(plugin);
   await WifiNotificationBridge.createChannel(plugin);
+  await WebsiteNotificationBridge.createChannel(plugin);
+  await AplikasiNotificationBridge.createChannel(plugin);
+  await FasilitasNotificationBridge.createChannel(plugin);
+  await PengaduanAkademikNotificationBridge.createChannel(plugin);
+  await PungliNotificationBridge.createChannel(plugin);
+  await KampusAmanNotificationBridge.createChannel(plugin);
 }
 
 // =========================================================
@@ -157,6 +172,36 @@ Future<void> _displayMessage(
   RemoteMessage message,
   FlutterLocalNotificationsPlugin plugin,
 ) async {
+  if (KampusAmanNotificationBridge.handles(message.data)) {
+    await KampusAmanNotificationBridge.display(message, plugin);
+    return;
+  }
+
+  if (PungliNotificationBridge.handles(message.data)) {
+    await PungliNotificationBridge.display(message, plugin);
+    return;
+  }
+
+  if (PengaduanAkademikNotificationBridge.handles(message.data)) {
+    await PengaduanAkademikNotificationBridge.display(message, plugin);
+    return;
+  }
+
+  if (FasilitasNotificationBridge.handles(message.data)) {
+    await FasilitasNotificationBridge.display(message, plugin);
+    return;
+  }
+
+  if (AplikasiNotificationBridge.handles(message.data)) {
+    await AplikasiNotificationBridge.display(message, plugin);
+    return;
+  }
+
+  if (WebsiteNotificationBridge.handles(message.data)) {
+    await WebsiteNotificationBridge.display(message, plugin);
+    return;
+  }
+
   if (WifiNotificationBridge.handles(message.data)) {
     await WifiNotificationBridge.display(message, plugin);
     return;
@@ -291,10 +336,6 @@ class QueueNotificationService with WidgetsBindingObserver {
     await _prepareLocalNotifications(
       _local,
       onTap: (NotificationResponse response) {
-        if (response.payload == 'kampus_aman_confirmation') {
-          return;
-        }
-
         _requestOpen(_rememberOpenedPayload(response.payload));
       },
     );
@@ -343,8 +384,7 @@ class QueueNotificationService with WidgetsBindingObserver {
     try {
       final launch = await _local.getNotificationAppLaunchDetails();
 
-      if (launch?.didNotificationLaunchApp == true &&
-          launch?.notificationResponse?.payload != 'kampus_aman_confirmation') {
+      if (launch?.didNotificationLaunchApp == true) {
         _pendingRequestNumber = _rememberOpenedPayload(
           launch?.notificationResponse?.payload,
         );
@@ -487,77 +527,57 @@ class QueueNotificationService with WidgetsBindingObserver {
     required int ticketId,
     required String requestNumber,
     required bool isAccess,
-  }) {
-    if (!supported ||
-        !_initialized ||
-        !_permissionAllowed ||
-        ticketId <= 0 ||
-        requestNumber.trim().isEmpty) {
-      return Future<void>.value();
+  }) async {
+    debugPrint('WIFI_NOTIF: konfirmasi pengajuan dipanggil.');
+
+    if (!supported) {
+      debugPrint('WIFI_NOTIF: platform tidak didukung.');
+      return;
     }
 
-    _foregroundQueue = _foregroundQueue
-        .then<void>((_) async {
-          const channel = AndroidNotificationChannel(
-            'wifi_complaints',
-            'Pengaduan Wi-Fi / Internet',
-            description: 'Konfirmasi pengajuan Wi-Fi / Internet.',
-            importance: Importance.high,
-          );
+    if (!_initialized) {
+      debugPrint('WIFI_NOTIF: layanan notifikasi belum diinisialisasi.');
+      return;
+    }
 
-          await _local
-              .resolvePlatformSpecificImplementation<
-                AndroidFlutterLocalNotificationsPlugin
-              >()
-              ?.createNotificationChannel(channel);
+    final number = requestNumber.trim();
 
-          final tag = 'wifi_${ticketId}_ticket_created';
-          final key = 'shown_$tag';
+    if (ticketId <= 0 || number.isEmpty) {
+      debugPrint('WIFI_NOTIF: ID atau kode tiket tidak valid.');
+      return;
+    }
 
-          if (await _prefs.getBool(key) == true) {
-            return;
-          }
+    try {
+      // Periksa kembali izin, jangan hanya memakai nilai sebelumnya.
+      final allowed = await enableNotifications();
 
-          final number = requestNumber.trim();
+      if (!allowed) {
+        debugPrint(
+          'WIFI_NOTIF: izin notifikasi belum tersedia. '
+          'Periksa pengaturan notifikasi aplikasi dan log FCM.',
+        );
+        return;
+      }
 
-          final service = isAccess ? 'Akses Login/Wi-Fi' : 'Gangguan Jaringan';
+      _foregroundQueue = _foregroundQueue
+          .then<void>((_) async {
+            debugPrint('WIFI_NOTIF: meneruskan konfirmasi ke bridge.');
 
-          final body =
-              'Tiket $number berhasil diajukan. '
-              'Pantau tindak lanjut $service melalui Cek Status.';
+            await WifiNotificationBridge.showCreated(
+              plugin: _local,
+              ticketId: ticketId,
+              requestNumber: number,
+              isAccess: isAccess,
+            );
+          })
+          .catchError((Object error, StackTrace stack) {
+            debugPrint('WIFI_NOTIF: gagal menampilkan: $error');
+          });
 
-          await _local.show(
-            id: 0,
-            title: '$service berhasil diajukan',
-            body: body,
-            notificationDetails: NotificationDetails(
-              android: AndroidNotificationDetails(
-                channel.id,
-                channel.name,
-                channelDescription: channel.description,
-                icon: 'ic_stat_ult',
-                importance: Importance.high,
-                priority: Priority.high,
-                tag: tag,
-                onlyAlertOnce: true,
-                styleInformation: BigTextStyleInformation(body),
-              ),
-            ),
-            payload: jsonEncode({
-              'module': 'wifi_internet',
-              'event': 'ticket_created',
-              'request_id': ticketId.toString(),
-              'request_number': number,
-            }),
-          );
-
-          await _prefs.setBool(key, true);
-        })
-        .catchError((Object error, StackTrace stack) {
-          debugPrint('WIFI confirmation error: ${error.runtimeType}');
-        });
-
-    return _foregroundQueue;
+      await _foregroundQueue;
+    } catch (error) {
+      debugPrint('WIFI_NOTIF: pemeriksaan gagal: $error');
+    }
   }
 
   // =======================================================
@@ -567,78 +587,61 @@ class QueueNotificationService with WidgetsBindingObserver {
   Future<void> showAcademicComplaintCreated({
     required int ticketId,
     required String requestNumber,
-  }) {
-    if (!supported ||
-        !_initialized ||
-        !_permissionAllowed ||
-        ticketId <= 0 ||
-        requestNumber.trim().isEmpty) {
-      return Future<void>.value();
+  }) async {
+    debugPrint(
+      'PENGADUAN_AKADEMIK_NOTIF: '
+      'konfirmasi pengajuan dipanggil.',
+    );
+
+    if (!supported || !_initialized) {
+      debugPrint(
+        'PENGADUAN_AKADEMIK_NOTIF: '
+        'layanan belum siap pada perangkat ini.',
+      );
+      return;
     }
 
-    _foregroundQueue = _foregroundQueue
-        .then<void>((_) async {
-          const channel = AndroidNotificationChannel(
-            'academic_complaints',
-            'Pengaduan Akademik',
-            description: 'Konfirmasi pengajuan pengaduan Akademik.',
-            importance: Importance.high,
-          );
+    final number = requestNumber.trim();
 
-          await _local
-              .resolvePlatformSpecificImplementation<
-                AndroidFlutterLocalNotificationsPlugin
-              >()
-              ?.createNotificationChannel(channel);
+    if (ticketId <= 0 || number.isEmpty) {
+      debugPrint(
+        'PENGADUAN_AKADEMIK_NOTIF: '
+        'ID atau kode tiket tidak valid.',
+      );
+      return;
+    }
 
-          final tag = 'academic_complaint_${ticketId}_created';
-          final key = 'shown_$tag';
+    try {
+      if (!await enableNotifications()) {
+        debugPrint(
+          'PENGADUAN_AKADEMIK_NOTIF: '
+          'izin notifikasi belum tersedia.',
+        );
+        return;
+      }
 
-          if (await _prefs.getBool(key) == true) {
-            return;
-          }
+      _foregroundQueue = _foregroundQueue
+          .then<void>((_) async {
+            await PengaduanAkademikNotificationBridge.showCreated(
+              plugin: _local,
+              ticketId: ticketId,
+              requestNumber: number,
+            );
+          })
+          .catchError((Object error, StackTrace stack) {
+            debugPrint(
+              'PENGADUAN_AKADEMIK_NOTIF: '
+              'gagal menampilkan: $error',
+            );
+          });
 
-          final number = requestNumber.trim();
-
-          final body =
-              'Pengaduan $number berhasil dikirim. '
-              'Pantau verifikasi laporan melalui Cek Status.';
-
-          await _local.show(
-            id: 0,
-            title: 'Pengaduan Akademik berhasil dikirim',
-            body: body,
-            notificationDetails: NotificationDetails(
-              android: AndroidNotificationDetails(
-                channel.id,
-                channel.name,
-                channelDescription: channel.description,
-                icon: 'ic_stat_ult',
-                importance: Importance.high,
-                priority: Priority.high,
-                tag: tag,
-                onlyAlertOnce: true,
-                styleInformation: BigTextStyleInformation(body),
-              ),
-            ),
-            payload: jsonEncode({
-              'module': 'pengaduan_akademik',
-              'event': 'ticket_created',
-              'request_id': ticketId.toString(),
-              'request_number': number,
-            }),
-          );
-
-          await _prefs.setBool(key, true);
-        })
-        .catchError((Object error, StackTrace stack) {
-          debugPrint(
-            'ACADEMIC complaint confirmation error: '
-            '${error.runtimeType}',
-          );
-        });
-
-    return _foregroundQueue;
+      await _foregroundQueue;
+    } catch (error) {
+      debugPrint(
+        'PENGADUAN_AKADEMIK_NOTIF: '
+        'pemeriksaan gagal: $error',
+      );
+    }
   }
 
   // =======================================================
@@ -648,136 +651,206 @@ class QueueNotificationService with WidgetsBindingObserver {
   Future<void> showPungliTicketCreated({
     required int ticketId,
     required String requestNumber,
-  }) {
-    if (!supported ||
-        !_initialized ||
-        !_permissionAllowed ||
-        ticketId <= 0 ||
-        requestNumber.trim().isEmpty) {
-      return Future<void>.value();
+  }) async {
+    debugPrint('PUNGLI_NOTIF: konfirmasi pengajuan dipanggil.');
+
+    if (!supported || !_initialized) {
+      debugPrint('PUNGLI_NOTIF: layanan belum siap pada perangkat ini.');
+      return;
     }
 
-    _foregroundQueue = _foregroundQueue
-        .then<void>((_) async {
-          const channel = AndroidNotificationChannel(
-            'pungli_complaints',
-            'Pengaduan Pungli',
-            description: 'Konfirmasi pengajuan laporan Pungli.',
-            importance: Importance.high,
-          );
+    final number = requestNumber.trim();
 
-          await _local
-              .resolvePlatformSpecificImplementation<
-                AndroidFlutterLocalNotificationsPlugin
-              >()
-              ?.createNotificationChannel(channel);
+    if (ticketId <= 0 || number.isEmpty) {
+      debugPrint('PUNGLI_NOTIF: ID atau kode tiket tidak valid.');
+      return;
+    }
 
-          final tag = 'pungli_${ticketId}_created';
-          final key = 'shown_$tag';
+    try {
+      if (!await enableNotifications()) {
+        debugPrint('PUNGLI_NOTIF: izin notifikasi belum tersedia.');
+        return;
+      }
 
-          if (await _prefs.getBool(key) == true) {
-            return;
-          }
+      _foregroundQueue = _foregroundQueue
+          .then<void>((_) async {
+            await PungliNotificationBridge.showCreated(
+              plugin: _local,
+              ticketId: ticketId,
+              requestNumber: number,
+            );
+          })
+          .catchError((Object error, StackTrace stack) {
+            debugPrint('PUNGLI_NOTIF: gagal menampilkan: $error');
+          });
 
-          final number = requestNumber.trim();
-
-          final body =
-              'Laporan $number berhasil dikirim. '
-              'Pantau verifikasi laporan melalui Cek Status.';
-
-          await _local.show(
-            id: 0,
-            title: 'Laporan Pungli berhasil dikirim',
-            body: body,
-            notificationDetails: NotificationDetails(
-              android: AndroidNotificationDetails(
-                channel.id,
-                channel.name,
-                channelDescription: channel.description,
-                icon: 'ic_stat_ult',
-                importance: Importance.high,
-                priority: Priority.high,
-                tag: tag,
-                onlyAlertOnce: true,
-                styleInformation: BigTextStyleInformation(body),
-              ),
-            ),
-            payload: jsonEncode({
-              'module': 'pengaduan_pungli',
-              'event': 'ticket_created',
-              'request_id': ticketId.toString(),
-              'request_number': number,
-            }),
-          );
-
-          await _prefs.setBool(key, true);
-        })
-        .catchError((Object error, StackTrace stack) {
-          debugPrint('PUNGLI confirmation error: ${error.runtimeType}');
-        });
-
-    return _foregroundQueue;
+      await _foregroundQueue;
+    } catch (error) {
+      debugPrint('PUNGLI_NOTIF: pemeriksaan gagal: $error');
+    }
   }
 
   // =======================================================
   // KONFIRMASI KAMPUS AMAN
   // =======================================================
 
-  Future<void> showKampusAmanCreated({required int ticketId}) {
-    if (!supported || !_initialized || !_permissionAllowed || ticketId <= 0) {
-      return Future<void>.value();
+  Future<void> showKampusAmanCreated({
+    required int ticketId,
+    String requestNumber = '',
+  }) async {
+    if (!supported || !_initialized || ticketId <= 0) {
+      return;
     }
 
-    _foregroundQueue = _foregroundQueue
-        .then<void>((_) async {
-          const channel = AndroidNotificationChannel(
-            'helpdesk_private_confirmations',
-            'Konfirmasi Laporan',
-            description: 'Konfirmasi pengiriman laporan.',
-            importance: Importance.high,
-          );
+    try {
+      if (!await enableNotifications()) {
+        debugPrint('KAMPUS_AMAN_NOTIF: izin notifikasi belum tersedia.');
 
-          await _local
-              .resolvePlatformSpecificImplementation<
-                AndroidFlutterLocalNotificationsPlugin
-              >()
-              ?.createNotificationChannel(channel);
+        return;
+      }
 
-          final tag = 'kampus_aman_${ticketId}_created';
-          final key = 'shown_$tag';
+      _foregroundQueue = _foregroundQueue
+          .then<void>((_) async {
+            await KampusAmanNotificationBridge.showCreated(
+              plugin: _local,
+              ticketId: ticketId,
+              requestNumber: requestNumber,
+            );
+          })
+          .catchError((Object error, StackTrace stack) {
+            debugPrint('KAMPUS_AMAN_NOTIF: gagal (${error.runtimeType}).');
+          });
 
-          if (await _prefs.getBool(key) == true) {
-            return;
-          }
+      await _foregroundQueue;
+    } catch (error) {
+      debugPrint('KAMPUS_AMAN_NOTIF: belum tersedia (${error.runtimeType}).');
+    }
+  }
 
-          await _local.show(
-            id: 0,
-            title: 'Laporan berhasil dikirim',
-            body:
-                'Simpan kode tiket dan kunci akses '
-                'di tempat pribadi.',
-            notificationDetails: NotificationDetails(
-              android: AndroidNotificationDetails(
-                channel.id,
-                channel.name,
-                channelDescription: channel.description,
-                icon: 'ic_stat_ult',
-                importance: Importance.high,
-                priority: Priority.high,
-                tag: tag,
-                onlyAlertOnce: true,
-              ),
-            ),
-            payload: 'kampus_aman_confirmation',
-          );
+  Future<void> showWebsiteTicketCreated({
+    required int ticketId,
+    required String requestNumber,
+  }) async {
+    debugPrint('WEBSITE_NOTIF: konfirmasi pengajuan dipanggil.');
 
-          await _prefs.setBool(key, true);
-        })
-        .catchError((Object error, StackTrace stack) {
-          // Kegagalan konfirmasi tidak membatalkan pengajuan.
-        });
+    if (!supported || !_initialized) {
+      debugPrint('WEBSITE_NOTIF: layanan belum siap pada perangkat ini.');
+      return;
+    }
 
-    return _foregroundQueue;
+    final number = requestNumber.trim();
+
+    if (ticketId <= 0 || number.isEmpty) {
+      debugPrint('WEBSITE_NOTIF: ID atau kode tiket tidak valid.');
+      return;
+    }
+
+    try {
+      if (!await enableNotifications()) {
+        debugPrint('WEBSITE_NOTIF: izin notifikasi belum tersedia.');
+        return;
+      }
+
+      _foregroundQueue = _foregroundQueue
+          .then<void>((_) async {
+            await WebsiteNotificationBridge.showCreated(
+              plugin: _local,
+              ticketId: ticketId,
+              requestNumber: number,
+            );
+          })
+          .catchError((Object error, StackTrace stack) {
+            debugPrint('WEBSITE_NOTIF: gagal menampilkan: $error');
+          });
+
+      await _foregroundQueue;
+    } catch (error) {
+      debugPrint('WEBSITE_NOTIF: pemeriksaan gagal: $error');
+    }
+  }
+
+  Future<void> showAplikasiTicketCreated({
+    required int ticketId,
+    required String requestNumber,
+  }) async {
+    debugPrint('APLIKASI_NOTIF: konfirmasi pengajuan dipanggil.');
+
+    if (!supported || !_initialized) {
+      debugPrint('APLIKASI_NOTIF: layanan belum siap pada perangkat ini.');
+      return;
+    }
+
+    final number = requestNumber.trim();
+
+    if (ticketId <= 0 || number.isEmpty) {
+      debugPrint('APLIKASI_NOTIF: ID atau kode tiket tidak valid.');
+      return;
+    }
+
+    try {
+      if (!await enableNotifications()) {
+        debugPrint('APLIKASI_NOTIF: izin notifikasi belum tersedia.');
+        return;
+      }
+
+      _foregroundQueue = _foregroundQueue
+          .then<void>((_) async {
+            await AplikasiNotificationBridge.showCreated(
+              plugin: _local,
+              ticketId: ticketId,
+              requestNumber: number,
+            );
+          })
+          .catchError((Object error, StackTrace stack) {
+            debugPrint('APLIKASI_NOTIF: gagal menampilkan: $error');
+          });
+
+      await _foregroundQueue;
+    } catch (error) {
+      debugPrint('APLIKASI_NOTIF: pemeriksaan gagal: $error');
+    }
+  }
+
+  Future<void> showFasilitasTicketCreated({
+    required int ticketId,
+    required String requestNumber,
+  }) async {
+    debugPrint('FASILITAS_NOTIF: konfirmasi pengajuan dipanggil.');
+
+    if (!supported || !_initialized) {
+      debugPrint('FASILITAS_NOTIF: layanan belum siap pada perangkat ini.');
+      return;
+    }
+
+    final number = requestNumber.trim();
+
+    if (ticketId <= 0 || number.isEmpty) {
+      debugPrint('FASILITAS_NOTIF: ID atau kode tiket tidak valid.');
+      return;
+    }
+
+    try {
+      if (!await enableNotifications()) {
+        debugPrint('FASILITAS_NOTIF: izin notifikasi belum tersedia.');
+        return;
+      }
+
+      _foregroundQueue = _foregroundQueue
+          .then<void>((_) async {
+            await FasilitasNotificationBridge.showCreated(
+              plugin: _local,
+              ticketId: ticketId,
+              requestNumber: number,
+            );
+          })
+          .catchError((Object error, StackTrace stack) {
+            debugPrint('FASILITAS_NOTIF: gagal menampilkan: $error');
+          });
+
+      await _foregroundQueue;
+    } catch (error) {
+      debugPrint('FASILITAS_NOTIF: pemeriksaan gagal: $error');
+    }
   }
 
   // =======================================================
@@ -901,6 +974,18 @@ class QueueNotificationService with WidgetsBindingObserver {
     unawaited(AkademikDeviceSyncService.instance.syncToken(clean));
 
     unawaited(WifiDeviceSyncService.instance.syncToken(clean));
+
+    unawaited(WebsiteDeviceSyncService.instance.syncToken(clean));
+
+    unawaited(AplikasiDeviceSyncService.instance.syncToken(clean));
+
+    unawaited(FasilitasDeviceSyncService.instance.syncToken(clean));
+
+    unawaited(PengaduanAkademikDeviceSyncService.instance.syncToken(clean));
+
+    unawaited(PungliDeviceSyncService.instance.syncToken(clean));
+
+    unawaited(KampusAmanDeviceSyncService.instance.syncToken(clean));
   }
 
   // =======================================================
@@ -943,6 +1028,18 @@ class QueueNotificationService with WidgetsBindingObserver {
       unawaited(AkademikDeviceSyncService.instance.syncToken(current));
 
       unawaited(WifiDeviceSyncService.instance.syncToken(current));
+
+      unawaited(WebsiteDeviceSyncService.instance.syncToken(current));
+
+      unawaited(AplikasiDeviceSyncService.instance.syncToken(current));
+
+      unawaited(FasilitasDeviceSyncService.instance.syncToken(current));
+
+      unawaited(PengaduanAkademikDeviceSyncService.instance.syncToken(current));
+
+      unawaited(PungliDeviceSyncService.instance.syncToken(current));
+
+      unawaited(KampusAmanDeviceSyncService.instance.syncToken(current));
     }
 
     final refresh = _startTokenRefresh();
@@ -1097,6 +1194,54 @@ class QueueNotificationService with WidgetsBindingObserver {
         return null;
       }
 
+      if (KampusAmanNotificationBridge.handles(decoded)) {
+        unawaited(
+          KampusAmanNotificationBridge.rememberOpened(
+            decoded,
+          ).catchError((Object _) {}),
+        );
+      }
+
+      if (PungliNotificationBridge.handles(decoded)) {
+        unawaited(
+          PungliNotificationBridge.rememberOpened(
+            decoded,
+          ).catchError((Object _) {}),
+        );
+      }
+
+      if (PengaduanAkademikNotificationBridge.handles(decoded)) {
+        unawaited(
+          PengaduanAkademikNotificationBridge.rememberOpened(
+            decoded,
+          ).catchError((Object _) {}),
+        );
+      }
+
+      if (FasilitasNotificationBridge.handles(decoded)) {
+        unawaited(
+          FasilitasNotificationBridge.rememberOpened(
+            decoded,
+          ).catchError((Object _) {}),
+        );
+      }
+
+      if (AplikasiNotificationBridge.handles(decoded)) {
+        unawaited(
+          AplikasiNotificationBridge.rememberOpened(
+            decoded,
+          ).catchError((Object _) {}),
+        );
+      }
+
+      if (WebsiteNotificationBridge.handles(decoded)) {
+        unawaited(
+          WebsiteNotificationBridge.rememberOpened(
+            decoded,
+          ).catchError((Object _) {}),
+        );
+      }
+
       if (WifiNotificationBridge.handles(decoded)) {
         unawaited(
           WifiNotificationBridge.rememberOpened(
@@ -1123,7 +1268,10 @@ class QueueNotificationService with WidgetsBindingObserver {
       if (alert != null) {
         unawaited(
           _prefs.setBool('shown_${alert.key}', true).catchError((Object error) {
-            debugPrint('ULT remember notification error: $error');
+            debugPrint(
+              'ULT remember notification error: '
+              '${error.runtimeType}',
+            );
           }),
         );
       }
@@ -1132,7 +1280,10 @@ class QueueNotificationService with WidgetsBindingObserver {
 
       return number.isEmpty ? null : number;
     } catch (error) {
-      debugPrint('QUEUE notification payload error: $error');
+      debugPrint(
+        'QUEUE notification payload error: '
+        '${error.runtimeType}',
+      );
 
       return null;
     }

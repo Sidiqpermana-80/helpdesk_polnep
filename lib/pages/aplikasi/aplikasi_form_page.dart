@@ -8,6 +8,8 @@ import 'package:http/http.dart' as http;
 
 import '../../config/api_config.dart';
 import 'aplikasi_success_page.dart';
+import '../../services/queue_notification_service.dart';
+import '../../services/aplikasi_device_sync_service.dart';
 
 class AplikasiFormPage extends StatefulWidget {
   const AplikasiFormPage({
@@ -536,7 +538,7 @@ class _AplikasiFormPageState extends State<AplikasiFormPage> {
                                   onPressed: _isSubmitting ? null : _submitForm,
 
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: const Color(0xFF8C99F2),
+                                    backgroundColor: const Color(0xFF5868FF),
 
                                     disabledBackgroundColor: const Color(
                                       0xFFADB5F5,
@@ -845,6 +847,11 @@ class _AplikasiFormPageState extends State<AplikasiFormPage> {
     });
 
     try {
+      await QueueNotificationService.instance.enableNotifications();
+
+      final fcmToken = await QueueNotificationService.instance
+          .tokenForSubmission();
+
       final request = http.MultipartRequest(
         'POST',
         Uri.parse(ApiConfig.createAplikasi),
@@ -861,6 +868,13 @@ class _AplikasiFormPageState extends State<AplikasiFormPage> {
         'issue_type': issueType,
         'description': description,
       });
+
+      if (fcmToken != null && fcmToken.isNotEmpty) {
+        request.fields.addAll({
+          'fcm_token': fcmToken,
+          'device_platform': 'android',
+        });
+      }
 
       if (file != null) {
         request.files.add(
@@ -920,6 +934,40 @@ class _AplikasiFormPageState extends State<AplikasiFormPage> {
       debugPrint('APLIKASI deskripsi terisi: ${description.isNotEmpty}');
 
       debugPrint('APLIKASI email_sent dari server: ${data['email_sent']}');
+
+      if (!mounted) {
+        return;
+      }
+
+      final ticketId = int.tryParse(data['id']?.toString() ?? '') ?? 0;
+
+      if (ticketId > 0) {
+        final syncKey = data['device_sync_key']?.toString() ?? '';
+
+        if (syncKey.isNotEmpty) {
+          try {
+            await AplikasiDeviceSyncService.instance.rememberTicket(
+              id: ticketId,
+              key: syncKey,
+            );
+          } catch (_) {
+            debugPrint('APLIKASI: kunci sinkronisasi belum berhasil disimpan.');
+          }
+        }
+
+        // Ditampilkan setelah API mengonfirmasi pengajuan berhasil.
+        unawaited(
+          QueueNotificationService.instance.showAplikasiTicketCreated(
+            ticketId: ticketId,
+            requestNumber: requestNumber,
+          ),
+        );
+      } else {
+        debugPrint(
+          'APLIKASI_NOTIF: respons pengajuan tidak memuat '
+          'ID tiket yang valid.',
+        );
+      }
 
       if (!mounted) {
         return;

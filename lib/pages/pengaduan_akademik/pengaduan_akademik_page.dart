@@ -10,6 +10,7 @@ import '../../config/api_config.dart';
 import '../../services/queue_notification_service.dart';
 import '../cek_status/cek_status_page.dart';
 import 'pengaduan_akademik_success_page.dart';
+import '../../services/pengaduan_akademik_device_sync_service.dart';
 
 class PengaduanAkademikPage extends StatefulWidget {
   const PengaduanAkademikPage({super.key});
@@ -633,7 +634,7 @@ class _PengaduanAkademikPageState extends State<PengaduanAkademikPage> {
           child: ElevatedButton(
             onPressed: _busy || _loading ? null : _submit,
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF8C99F2),
+              backgroundColor: const Color(0xFF5868FF),
               disabledBackgroundColor: const Color(0xFFADB5F5),
               foregroundColor: Colors.white,
               elevation: 0,
@@ -1020,6 +1021,11 @@ class _PengaduanAkademikPageState extends State<PengaduanAkademikPage> {
     final client = http.Client();
 
     try {
+      await QueueNotificationService.instance.enableNotifications();
+
+      final fcmToken = await QueueNotificationService.instance
+          .tokenForSubmission();
+
       final request = http.MultipartRequest(
         'POST',
         Uri.parse('$_base/pengaduan/akademik'),
@@ -1039,6 +1045,13 @@ class _PengaduanAkademikPageState extends State<PengaduanAkademikPage> {
         if (course.isNotEmpty) 'course_name': course,
         if (lecturer.isNotEmpty) 'lecturer_name': lecturer,
       });
+
+      if (fcmToken != null && fcmToken.isNotEmpty) {
+        request.fields.addAll({
+          'fcm_token': fcmToken,
+          'device_platform': 'android',
+        });
+      }
 
       if (file != null) {
         final bytes = await file.readAsBytes();
@@ -1120,6 +1133,8 @@ class _PengaduanAkademikPageState extends State<PengaduanAkademikPage> {
         throw const FormatException();
       }
 
+      debugPrint('PENGADUAN AKADEMIK EMAIL SENT: ${data['email_sent']}');
+
       final id = int.tryParse(data['id']?.toString() ?? '') ?? 0;
 
       final number = data['request_number']?.toString().trim() ?? '';
@@ -1138,6 +1153,23 @@ class _PengaduanAkademikPageState extends State<PengaduanAkademikPage> {
           )?.toLocal() ??
           DateTime.now();
 
+      final syncKey = data['device_sync_key']?.toString() ?? '';
+
+      if (syncKey.isNotEmpty) {
+        try {
+          await PengaduanAkademikDeviceSyncService.instance.rememberTicket(
+            id: id,
+            key: syncKey,
+          );
+        } catch (_) {
+          debugPrint(
+            'PENGADUAN AKADEMIK: '
+            'kunci sinkronisasi belum berhasil disimpan.',
+          );
+        }
+      }
+
+      // Tetap satu kali pemanggilan konfirmasi pengajuan.
       unawaited(
         QueueNotificationService.instance.showAcademicComplaintCreated(
           ticketId: id,

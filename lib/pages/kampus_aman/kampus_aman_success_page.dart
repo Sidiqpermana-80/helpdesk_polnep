@@ -1,121 +1,396 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:http/http.dart' as http;
 
-import '../../config/api_config.dart';
+import '../cek_status/cek_status_page.dart';
 
-const _statusLabels = <String, String>{
-  'menunggu_verifikasi': 'Menunggu Verifikasi',
-  'diterima': 'Laporan Diterima',
-  'dalam_penanganan': 'Dalam Penanganan',
-  'selesai': 'Penanganan Selesai',
-};
-
-const _background = BoxDecoration(
-  gradient: LinearGradient(
-    begin: Alignment.topCenter,
-    end: Alignment.bottomCenter,
-    colors: [Color(0xFFF0F9FF), Color(0xFFD7EEFF), Color(0xFFB9E1FF)],
-  ),
-);
-
-class KampusAmanSuccessPage extends StatefulWidget {
+class KampusAmanSuccessPage extends StatelessWidget {
   const KampusAmanSuccessPage({
     required this.requestNumber,
-    required this.accessKey,
     required this.submittedAt,
     this.status = 'menunggu_verifikasi',
     this.emailSent = false,
+    this.contactPreference = 'none',
+    this.email = '',
     super.key,
   });
 
   final String requestNumber;
-  final String accessKey;
-  final String status;
   final DateTime submittedAt;
+  final String status;
   final bool emailSent;
+  final String contactPreference;
+  final String email;
 
-  @override
-  State<KampusAmanSuccessPage> createState() => _KampusAmanSuccessPageState();
-}
+  static const _green = Color(0xFF2EAA42);
+  static const _blue = Color(0xFF315D9D);
+  static const _infoBackground = Color(0xFFF0F7FF);
+  static const _infoBorder = Color(0xFF9D8EE7);
 
-class _KampusAmanSuccessPageState extends State<KampusAmanSuccessPage> {
-  bool _showKey = false;
+  BoxDecoration get _infoDecoration => BoxDecoration(
+    color: _infoBackground,
+    borderRadius: BorderRadius.circular(6),
+    border: Border.all(color: _infoBorder, width: 0.7),
+  );
 
-  Future<void> _copy() async {
+  String get _dateLabel {
+    const months = [
+      'Januari',
+      'Februari',
+      'Maret',
+      'April',
+      'Mei',
+      'Juni',
+      'Juli',
+      'Agustus',
+      'September',
+      'Oktober',
+      'November',
+      'Desember',
+    ];
+
+    final date = submittedAt.toLocal();
+
+    return '${date.day} ${months[date.month - 1]} ${date.year}';
+  }
+
+  String get _timeLabel {
+    final date = submittedAt.toLocal();
+
+    return '${date.hour.toString().padLeft(2, '0')}:'
+        '${date.minute.toString().padLeft(2, '0')}';
+  }
+
+  String get _statusLabel {
+    const labels = {
+      'menunggu_verifikasi': 'Menunggu Verifikasi',
+      'diterima': 'Laporan Diterima',
+      'dalam_penanganan': 'Dalam Penanganan',
+      'selesai': 'Penanganan Selesai',
+      'ditolak': 'Ditolak',
+    };
+
+    return labels[status] ?? status;
+  }
+
+  String get _contactLabel {
+    const labels = {
+      'none': 'Tidak Dihubungi',
+      'phone': 'No. HP',
+      'email': 'Email',
+    };
+
+    return labels[contactPreference] ?? '-';
+  }
+
+  Future<void> _copyTicket(BuildContext context) async {
     try {
-      await Clipboard.setData(
-        ClipboardData(
-          text:
-              'Kode tiket: ${widget.requestNumber}\n'
-              'Kunci akses: ${widget.accessKey}',
-        ),
-      );
+      await Clipboard.setData(ClipboardData(text: requestNumber));
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
+      if (!context.mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
           const SnackBar(
-            content: Text(
-              'Kode tiket dan kunci akses disalin. '
-              'Simpan di tempat pribadi.',
-            ),
+            content: Text('Kode tiket berhasil disalin.'),
+            behavior: SnackBarBehavior.floating,
           ),
         );
-      }
     } catch (_) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Belum berhasil menyalin data akses.')),
-        );
+      if (!context.mounted) {
+        return;
       }
+
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          const SnackBar(
+            content: Text('Kode tiket belum berhasil disalin.'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
     }
   }
 
-  Widget _detail(String label, String value, IconData icon) {
-    return Container(
-      width: double.infinity,
-      constraints: const BoxConstraints(minHeight: 60),
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: const Color(0xFFE5E5E5),
-        borderRadius: BorderRadius.circular(9),
-        border: Border.all(color: const Color(0xFF969696), width: 0.7),
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFF0F9FF),
+      body: SafeArea(
+        child: Container(
+          width: double.infinity,
+          height: double.infinity,
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [Color(0xFFF0F9FF), Color(0xFFD7EEFF), Color(0xFFB9E1FF)],
+              stops: [0, 0.48, 1],
+            ),
+          ),
+          child: SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            padding: const EdgeInsets.fromLTRB(14, 13, 14, 18),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    IconButton(
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      tooltip: 'Kembali',
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      },
+                      icon: const Icon(
+                        Icons.arrow_back_ios_new_rounded,
+                        size: 21,
+                        color: Color(0xFF111111),
+                      ),
+                    ),
+                    const SizedBox(width: 11),
+                    const Text(
+                      'Pengajuan Berhasil',
+                      style: TextStyle(
+                        color: Color(0xFF111111),
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                const Text(
+                  'Kampus Aman',
+                  style: TextStyle(
+                    color: Color(0xFF202020),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                const Text(
+                  'Home / Pengaduan / Kampus Aman',
+                  style: TextStyle(
+                    color: Color(0xFF168DE2),
+                    fontSize: 9,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.fromLTRB(8, 15, 8, 10),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: const Color(0xFFDCEAF4),
+                      width: 0.6,
+                    ),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Color(0x10000000),
+                        blurRadius: 4,
+                        offset: Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    children: [
+                      Container(
+                        width: 96,
+                        height: 96,
+                        decoration: BoxDecoration(
+                          color: _infoBackground,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: _green, width: 3),
+                        ),
+                        child: const Icon(
+                          Icons.check_rounded,
+                          color: _green,
+                          size: 58,
+                        ),
+                      ),
+                      const SizedBox(height: 11),
+                      const Text(
+                        'Pengajuan Berhasil Dikirim',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Color(0xFF202020),
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(height: 5),
+                      const Text(
+                        'Laporan Kampus Aman Anda berhasil dikirim.\n'
+                        'Laporan akan diverifikasi oleh petugas.\n'
+                        'Simpan kode tiket untuk memantau statusnya.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Color(0xFF222222),
+                          fontSize: 8.2,
+                          height: 1.25,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _smallCard(
+                              icon: Icons.calendar_month_rounded,
+                              label: 'Tanggal Pengajuan:',
+                              value: Text(
+                                _dateLabel,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  color: _blue,
+                                  fontSize: 7.5,
+                                  height: 1.1,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: _smallCard(
+                              icon: Icons.confirmation_number_rounded,
+                              label: 'Kode Tiket:',
+                              value: Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      requestNumber,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        color: _blue,
+                                        fontSize: 8,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ),
+                                  SizedBox(
+                                    width: 24,
+                                    height: 24,
+                                    child: IconButton(
+                                      padding: EdgeInsets.zero,
+                                      constraints: const BoxConstraints(),
+                                      tooltip: 'Salin kode tiket',
+                                      onPressed: () {
+                                        _copyTicket(context);
+                                      },
+                                      icon: const Icon(
+                                        Icons.copy_rounded,
+                                        size: 14,
+                                        color: _blue,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      _summary(),
+                      const SizedBox(height: 8),
+                      _information(
+                        'Simpan kode tiket untuk memantau '
+                        'perkembangan laporan melalui Cek Status.',
+                      ),
+                      if (email.trim().isNotEmpty) ...[
+                        const SizedBox(height: 7),
+                        _emailCard(),
+                      ],
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 18),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Flexible(
+                      child: _button(
+                        'Cek Status',
+                        125,
+                        const Color(0xFF5868FF),
+                        () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute<void>(
+                              builder: (_) =>
+                                  CekStatusPage(initialKeyword: requestNumber),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Flexible(
+                      child: _button(
+                        'Kembali ke Beranda',
+                        137,
+                        const Color(0xFF59C467),
+                        () {
+                          Navigator.of(
+                            context,
+                          ).popUntil((route) => route.isFirst);
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Center(
+                  child: TextButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                    child: const Text(
+                      'Buat Laporan Lagi',
+                      style: TextStyle(fontSize: 9),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
+    );
+  }
+
+  Widget _smallCard({
+    required IconData icon,
+    required String label,
+    required Widget value,
+  }) {
+    return Container(
+      height: 48,
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      decoration: _infoDecoration,
       child: Row(
         children: [
-          Container(
-            width: 40,
-            height: 40,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: const Color(0xFFD6EBF8),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(icon, color: const Color(0xFF1762B0)),
-          ),
-          const SizedBox(width: 10),
+          Icon(icon, color: _blue, size: 23),
+          const SizedBox(width: 7),
           Expanded(
             child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   label,
-                  style: const TextStyle(
-                    fontSize: 10.5,
-                    color: Color(0xFF1762B0),
-                  ),
+                  style: const TextStyle(color: Color(0xFF333333), fontSize: 7),
                 ),
-                const SizedBox(height: 3),
-                SelectableText(
-                  value,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: Color(0xFF202020),
-                  ),
-                ),
+                const SizedBox(height: 2),
+                value,
               ],
             ),
           ),
@@ -124,222 +399,194 @@ class _KampusAmanSuccessPageState extends State<KampusAmanSuccessPage> {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final date = widget.submittedAt;
+  Widget _summary() {
+    final rows = <Widget>[
+      _summaryRow(Icons.shield_outlined, 'Jenis Layanan', 'Kampus Aman'),
+      _summaryRow(Icons.fact_check_outlined, 'Status Pengajuan', _statusLabel),
+      _summaryRow(Icons.contact_mail_outlined, 'Pilihan Kontak', _contactLabel),
+      _summaryRow(Icons.schedule_rounded, 'Jam Pengajuan', _timeLabel),
+    ];
 
-    final dateLabel =
-        '${date.day.toString().padLeft(2, '0')}-'
-        '${date.month.toString().padLeft(2, '0')}-'
-        '${date.year} '
-        '${date.hour.toString().padLeft(2, '0')}:'
-        '${date.minute.toString().padLeft(2, '0')}';
-
-    return Scaffold(
-      backgroundColor: const Color(0xFFF0F9FF),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFFF0F9FF),
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        surfaceTintColor: Colors.transparent,
-        title: const Text('Kampus Aman', style: TextStyle(fontSize: 16)),
-        leading: IconButton(
-          tooltip: 'Kembali',
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
-          onPressed: () {
-            Navigator.of(context).pop();
-          },
-        ),
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(11, 11, 11, 13),
+      decoration: BoxDecoration(
+        color: const Color(0xFFD8D8D8),
+        borderRadius: BorderRadius.circular(5),
+        border: Border.all(color: const Color(0xFF9A9A9A), width: 0.7),
       ),
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: _background,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(12, 12, 12, 28),
-          child: Column(
+      child: Column(
+        children: [
+          const Row(
             children: [
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(10),
+              Icon(Icons.description_outlined, color: _blue, size: 23),
+              SizedBox(width: 7),
+              Text(
+                'Ringkasan Pengajuan',
+                style: TextStyle(
+                  color: _blue,
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w700,
                 ),
-                child: Column(
-                  children: [
-                    const Icon(
-                      Icons.verified_rounded,
-                      color: Color(0xFF00D51D),
-                      size: 82,
-                    ),
-
-                    const SizedBox(height: 8),
-
-                    const Text(
-                      'Laporan Berhasil Dikirim',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-
-                    const SizedBox(height: 7),
-
-                    const Text(
-                      'Simpan kode tiket dan kunci akses '
-                      'untuk memeriksa status laporan.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 10.5, height: 1.4),
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    _detail(
-                      'Kode Tiket',
-                      widget.requestNumber,
-                      Icons.confirmation_number_outlined,
-                    ),
-
-                    _detail(
-                      'Status',
-                      _statusLabels[widget.status] ?? 'Status Belum Tersedia',
-                      Icons.hourglass_empty_rounded,
-                    ),
-
-                    _detail(
-                      'Tanggal Pengajuan',
-                      dateLabel,
-                      Icons.calendar_month_outlined,
-                    ),
-
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF0F7FF),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color: const Color(0xFF9D8EE7),
-                          width: 0.6,
-                        ),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              const Expanded(
-                                child: Text(
-                                  'Kunci Akses Pribadi',
-                                  style: TextStyle(
-                                    fontSize: 10.5,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ),
-                              IconButton(
-                                tooltip: _showKey
-                                    ? 'Sembunyikan kunci'
-                                    : 'Tampilkan kunci',
-                                onPressed: () {
-                                  setState(() {
-                                    _showKey = !_showKey;
-                                  });
-                                },
-                                icon: Icon(
-                                  _showKey
-                                      ? Icons.visibility_off_outlined
-                                      : Icons.visibility_outlined,
-                                  size: 20,
-                                ),
-                              ),
-                            ],
-                          ),
-
-                          SelectableText(
-                            _showKey ? widget.accessKey : '••••••••••••••••',
-                            style: const TextStyle(fontSize: 14),
-                          ),
-
-                          const SizedBox(height: 8),
-
-                          const Text(
-                            'Jangan bagikan kunci ini. Siapa pun yang '
-                            'memilikinya bersama kode tiket dapat '
-                            'memeriksa status laporan.',
-                            style: TextStyle(fontSize: 9.5, height: 1.4),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    const SizedBox(height: 8),
-
-                    TextButton.icon(
-                      onPressed: _copy,
-                      icon: const Icon(Icons.copy_rounded, size: 17),
-                      label: const Text(
-                        'Salin Kode Tiket dan Kunci Akses',
-                        style: TextStyle(fontSize: 10.5),
-                      ),
-                    ),
-
-                    if (widget.emailSent)
-                      const Text(
-                        'Server mengonfirmasi pengiriman email '
-                        'ke alamat yang Anda izinkan.',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(fontSize: 9.5, height: 1.4),
-                      ),
-
-                    TextButton(
-                      onPressed: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute<void>(
-                            builder: (_) => KampusAmanStatusPage(
-                              requestNumber: widget.requestNumber,
-                              accessKey: widget.accessKey,
-                            ),
-                          ),
-                        );
-                      },
-                      child: const Text(
-                        'Cek Status Kampus Aman',
-                        style: TextStyle(fontSize: 10.5),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 25),
-
-              Wrap(
-                spacing: 16,
-                runSpacing: 12,
-                alignment: WrapAlignment.center,
-                children: [
-                  _button('Kembali ke Beranda', const Color(0xFF8C99F2), () {
-                    Navigator.of(context).popUntil((route) => route.isFirst);
-                  }),
-                  _button('Buat Laporan Lagi', const Color(0xFF59C467), () {
-                    Navigator.of(context).pop();
-                  }),
-                ],
               ),
             ],
           ),
-        ),
+          const SizedBox(height: 14),
+          for (int i = 0; i < rows.length; i++) ...[
+            rows[i],
+            if (i < rows.length - 1) const SizedBox(height: 15),
+          ],
+        ],
       ),
     );
   }
 
-  Widget _button(String text, Color color, VoidCallback onPressed) {
+  Widget _summaryRow(IconData icon, String label, String value) {
+    return Row(
+      children: [
+        SizedBox(
+          width: 22,
+          child: Icon(icon, size: 16, color: const Color(0xFF2884F2)),
+        ),
+        const SizedBox(width: 7),
+        SizedBox(
+          width: 76,
+          child: Text(
+            label,
+            style: const TextStyle(color: Color(0xFF303030), fontSize: 8.3),
+          ),
+        ),
+        const SizedBox(width: 5),
+        Expanded(
+          child: Text(
+            value.trim().isEmpty ? '-' : value,
+            textAlign: TextAlign.right,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: Color(0xFF202020),
+              fontSize: 8.3,
+              height: 1.2,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _information(String text) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 9),
+      decoration: _infoDecoration,
+      child: Row(
+        children: [
+          const CircleAvatar(
+            radius: 13,
+            backgroundColor: Color(0xFF075DBD),
+            child: Icon(
+              Icons.priority_high_rounded,
+              color: Colors.white,
+              size: 18,
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              text,
+              style: const TextStyle(
+                color: Color(0xFF222222),
+                fontSize: 8,
+                height: 1.25,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _emailCard() {
+    final address = email.trim().isEmpty ? 'alamat email yang Anda isi' : email;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
+      decoration: _infoDecoration,
+      child: Row(
+        children: [
+          const CircleAvatar(
+            radius: 14,
+            backgroundColor: Color(0xFF2389EC),
+            child: Icon(Icons.email_outlined, color: Colors.white, size: 18),
+          ),
+          const SizedBox(width: 9),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  emailSent ? 'Notifikasi Terkirim' : 'Notifikasi Email',
+                  style: const TextStyle(
+                    color: Color(0xFF222222),
+                    fontSize: 9,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  emailSent
+                      ? 'Informasi pengajuan telah dikirim ke\n'
+                            '$address'
+                      : 'Konfirmasi pengiriman email '
+                            'belum tersedia.\n$address',
+                  style: const TextStyle(
+                    color: Color(0xFF555555),
+                    fontSize: 7.5,
+                    height: 1.25,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 5),
+          Container(
+            width: 20,
+            height: 20,
+            decoration: BoxDecoration(
+              color: emailSent
+                  ? const Color(0xFFE9F8EA)
+                  : const Color(0xFFFFF4DB),
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: emailSent
+                    ? const Color(0xFF39B54A)
+                    : const Color(0xFFFFB52D),
+                width: 1.3,
+              ),
+            ),
+            child: Icon(
+              emailSent ? Icons.check_rounded : Icons.priority_high_rounded,
+              size: 14,
+              color: emailSent
+                  ? const Color(0xFF39B54A)
+                  : const Color(0xFFFFA000),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _button(
+    String label,
+    double width,
+    Color color,
+    VoidCallback onPressed,
+  ) {
     return SizedBox(
-      width: 125,
-      height: 40,
+      width: width,
+      height: 38,
       child: ElevatedButton(
         onPressed: onPressed,
         style: ElevatedButton.styleFrom(
@@ -349,260 +596,11 @@ class _KampusAmanSuccessPageState extends State<KampusAmanSuccessPage> {
           padding: EdgeInsets.zero,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
         ),
-        child: Text(text, style: const TextStyle(fontSize: 9.5)),
-      ),
-    );
-  }
-}
-
-// =========================================================
-// CEK STATUS PRIBADI KAMPUS AMAN
-// =========================================================
-
-class KampusAmanStatusPage extends StatefulWidget {
-  const KampusAmanStatusPage({
-    this.requestNumber = '',
-    this.accessKey = '',
-    super.key,
-  });
-
-  final String requestNumber;
-  final String accessKey;
-
-  @override
-  State<KampusAmanStatusPage> createState() => _KampusAmanStatusPageState();
-}
-
-class _KampusAmanStatusPageState extends State<KampusAmanStatusPage> {
-  final _formKey = GlobalKey<FormState>();
-
-  late final TextEditingController _number;
-  late final TextEditingController _key;
-
-  bool _loading = false;
-
-  String? _status;
-  String? _message;
-
-  @override
-  void initState() {
-    super.initState();
-
-    _number = TextEditingController(text: widget.requestNumber);
-
-    _key = TextEditingController(text: widget.accessKey);
-  }
-
-  @override
-  void dispose() {
-    _number.dispose();
-    _key.dispose();
-
-    super.dispose();
-  }
-
-  Future<void> _check() async {
-    if (_loading || !(_formKey.currentState?.validate() ?? false)) {
-      return;
-    }
-
-    FocusScope.of(context).unfocus();
-
-    setState(() {
-      _loading = true;
-      _status = null;
-      _message = null;
-    });
-
-    try {
-      final base = ApiConfig.baseUrl.replaceAll(RegExp(r'/+$'), '');
-
-      final response = await http
-          .post(
-            Uri.parse('$base/pengaduan/kampus-aman/status'),
-            headers: {'Accept': 'application/json'},
-            body: {
-              'request_number': _number.text.trim(),
-              'access_key': _key.text.trim(),
-            },
-          )
-          .timeout(const Duration(seconds: 20));
-
-      if (!mounted) {
-        return;
-      }
-
-      if (response.statusCode == 404 || response.statusCode == 405) {
-        setState(() {
-          _message = 'Layanan belum tersedia atau data akses tidak cocok.';
-        });
-
-        return;
-      }
-
-      final data = jsonDecode(response.body);
-
-      if (response.statusCode != 200 ||
-          data is! Map ||
-          data['success'] != true) {
-        setState(() {
-          _message =
-              'Status belum dapat ditampilkan. '
-              'Periksa kode tiket dan kunci akses.';
-        });
-
-        return;
-      }
-
-      final detail = data['data'];
-
-      if (detail is! Map || !_statusLabels.containsKey(detail['status'])) {
-        throw const FormatException();
-      }
-
-      setState(() {
-        _status = _statusLabels[detail['status']];
-      });
-    } catch (_) {
-      if (mounted) {
-        setState(() {
-          _message = 'Status belum dapat dimuat. Coba kembali nanti.';
-        });
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _loading = false);
-      }
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF0F9FF),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFFF0F9FF),
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        surfaceTintColor: Colors.transparent,
-        title: const Text('Status Kampus Aman', style: TextStyle(fontSize: 16)),
-      ),
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: _background,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Masukkan kode tiket dan kunci akses pribadi.',
-                  style: TextStyle(fontSize: 10.5, height: 1.4),
-                ),
-
-                const SizedBox(height: 16),
-
-                _input('Kode Tiket', _number),
-
-                const SizedBox(height: 13),
-
-                _input('Kunci Akses', _key, secret: true),
-
-                const SizedBox(height: 18),
-
-                Center(
-                  child: SizedBox(
-                    width: 125,
-                    height: 40,
-                    child: ElevatedButton(
-                      onPressed: _loading ? null : _check,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF8C99F2),
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(5),
-                        ),
-                      ),
-                      child: Text(
-                        _loading ? 'Memeriksa...' : 'Cek Status',
-                        style: const TextStyle(fontSize: 9.5),
-                      ),
-                    ),
-                  ),
-                ),
-
-                if (_status != null) ...[
-                  const SizedBox(height: 20),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(9),
-                    ),
-                    child: Text(
-                      'Status: $_status',
-                      style: const TextStyle(fontSize: 16),
-                    ),
-                  ),
-                ],
-
-                if (_message != null) ...[
-                  const SizedBox(height: 16),
-                  Text(
-                    _message!,
-                    style: const TextStyle(fontSize: 11, height: 1.4),
-                  ),
-                ],
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _input(
-    String label,
-    TextEditingController controller, {
-    bool secret = false,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
+        child: Text(
           label,
-          style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w500),
+          style: const TextStyle(fontSize: 8.5, fontWeight: FontWeight.w400),
         ),
-        const SizedBox(height: 5),
-        TextFormField(
-          controller: controller,
-          enabled: !_loading,
-          obscureText: secret,
-          autocorrect: false,
-          enableSuggestions: false,
-          style: const TextStyle(fontSize: 16),
-          decoration: InputDecoration(
-            filled: true,
-            fillColor: const Color(0xFFF5F6FA),
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 10,
-              vertical: 11,
-            ),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(5)),
-          ),
-          validator: (value) {
-            if (value?.trim().isEmpty ?? true) {
-              return '$label wajib diisi';
-            }
-
-            return null;
-          },
-        ),
-      ],
+      ),
     );
   }
 }

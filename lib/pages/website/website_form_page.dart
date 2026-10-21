@@ -9,6 +9,9 @@ import 'package:http/http.dart' as http;
 import '../../config/api_config.dart';
 import 'website_success_page.dart';
 
+import '../../services/queue_notification_service.dart';
+import '../../services/website_device_sync_service.dart';
+
 class WebsiteFormPage extends StatefulWidget {
   const WebsiteFormPage({required this.websiteName, super.key});
 
@@ -599,7 +602,7 @@ class _WebsiteFormPageState extends State<WebsiteFormPage> {
                                 child: ElevatedButton(
                                   onPressed: _isSubmitting ? null : _submit,
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: const Color(0xFF8C99F2),
+                                    backgroundColor: const Color(0xFF5868FF),
                                     disabledBackgroundColor: const Color(
                                       0xFFADB5F5,
                                     ),
@@ -812,65 +815,83 @@ class _WebsiteFormPageState extends State<WebsiteFormPage> {
   // =========================================================
 
   Future<void> _submit() async {
-    FocusScope.of(context).unfocus();
-
-    final bool valid = _formKey.currentState?.validate() ?? false;
-
-    if (!valid) {
+    if (_isSubmitting) {
       return;
     }
 
-    final String issue = _apiIssueType();
+    FocusScope.of(context).unfocus();
+
+    if (!(_formKey.currentState?.validate() ?? false)) {
+      return;
+    }
+
+    final issue = _apiIssueType();
 
     if (issue.isEmpty) {
       _message('Jenis kendala tidak valid.');
       return;
     }
 
-    if (_isSubmitting) {
-      return;
-    }
+    // Simpan nilai sebelum proses asynchronous.
+    final fullName = _nameController.text.trim();
+    final identifier = _identifierController.text.trim();
+    final email = _emailController.text.trim().toLowerCase();
+    final description = _descriptionController.text.trim();
+    final websiteName = widget.websiteName;
+    final supportFile = _supportFile;
+    final issueLabel = _selectedIssue?.trim() ?? '';
+    final supportFileName = _supportFile?.name ?? '';
 
     setState(() {
       _isSubmitting = true;
     });
 
-    final String fullName = _nameController.text.trim();
-    final String identifier = _identifierController.text.trim();
-
     try {
-      final http.MultipartRequest request = http.MultipartRequest(
+      await QueueNotificationService.instance.enableNotifications();
+
+      final fcmToken = await QueueNotificationService.instance
+          .tokenForSubmission();
+
+      final request = http.MultipartRequest(
         'POST',
         Uri.parse(ApiConfig.createWebsite),
       );
 
+      request.headers['Accept'] = 'application/json';
+
       request.fields.addAll({
         'full_name': fullName,
         'identifier_value': identifier,
-        'email': _emailController.text.trim(),
-        'website_name': widget.websiteName,
+        'email': email,
+        'website_name': websiteName,
         'issue_type': issue,
-        'description': _descriptionController.text.trim(),
+        'description': description,
+
+        if (fcmToken != null && fcmToken.isNotEmpty) ...{
+          'fcm_token': fcmToken,
+          'device_platform': 'android',
+        },
       });
 
-      if (_supportFile != null) {
+      if (supportFile != null) {
         request.files.add(
           http.MultipartFile.fromBytes(
             'support_file',
-            await _supportFile!.readAsBytes(),
-            filename: _supportFile!.name,
+            await supportFile.readAsBytes(),
+            filename: supportFile.name,
           ),
         );
       }
 
-      final http.StreamedResponse streamed = await request.send().timeout(
+      final streamed = await request.send().timeout(
         const Duration(seconds: 30),
       );
 
-      final http.Response response = await http.Response.fromStream(streamed);
+      final response = await http.Response.fromStream(
+        streamed,
+      ).timeout(const Duration(seconds: 30));
 
       debugPrint('WEBSITE STATUS: ${response.statusCode}');
-      debugPrint('WEBSITE RESPONSE: ${response.body}');
 
       final dynamic decoded = jsonDecode(response.body);
 
@@ -878,76 +899,122 @@ class _WebsiteFormPageState extends State<WebsiteFormPage> {
         throw const FormatException();
       }
 
-      final dynamic rawData = decoded['data'];
+      final successfulStatus =
+          response.statusCode == 200 || response.statusCode == 201;
 
-      if ((response.statusCode == 200 || response.statusCode == 201) &&
-          decoded['success'] == true &&
-          rawData is Map<String, dynamic>) {
-        final String ticket = rawData['request_number']?.toString() ?? '';
-
-        if (ticket.isEmpty) {
-          throw const FormatException();
-        }
-
-        DateTime submittedAt = DateTime.now();
-
-        final String? serverDate = rawData['submitted_at']?.toString();
-
-        if (serverDate != null) {
-          submittedAt = DateTime.tryParse(serverDate) ?? submittedAt;
-        }
-
+      if (!successfulStatus || decoded['success'] != true) {
         if (!mounted) {
           return;
         }
 
-        _clear();
+        if (response.statusCode >= 500) {
+          _message(
+            'Hasil pengajuan belum dapat dipastikan. '
+            'Cek Status dengan email $email sebelum mengirim ulang.',
+          );
+          return;
+        }
 
-        Navigator.of(context).push(
-          MaterialPageRoute<void>(
-            builder: (BuildContext context) {
-              return WebsiteSuccessPage(
-                requestNumber: ticket,
-                fullName: fullName,
-                identifierValue: identifier,
-                websiteName: widget.websiteName,
-                issueType: issue,
-                submittedAt: submittedAt,
-              );
-            },
-          ),
-        );
+        var message =
+            decoded['message']?.toString() ??
+            'Pengajuan Website gagal dikirim.';
 
+        final errors = decoded['errors'];
+
+        if (errors is Map && errors.isNotEmpty) {
+          final first = errors.values.first;
+
+          if (first is List && first.isNotEmpty) {
+            message = first.first.toString();
+          }
+        }
+
+        _message(message);
         return;
       }
 
-      if (!mounted) {
-        return;
+      final rawData = decoded['data'];
+
+      if (rawData is! Map<String, dynamic>) {
+        throw const FormatException();
       }
 
-      _message(
-        decoded['message']?.toString() ?? 'Pengajuan Website gagal dikirim.',
+      final id = int.tryParse(rawData['id']?.toString() ?? '') ?? 0;
+
+      final ticket = rawData['request_number']?.toString().trim() ?? '';
+
+      if (id <= 0 || ticket.isEmpty) {
+        throw const FormatException();
+      }
+
+      final submittedAt =
+          DateTime.tryParse(
+            rawData['submitted_at']?.toString() ?? '',
+          )?.toLocal() ??
+          DateTime.now();
+
+      // Digunakan setelah Laravel menyediakan kunci sinkronisasi.
+      final syncKey = rawData['device_sync_key']?.toString() ?? '';
+
+      if (syncKey.isNotEmpty) {
+        try {
+          await WebsiteDeviceSyncService.instance.rememberTicket(
+            id: id,
+            key: syncKey,
+          );
+        } catch (_) {
+          debugPrint('WEBSITE: kunci sinkronisasi belum berhasil disimpan.');
+        }
+      }
+
+      // Konfirmasi lokal setelah pengajuan benar-benar berhasil.
+      unawaited(
+        QueueNotificationService.instance.showWebsiteTicketCreated(
+          ticketId: id,
+          requestNumber: ticket,
+        ),
       );
-    } on TimeoutException {
-      if (!mounted) {
-        return;
-      }
-
-      _message('Server tidak merespon. Periksa koneksi jaringan.');
-    } on FormatException {
-      if (!mounted) {
-        return;
-      }
-
-      _message('Response dari server tidak valid.');
-    } catch (e) {
-      debugPrint('WEBSITE ERROR: $e');
 
       if (!mounted) {
         return;
       }
 
-      _message('Tidak dapat terhubung ke server.');
+      _clear();
+
+      await Navigator.of(context).push<void>(
+        MaterialPageRoute<void>(
+          builder: (_) => WebsiteSuccessPage(
+            requestNumber: ticket,
+            fullName: fullName,
+            identifierValue: identifier,
+            websiteName: websiteName,
+
+            issueType: issue,
+            issueLabel: issueLabel,
+
+            submittedAt: submittedAt,
+
+            email: email,
+            description: description,
+            supportFileName: supportFileName,
+
+            status: rawData['status']?.toString() ?? 'menunggu_verifikasi',
+
+            estimatedResponse: rawData['estimated_response']?.toString() ?? '',
+
+            emailSent: rawData['email_sent'] == true,
+          ),
+        ),
+      );
+    } catch (error) {
+      debugPrint('WEBSITE SUBMIT ERROR: ${error.runtimeType}');
+
+      if (mounted) {
+        _message(
+          'Hasil pengajuan belum dapat dipastikan. '
+          'Cek Status dengan email $email sebelum mengirim ulang.',
+        );
+      }
     } finally {
       if (mounted) {
         setState(() {

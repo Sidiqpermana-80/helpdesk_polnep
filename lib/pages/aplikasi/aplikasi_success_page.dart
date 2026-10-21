@@ -5,20 +5,20 @@ import '../cek_status/cek_status_page.dart';
 
 class AplikasiSuccessPage extends StatelessWidget {
   const AplikasiSuccessPage({
-  required this.requestNumber,
-  required this.fullName,
-  required this.identifierValue,
-  required this.applicationName,
-  required this.issueType,
-  required this.submittedAt,
-  required this.email,
-  required this.description,
-  required this.emailSent,
-  this.supportFileName = '',
-  this.status = 'menunggu_verifikasi',
-  this.estimatedResponse = '1-2 Hari Kerja',
-  super.key,
-});
+    required this.requestNumber,
+    required this.fullName,
+    required this.identifierValue,
+    required this.applicationName,
+    required this.issueType,
+    required this.submittedAt,
+    required this.email,
+    required this.description,
+    required this.emailSent,
+    this.supportFileName = '',
+    this.status = 'menunggu_verifikasi',
+    this.estimatedResponse = '1-2 Hari Kerja',
+    super.key,
+  });
 
   final String requestNumber;
   final String fullName;
