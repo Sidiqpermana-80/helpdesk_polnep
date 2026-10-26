@@ -5,10 +5,10 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class KampusAmanNotificationBridge {
+class PpkptNotificationBridge {
   static const channel = AndroidNotificationChannel(
     'kampus_aman_complaints',
-    'Kampus Aman',
+    'PPKPT',
     description: 'Pengajuan berhasil, laporan diterima, dan laporan ditolak.',
     importance: Importance.high,
   );
@@ -30,7 +30,7 @@ class KampusAmanNotificationBridge {
   }
 
   static Future<void> rememberOpened(Map<String, dynamic> data) async {
-    final notice = _KampusAmanNotice.fromData(data);
+    final notice = _PpkptNotice.fromData(data);
 
     if (notice == null) {
       return;
@@ -43,7 +43,7 @@ class KampusAmanNotificationBridge {
     RemoteMessage message,
     FlutterLocalNotificationsPlugin plugin,
   ) async {
-    final notice = _KampusAmanNotice.fromData(message.data);
+    final notice = _PpkptNotice.fromData(message.data);
 
     if (notice == null) {
       return;
@@ -57,7 +57,7 @@ class KampusAmanNotificationBridge {
     required int ticketId,
     required String requestNumber,
   }) async {
-    final notice = _KampusAmanNotice.fromData({
+    final notice = _PpkptNotice.fromData({
       'module': 'kampus_aman',
       'event': 'ticket_created',
       'request_id': ticketId.toString(),
@@ -72,7 +72,7 @@ class KampusAmanNotificationBridge {
   }
 
   static Future<void> _show(
-    _KampusAmanNotice notice,
+    _PpkptNotice notice,
     FlutterLocalNotificationsPlugin plugin,
   ) async {
     if (notice.expiresAt != null &&
@@ -119,8 +119,8 @@ class KampusAmanNotificationBridge {
   }
 }
 
-class _KampusAmanNotice {
-  const _KampusAmanNotice({
+class _PpkptNotice {
+  const _PpkptNotice({
     required this.ticketId,
     required this.requestNumber,
     required this.event,
@@ -138,8 +138,8 @@ class _KampusAmanNotice {
     'report_rejected',
   };
 
-  static _KampusAmanNotice? fromData(Map<String, dynamic> data) {
-    if (!KampusAmanNotificationBridge.handles(data)) {
+  static _PpkptNotice? fromData(Map<String, dynamic> data) {
+    if (!PpkptNotificationBridge.handles(data)) {
       return null;
     }
 
@@ -165,7 +165,7 @@ class _KampusAmanNotice {
       return null;
     }
 
-    return _KampusAmanNotice(
+    return _PpkptNotice(
       ticketId: id,
       requestNumber: number,
       event: event,

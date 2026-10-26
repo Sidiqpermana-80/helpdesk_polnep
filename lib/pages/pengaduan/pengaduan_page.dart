@@ -6,7 +6,7 @@ import '../website/website_page.dart';
 import '../wifi_internet/wifi_internet_page.dart';
 import '../pengaduan_akademik/pengaduan_akademik_page.dart';
 import '../pungli/pungli_page.dart';
-import '../kampus_aman/kampus_aman_page.dart';
+import '../ppkpt/ppkpt_page.dart';
 
 class PengaduanPage extends StatelessWidget {
   const PengaduanPage({super.key});
@@ -152,10 +152,10 @@ class PengaduanPage extends StatelessWidget {
 
                         _ComplaintCard(
                           width: width,
-                          title: 'Kampus Aman',
+                          title: 'PPKPT',
                           imagePath: 'assets/images/mhs.png',
                           fallbackIcon: Icons.shield_outlined,
-                          destination: const KampusAmanPage(),
+                          destination: const PpkptPage(),
                         ),
                       ],
                     );

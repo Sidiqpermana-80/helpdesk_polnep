@@ -24,8 +24,8 @@ import 'pengaduan_akademik_notification_bridge.dart';
 import 'pengaduan_akademik_device_sync_service.dart';
 import 'pungli_notification_bridge.dart';
 import 'pungli_device_sync_service.dart';
-import 'kampus_aman_notification_bridge.dart';
-import 'kampus_aman_device_sync_service.dart';
+import 'ppkpt_notification_bridge.dart';
+import 'ppkpt_device_sync_service.dart';
 
 // =========================================================
 // JENIS PENGINGAT ULT
@@ -161,7 +161,7 @@ Future<void> _prepareLocalNotifications(
   await FasilitasNotificationBridge.createChannel(plugin);
   await PengaduanAkademikNotificationBridge.createChannel(plugin);
   await PungliNotificationBridge.createChannel(plugin);
-  await KampusAmanNotificationBridge.createChannel(plugin);
+  await PpkptNotificationBridge.createChannel(plugin);
 }
 
 // =========================================================
@@ -172,8 +172,8 @@ Future<void> _displayMessage(
   RemoteMessage message,
   FlutterLocalNotificationsPlugin plugin,
 ) async {
-  if (KampusAmanNotificationBridge.handles(message.data)) {
-    await KampusAmanNotificationBridge.display(message, plugin);
+  if (PpkptNotificationBridge.handles(message.data)) {
+    await PpkptNotificationBridge.display(message, plugin);
     return;
   }
 
@@ -691,10 +691,10 @@ class QueueNotificationService with WidgetsBindingObserver {
   }
 
   // =======================================================
-  // KONFIRMASI KAMPUS AMAN
+  // KONFIRMASI PPKPT
   // =======================================================
 
-  Future<void> showKampusAmanCreated({
+  Future<void> showPpkptCreated({
     required int ticketId,
     String requestNumber = '',
   }) async {
@@ -711,7 +711,7 @@ class QueueNotificationService with WidgetsBindingObserver {
 
       _foregroundQueue = _foregroundQueue
           .then<void>((_) async {
-            await KampusAmanNotificationBridge.showCreated(
+            await PpkptNotificationBridge.showCreated(
               plugin: _local,
               ticketId: ticketId,
               requestNumber: requestNumber,
@@ -985,7 +985,7 @@ class QueueNotificationService with WidgetsBindingObserver {
 
     unawaited(PungliDeviceSyncService.instance.syncToken(clean));
 
-    unawaited(KampusAmanDeviceSyncService.instance.syncToken(clean));
+    unawaited(PpkptDeviceSyncService.instance.syncToken(clean));
   }
 
   // =======================================================
@@ -1039,7 +1039,7 @@ class QueueNotificationService with WidgetsBindingObserver {
 
       unawaited(PungliDeviceSyncService.instance.syncToken(current));
 
-      unawaited(KampusAmanDeviceSyncService.instance.syncToken(current));
+      unawaited(PpkptDeviceSyncService.instance.syncToken(current));
     }
 
     final refresh = _startTokenRefresh();
@@ -1194,9 +1194,9 @@ class QueueNotificationService with WidgetsBindingObserver {
         return null;
       }
 
-      if (KampusAmanNotificationBridge.handles(decoded)) {
+      if (PpkptNotificationBridge.handles(decoded)) {
         unawaited(
-          KampusAmanNotificationBridge.rememberOpened(
+          PpkptNotificationBridge.rememberOpened(
             decoded,
           ).catchError((Object _) {}),
         );

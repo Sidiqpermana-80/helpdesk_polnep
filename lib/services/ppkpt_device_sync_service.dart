@@ -7,10 +7,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../config/api_config.dart';
 
-class KampusAmanDeviceSyncService {
-  KampusAmanDeviceSyncService._();
+class PpkptDeviceSyncService {
+  PpkptDeviceSyncService._();
 
-  static final instance = KampusAmanDeviceSyncService._();
+  static final instance = PpkptDeviceSyncService._();
 
   final _prefs = SharedPreferencesAsync();
 
@@ -183,9 +183,7 @@ class KampusAmanDeviceSyncService {
 
     if (kDebugMode) {
       debugPrint(
-        failed
-            ? 'KAMPUS AMAN TOKEN SYNC: tertunda'
-            : 'KAMPUS AMAN TOKEN SYNC: selesai',
+        failed ? 'PPKPT TOKEN SYNC: tertunda' : 'PPKPT TOKEN SYNC: selesai',
       );
     }
   }

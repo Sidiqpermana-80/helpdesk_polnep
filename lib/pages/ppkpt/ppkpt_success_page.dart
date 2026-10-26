@@ -3,8 +3,8 @@ import 'package:flutter/services.dart';
 
 import '../cek_status/cek_status_page.dart';
 
-class KampusAmanSuccessPage extends StatelessWidget {
-  const KampusAmanSuccessPage({
+class PpkptSuccessPage extends StatelessWidget {
+  const PpkptSuccessPage({
     required this.requestNumber,
     required this.submittedAt,
     this.status = 'menunggu_verifikasi',
@@ -164,7 +164,7 @@ class KampusAmanSuccessPage extends StatelessWidget {
                 ),
                 const SizedBox(height: 10),
                 const Text(
-                  'Kampus Aman',
+                  'PPKPT',
                   style: TextStyle(
                     color: Color(0xFF202020),
                     fontSize: 12,
@@ -173,7 +173,7 @@ class KampusAmanSuccessPage extends StatelessWidget {
                 ),
                 const SizedBox(height: 6),
                 const Text(
-                  'Home / Pengaduan / Kampus Aman',
+                  'Home / Pengaduan / PPKPT',
                   style: TextStyle(
                     color: Color(0xFF168DE2),
                     fontSize: 9,
@@ -227,7 +227,7 @@ class KampusAmanSuccessPage extends StatelessWidget {
                       ),
                       const SizedBox(height: 5),
                       const Text(
-                        'Laporan Kampus Aman Anda berhasil dikirim.\n'
+                        'Laporan PPKPT Anda berhasil dikirim.\n'
                         'Laporan akan diverifikasi oleh petugas.\n'
                         'Simpan kode tiket untuk memantau statusnya.',
                         textAlign: TextAlign.center,
@@ -401,7 +401,7 @@ class KampusAmanSuccessPage extends StatelessWidget {
 
   Widget _summary() {
     final rows = <Widget>[
-      _summaryRow(Icons.shield_outlined, 'Jenis Layanan', 'Kampus Aman'),
+      _summaryRow(Icons.shield_outlined, 'Jenis Layanan', 'PPKPT'),
       _summaryRow(Icons.fact_check_outlined, 'Status Pengajuan', _statusLabel),
       _summaryRow(Icons.contact_mail_outlined, 'Pilihan Kontak', _contactLabel),
       _summaryRow(Icons.schedule_rounded, 'Jam Pengajuan', _timeLabel),
