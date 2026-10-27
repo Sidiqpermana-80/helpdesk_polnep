@@ -82,7 +82,6 @@ class _PpkptPageState extends State<PpkptPage> {
   @override
   void initState() {
     super.initState();
-
     _loadTypes();
   }
 
@@ -137,7 +136,6 @@ class _PpkptPageState extends State<PpkptPage> {
         }
 
         final id = int.tryParse(item['id']?.toString() ?? '');
-
         final label = item['option_label']?.toString().trim() ?? '';
 
         if (id == null || id <= 0 || label.isEmpty) {
@@ -202,10 +200,9 @@ class _PpkptPageState extends State<PpkptPage> {
 
         DropdownButtonFormField<String>(
           key: ValueKey('type-$_version'),
-
           initialValue: _types.containsKey(_type) ? _type : null,
-
           isExpanded: true,
+          dropdownColor: const Color(0xFFF0F7FF),
 
           style: const TextStyle(color: Color(0xFF202020), fontSize: 16),
 
@@ -217,7 +214,6 @@ class _PpkptPageState extends State<PpkptPage> {
                 : _types.isEmpty
                 ? 'Belum ada pilihan aktif'
                 : 'Pilih jenis kejadian',
-
             icon: Icons.list_alt_rounded,
           ),
 
@@ -280,13 +276,9 @@ class _PpkptPageState extends State<PpkptPage> {
       contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 11),
 
       enabledBorder: border(const Color(0xFF8D8D8D), 0.8),
-
       border: border(const Color(0xFF8D8D8D), 0.8),
-
       focusedBorder: border(const Color(0xFF3AA7F5), 1.4),
-
       errorBorder: border(Colors.red, 1),
-
       focusedErrorBorder: border(Colors.red, 1.3),
 
       errorStyle: const TextStyle(fontSize: 9),
@@ -327,7 +319,6 @@ class _PpkptPageState extends State<PpkptPage> {
           style: const TextStyle(fontSize: 16, color: Color(0xFF202020)),
 
           keyboardType: keyboard,
-
           textInputAction: TextInputAction.next,
 
           textCapitalization: keyboard == TextInputType.text
@@ -361,6 +352,8 @@ class _PpkptPageState extends State<PpkptPage> {
     ValueChanged<String> onChanged, {
     bool requiredField = false,
     int columns = 2,
+    Map<String, IconData> icons = const {},
+    Map<String, Color> iconColors = const {},
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -369,7 +362,6 @@ class _PpkptPageState extends State<PpkptPage> {
 
         FormField<String>(
           key: ValueKey('$label-$_version'),
-
           initialValue: value,
 
           validator: (_) {
@@ -398,6 +390,7 @@ class _PpkptPageState extends State<PpkptPage> {
                         for (final entry in options.entries)
                           SizedBox(
                             width: width,
+
                             child: Material(
                               color: value == entry.key
                                   ? const Color(0xFFEAF5FF)
@@ -433,22 +426,69 @@ class _PpkptPageState extends State<PpkptPage> {
                                   ),
 
                                   alignment: Alignment.center,
-
                                   padding: const EdgeInsets.all(8),
 
-                                  child: Text(
-                                    entry.value,
-                                    textAlign: TextAlign.center,
+                                  child: icons.containsKey(entry.key)
+                                      ? Row(
+                                          children: [
+                                            Container(
+                                              width: 25,
+                                              height: 25,
 
-                                    style: TextStyle(
-                                      fontSize: 10.5,
-                                      color: const Color(0xFF202020),
+                                              padding: const EdgeInsets.all(4),
 
-                                      fontWeight: value == entry.key
-                                          ? FontWeight.w600
-                                          : FontWeight.w400,
-                                    ),
-                                  ),
+                                              decoration: BoxDecoration(
+                                                color:
+                                                    iconColors[entry.key] ??
+                                                    const Color(0xFF6757D9),
+
+                                                borderRadius:
+                                                    BorderRadius.circular(4),
+                                              ),
+
+                                              child: Icon(
+                                                icons[entry.key],
+                                                size: 17,
+                                                color: Colors.white,
+                                              ),
+                                            ),
+
+                                            const SizedBox(width: 6),
+
+                                            Expanded(
+                                              child: Text(
+                                                entry.value,
+                                                maxLines: 2,
+                                                overflow: TextOverflow.ellipsis,
+
+                                                style: TextStyle(
+                                                  fontSize: 10.5,
+                                                  height: 1.2,
+                                                  color: const Color(
+                                                    0xFF202020,
+                                                  ),
+
+                                                  fontWeight: value == entry.key
+                                                      ? FontWeight.w600
+                                                      : FontWeight.w400,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        )
+                                      : Text(
+                                          entry.value,
+                                          textAlign: TextAlign.center,
+
+                                          style: TextStyle(
+                                            fontSize: 10.5,
+                                            color: const Color(0xFF202020),
+
+                                            fontWeight: value == entry.key
+                                                ? FontWeight.w600
+                                                : FontWeight.w400,
+                                          ),
+                                        ),
                                 ),
                               ),
                             ),
@@ -461,6 +501,7 @@ class _PpkptPageState extends State<PpkptPage> {
                 if (field.hasError)
                   Padding(
                     padding: const EdgeInsets.only(top: 5),
+
                     child: Text(
                       field.errorText!,
                       style: const TextStyle(color: Colors.red, fontSize: 9),
@@ -482,11 +523,14 @@ class _PpkptPageState extends State<PpkptPage> {
       children: [
         _choices(
           'Pilihan Identitas',
+
           const {
             'identified': 'Cantumkan Identitas',
             'anonymous': 'Tanpa Identitas',
           },
+
           _identity,
+
           (value) {
             setState(() {
               _identity = value;
@@ -500,7 +544,18 @@ class _PpkptPageState extends State<PpkptPage> {
               }
             });
           },
+
           requiredField: true,
+
+          icons: const {
+            'identified': Icons.person_outline_rounded,
+            'anonymous': Icons.visibility_off_outlined,
+          },
+
+          iconColors: const {
+            'identified': Color(0xFF6757D9),
+            'anonymous': Color(0xFFFFB74D),
+          },
         ),
 
         if (_identified) ...[
@@ -563,15 +618,19 @@ class _PpkptPageState extends State<PpkptPage> {
 
           _choices(
             'Boleh Menghubungi Saya Melalui',
+
             const {
               'none': 'Tidak Dihubungi',
               'phone': 'No. HP',
               'email': 'Email',
             },
+
             _contact,
+
             (value) {
               setState(() => _contact = value);
             },
+
             columns: 3,
           ),
         ],
@@ -579,10 +638,12 @@ class _PpkptPageState extends State<PpkptPage> {
         if (_identity == 'anonymous')
           const Padding(
             padding: EdgeInsets.only(bottom: 13),
+
             child: Text(
               'Nama, NIM/NIP, nomor HP, dan email tidak dikirim. '
               'Periksa isi laporan dan lampiran jika tidak ingin '
               'mencantumkan identitas.',
+
               style: TextStyle(
                 fontSize: 9,
                 height: 1.4,
@@ -654,6 +715,7 @@ class _PpkptPageState extends State<PpkptPage> {
   Widget _fileInput() {
     return SizedBox(
       height: 42,
+
       child: Row(
         children: [
           Expanded(
@@ -768,6 +830,7 @@ class _PpkptPageState extends State<PpkptPage> {
                 ? const SizedBox(
                     width: 18,
                     height: 18,
+
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
                       color: Colors.white,
@@ -775,6 +838,7 @@ class _PpkptPageState extends State<PpkptPage> {
                   )
                 : const Text(
                     'Kirim Data',
+
                     style: TextStyle(
                       fontSize: 9.5,
                       fontWeight: FontWeight.w500,
@@ -813,6 +877,7 @@ class _PpkptPageState extends State<PpkptPage> {
 
             child: const Text(
               'Reset',
+
               style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w500),
             ),
           ),
@@ -895,6 +960,7 @@ class _PpkptPageState extends State<PpkptPage> {
 
                         const Text(
                           'PPKPT',
+
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w500,
@@ -907,6 +973,7 @@ class _PpkptPageState extends State<PpkptPage> {
 
                     SizedBox(
                       height: 112,
+
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -935,7 +1002,7 @@ class _PpkptPageState extends State<PpkptPage> {
                             height: 100,
 
                             child: Image.asset(
-                              'assets/images/mhs.png',
+                              'assets/images/ppkpt.png',
                               fit: BoxFit.contain,
 
                               errorBuilder: (context, error, stackTrace) {
@@ -980,6 +1047,7 @@ class _PpkptPageState extends State<PpkptPage> {
                             children: [
                               const Text(
                                 'Data Laporan',
+
                                 style: TextStyle(
                                   fontSize: 12.5,
                                   fontWeight: FontWeight.w600,
@@ -993,17 +1061,21 @@ class _PpkptPageState extends State<PpkptPage> {
 
                               _choices(
                                 'Posisi Pelapor',
+
                                 const {
                                   'experienced': 'Mengalami Sendiri',
                                   'witness': 'Menyaksikan',
                                   'representative': 'Mewakili Orang Lain',
                                 },
+
                                 _position,
+
                                 (value) {
                                   setState(() {
                                     _position = value;
                                   });
                                 },
+
                                 requiredField: true,
                                 columns: 3,
                               ),
@@ -1024,14 +1096,12 @@ class _PpkptPageState extends State<PpkptPage> {
                               _text(
                                 'Waktu Kejadian (Opsional)',
                                 _time,
-                                'Tanggal pasti atau '
-                                    'perkiraan waktu',
+                                'Tanggal pasti atau perkiraan waktu',
                                 icon: Icons.access_time_rounded,
                               ),
 
                               _text(
-                                'Pihak yang Dilaporkan '
-                                    '(Opsional)',
+                                'Pihak yang Dilaporkan (Opsional)',
                                 _party,
                                 'Nama atau keterangan pihak '
                                     'terkait, jika diketahui',
@@ -1072,8 +1142,7 @@ class _PpkptPageState extends State<PpkptPage> {
 
                                   validator: (value) {
                                     if (value?.trim().isEmpty ?? true) {
-                                      return 'Laporan kejadian '
-                                          'wajib diisi';
+                                      return 'Laporan kejadian wajib diisi';
                                     }
 
                                     return null;
@@ -1083,10 +1152,7 @@ class _PpkptPageState extends State<PpkptPage> {
 
                               const SizedBox(height: 13),
 
-                              _title(
-                                'Upload File Pendukung '
-                                '(Opsional)',
-                              ),
+                              _title('Upload File Pendukung (Opsional)'),
 
                               _fileInput(),
 
@@ -1107,9 +1173,16 @@ class _PpkptPageState extends State<PpkptPage> {
 
                               const SizedBox(height: 16),
 
+                              // INFORMASI SEPERTI HALAMAN WI-FI
                               Container(
                                 width: double.infinity,
-                                padding: const EdgeInsets.all(12),
+
+                                padding: const EdgeInsets.fromLTRB(
+                                  12,
+                                  10,
+                                  12,
+                                  10,
+                                ),
 
                                 decoration: BoxDecoration(
                                   color: const Color(0xFFF0F7FF),
@@ -1122,18 +1195,36 @@ class _PpkptPageState extends State<PpkptPage> {
                                   ),
                                 ),
 
-                                child: const Text(
-                                  'Periksa kembali isi laporan '
-                                  'dan lampiran sebelum mengirim. '
-                                  'Simpan kode tiket setelah '
-                                  'pengajuan berhasil untuk '
-                                  'memeriksa status laporan.',
+                                child: Row(
+                                  children: [
+                                    SizedBox(
+                                      width: 31,
+                                      height: 31,
 
-                                  style: TextStyle(
-                                    fontSize: 9.5,
-                                    height: 1.4,
-                                    color: Color(0xFF333333),
-                                  ),
+                                      child: Image.asset(
+                                        'assets/images/seru.png',
+                                        fit: BoxFit.contain,
+                                      ),
+                                    ),
+
+                                    const SizedBox(width: 10),
+
+                                    const Expanded(
+                                      child: Text(
+                                        'Periksa kembali isi laporan '
+                                        'dan lampiran sebelum mengirim. '
+                                        'Simpan kode tiket setelah '
+                                        'pengajuan berhasil untuk '
+                                        'memeriksa status laporan.',
+
+                                        style: TextStyle(
+                                          color: Color(0xFF303030),
+                                          fontSize: 9,
+                                          height: 1.35,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
 
@@ -1177,13 +1268,9 @@ class _PpkptPageState extends State<PpkptPage> {
 
     final fields = <String, String>{
       'reporter_mode': identified ? 'identified' : 'anonymous',
-
       'reporter_position': _position!,
-
       'contact_preference': contact,
-
       'location': _location.text.trim(),
-
       'description': _description.text.trim(),
 
       if (_type != null && _types.containsKey(_type))
@@ -1265,8 +1352,7 @@ class _PpkptPageState extends State<PpkptPage> {
       }
 
       if (response.statusCode == 404 || response.statusCode == 405) {
-        _message('Layanan PPKPTdia di server.');
-
+        _message('Layanan PPKPT belum tersedia di server.');
         return;
       }
 
@@ -1301,7 +1387,6 @@ class _PpkptPageState extends State<PpkptPage> {
         }
 
         _message(message);
-
         return;
       }
 
@@ -1341,10 +1426,7 @@ class _PpkptPageState extends State<PpkptPage> {
             key: deviceKey,
           );
         } catch (_) {
-          debugPrint(
-            'PPKPT: sinkronisasi perangkat '
-            'belum tersimpan.',
-          );
+          debugPrint('PPKPT: sinkronisasi perangkat belum tersimpan.');
         }
       }
 

@@ -8,9 +8,9 @@ import 'package:http/http.dart' as http;
 
 import '../../config/api_config.dart';
 import '../../services/queue_notification_service.dart';
+import '../../services/pengaduan_akademik_device_sync_service.dart';
 import '../cek_status/cek_status_page.dart';
 import 'pengaduan_akademik_success_page.dart';
-import '../../services/pengaduan_akademik_device_sync_service.dart';
 
 class PengaduanAkademikPage extends StatefulWidget {
   const PengaduanAkademikPage({super.key});
@@ -35,6 +35,20 @@ class _PengaduanAkademikPageState extends State<PengaduanAkademikPage> {
     'proses_pembelajaran': 'Proses Pembelajaran',
     'tugas_penilaian': 'Tugas dan Penilaian',
     'lainnya': 'Lainnya',
+  };
+
+  static const Map<String, String> _issueImages = {
+    'pelaksanaan_perkuliahan': 'assets/images/date.png',
+    'proses_pembelajaran': 'assets/images/ngajar.png',
+    'tugas_penilaian': 'assets/images/tugas.png',
+    'lainnya': 'assets/images/talk.png',
+  };
+
+  static const Map<String, double> _issueImageScales = {
+    'pelaksanaan_perkuliahan': 1.0,
+    'proses_pembelajaran': 1.0,
+    'tugas_penilaian': 1.5,
+    'lainnya': 2.0,
   };
 
   static const List<String> _extensions = [
@@ -106,6 +120,7 @@ class _PengaduanAkademikPageState extends State<PengaduanAkademikPage> {
         }
 
         final id = item['id']?.toString() ?? '';
+
         final name = item['option_label']?.toString().trim() ?? '';
 
         if ((int.tryParse(id) ?? 0) > 0 && name.isNotEmpty) {
@@ -178,7 +193,7 @@ class _PengaduanAkademikPageState extends State<PengaduanAkademikPage> {
   }
 
   // =========================================================
-  // UKURAN INPUT MENGIKUTI FORM APLIKASI
+  // INPUT
   // =========================================================
 
   InputDecoration _decoration(String hint, {Widget? prefixIcon}) {
@@ -303,6 +318,7 @@ class _PengaduanAkademikPageState extends State<PengaduanAkademikPage> {
           initialValue: value,
           isExpanded: true,
           isDense: true,
+          dropdownColor: const Color(0xFFF0F7FF),
           style: const TextStyle(color: Color(0xFF202020), fontSize: 16),
           decoration: _decoration(
             _loading ? 'Memuat $label...' : 'Pilih $label',
@@ -419,22 +435,32 @@ class _PengaduanAkademikPageState extends State<PengaduanAkademikPage> {
                                 ),
                                 child: Row(
                                   children: [
-                                    Container(
+                                    SizedBox(
                                       width: 25,
                                       height: 25,
-                                      padding: const EdgeInsets.all(4),
-                                      decoration: BoxDecoration(
-                                        color: selected
-                                            ? const Color(0xFF6757D9)
-                                            : const Color(0xFF8D9EB3),
-                                        borderRadius: BorderRadius.circular(4),
-                                      ),
-                                      child: Icon(
-                                        selected
-                                            ? Icons.check_rounded
-                                            : Icons.description_outlined,
-                                        size: 17,
-                                        color: Colors.white,
+                                      child: Transform.scale(
+                                        scale:
+                                            _issueImageScales[entry.key] ?? 1.0,
+                                        child: Image.asset(
+                                          _issueImages[entry.key]!,
+                                          fit: BoxFit.contain,
+                                          errorBuilder:
+                                              (context, error, stackTrace) {
+                                                debugPrint(
+                                                  'GAMBAR JENIS PENGADUAN GAGAL: '
+                                                  '$error',
+                                                );
+
+                                                return Icon(
+                                                  selected
+                                                      ? Icons.check_rounded
+                                                      : Icons
+                                                            .description_outlined,
+                                                  size: 17,
+                                                  color: Colors.white,
+                                                );
+                                              },
+                                        ),
                                       ),
                                     ),
                                     const SizedBox(width: 6),
@@ -621,7 +647,7 @@ class _PengaduanAkademikPageState extends State<PengaduanAkademikPage> {
   }
 
   // =========================================================
-  // TOMBOL MENGIKUTI FORM APLIKASI
+  // TOMBOL
   // =========================================================
 
   Widget _buildButtons() {
@@ -960,6 +986,59 @@ class _PengaduanAkademikPageState extends State<PengaduanAkademikPage> {
 
                               const SizedBox(height: 25),
 
+                              // INFORMASI
+                              Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.fromLTRB(
+                                  12,
+                                  10,
+                                  12,
+                                  10,
+                                ),
+
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFF0F7FF),
+                                  borderRadius: BorderRadius.circular(8),
+
+                                  border: Border.all(
+                                    color: const Color(0xFF9D8EE7),
+                                    width: 0.6,
+                                  ),
+                                ),
+
+                                child: Row(
+                                  children: [
+                                    SizedBox(
+                                      width: 31,
+                                      height: 31,
+
+                                      child: Image.asset(
+                                        'assets/images/seru.png',
+                                        fit: BoxFit.contain,
+                                      ),
+                                    ),
+
+                                    const SizedBox(width: 10),
+
+                                    const Expanded(
+                                      child: Text(
+                                        'Pastikan data dan jenis pengaduan akademik sudah benar.\n'
+                                        'Jelaskan kejadian secara rinci agar petugas dapat '
+                                        'memahami dan menindaklanjuti laporan Anda.',
+
+                                        style: TextStyle(
+                                          color: Color(0xFF303030),
+                                          fontSize: 9,
+                                          height: 1.35,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+
+                              const SizedBox(height: 25),
+
                               _buildButtons(),
                             ],
                           ),
@@ -1133,7 +1212,10 @@ class _PengaduanAkademikPageState extends State<PengaduanAkademikPage> {
         throw const FormatException();
       }
 
-      debugPrint('PENGADUAN AKADEMIK EMAIL SENT: ${data['email_sent']}');
+      debugPrint(
+        'PENGADUAN AKADEMIK EMAIL SENT: '
+        '${data['email_sent']}',
+      );
 
       final id = int.tryParse(data['id']?.toString() ?? '') ?? 0;
 
@@ -1169,7 +1251,7 @@ class _PengaduanAkademikPageState extends State<PengaduanAkademikPage> {
         }
       }
 
-      // Tetap satu kali pemanggilan konfirmasi pengajuan.
+      // Satu kali pemanggilan konfirmasi pengajuan.
       unawaited(
         QueueNotificationService.instance.showAcademicComplaintCreated(
           ticketId: id,

@@ -1067,7 +1067,58 @@ class _AkademikPageState extends State<AkademikPage> {
 
                             // Field di atas sudah memiliki jarak bawah 13.
                             // Tambahan 12 membuat jarak ke tombol menjadi 25.
-                            const SizedBox(height: 12),
+                            // INFORMASI ANTRIAN AKADEMIK
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.fromLTRB(
+                                12,
+                                10,
+                                12,
+                                10,
+                              ),
+
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFF0F7FF),
+                                borderRadius: BorderRadius.circular(8),
+
+                                border: Border.all(
+                                  color: const Color(0xFF9D8EE7),
+                                  width: 0.6,
+                                ),
+                              ),
+
+                              child: Row(
+                                children: [
+                                  SizedBox(
+                                    width: 31,
+                                    height: 31,
+
+                                    child: Image.asset(
+                                      'assets/images/seru.png',
+                                      fit: BoxFit.contain,
+                                    ),
+                                  ),
+
+                                  const SizedBox(width: 10),
+
+                                  const Expanded(
+                                    child: Text(
+                                      'Pastikan tanggal, jam antrean, dan data Anda sudah benar.\n'
+                                      'Simpan kode tiket dan pantau Cek Status untuk '
+                                      'mengetahui perkembangan antrean Anda.',
+
+                                      style: TextStyle(
+                                        color: Color(0xFF303030),
+                                        fontSize: 9,
+                                        height: 1.35,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+
+                            const SizedBox(height: 25),
 
                             _buttons(),
 

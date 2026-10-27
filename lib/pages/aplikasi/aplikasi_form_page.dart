@@ -522,6 +522,54 @@ class _AplikasiFormPageState extends State<AplikasiFormPage> {
 
                           const SizedBox(height: 22),
 
+                          // INFORMASI
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF0F7FF),
+                              borderRadius: BorderRadius.circular(8),
+
+                              border: Border.all(
+                                color: const Color(0xFF9D8EE7),
+                                width: 0.6,
+                              ),
+                            ),
+
+                            child: Row(
+                              children: [
+                                SizedBox(
+                                  width: 31,
+                                  height: 31,
+
+                                  child: Image.asset(
+                                    'assets/images/seru.png',
+                                    fit: BoxFit.contain,
+                                  ),
+                                ),
+
+                                const SizedBox(width: 10),
+
+                                const Expanded(
+                                  child: Text(
+                                    'Pastikan aplikasi yang dipilih dan data laporan sudah benar.\n'
+                                    'Jelaskan kendala secara rinci agar petugas dapat '
+                                    'menindaklanjuti laporan Anda.',
+
+                                    style: TextStyle(
+                                      color: Color(0xFF303030),
+                                      fontSize: 9,
+                                      height: 1.35,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          const SizedBox(height: 25),
+
                           // =========================================
                           // BUTTON
                           // =========================================

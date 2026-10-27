@@ -510,6 +510,7 @@ class _PungliPageState extends State<PungliPage> {
           initialValue: _locationId,
           isExpanded: true,
           isDense: true,
+          dropdownColor: const Color(0xFFF0F7FF),
           style: const TextStyle(color: Color(0xFF202020), fontSize: 16),
           decoration: _decoration(
             _loading ? 'Memuat lokasi...' : 'Pilih unit / lokasi kejadian',
@@ -997,6 +998,60 @@ class _PungliPageState extends State<PungliPage> {
                                     color: Color(0xFF777777),
                                     fontSize: 7.5,
                                   ),
+                                ),
+                              ),
+
+                              const SizedBox(height: 25),
+
+                              // INFORMASI
+                              Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.fromLTRB(
+                                  12,
+                                  10,
+                                  12,
+                                  10,
+                                ),
+
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFF0F7FF),
+                                  borderRadius: BorderRadius.circular(8),
+
+                                  border: Border.all(
+                                    color: const Color(0xFF9D8EE7),
+                                    width: 0.6,
+                                  ),
+                                ),
+
+                                child: Row(
+                                  children: [
+                                    SizedBox(
+                                      width: 31,
+                                      height: 31,
+
+                                      child: Image.asset(
+                                        'assets/images/seru.png',
+                                        fit: BoxFit.contain,
+                                      ),
+                                    ),
+
+                                    const SizedBox(width: 10),
+
+                                    const Expanded(
+                                      child: Text(
+                                        'Periksa kembali isi laporan dan lampiran sebelum mengirim.\n'
+                                        'Jika memilih tanpa identitas, pastikan uraian dan bukti '
+                                        'tidak memuat identitas yang ingin Anda rahasiakan. '
+                                        'Simpan kode tiket untuk memeriksa status laporan.',
+
+                                        style: TextStyle(
+                                          color: Color(0xFF303030),
+                                          fontSize: 9,
+                                          height: 1.35,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
 

@@ -892,35 +892,41 @@ class _FasilitasRuanganPageState extends State<FasilitasRuanganPage> {
                           // INFORMASI
                           Container(
                             width: double.infinity,
-                            padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+                            padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+
                             decoration: BoxDecoration(
                               color: const Color(0xFFF0F7FF),
                               borderRadius: BorderRadius.circular(8),
+
                               border: Border.all(
                                 color: const Color(0xFF9D8EE7),
                                 width: 0.6,
                               ),
                             ),
-                            child: const Row(
+
+                            child: Row(
                               children: [
-                                CircleAvatar(
-                                  radius: 15,
-                                  backgroundColor: Color(0xFF075DBD),
-                                  child: Icon(
-                                    Icons.priority_high_rounded,
-                                    color: Colors.white,
-                                    size: 21,
+                                SizedBox(
+                                  width: 31,
+                                  height: 31,
+
+                                  child: Image.asset(
+                                    'assets/images/seru.png',
+                                    fit: BoxFit.contain,
                                   ),
                                 ),
-                                SizedBox(width: 12),
-                                Expanded(
+
+                                const SizedBox(width: 10),
+
+                                const Expanded(
                                   child: Text(
                                     'Pastikan Data yang Anda isi sudah benar.\n'
                                     'Tim Helpdesk akan menindaklanjuti laporan Anda.',
+
                                     style: TextStyle(
-                                      color: Color(0xFF222222),
-                                      fontSize: 9.5,
-                                      height: 1.3,
+                                      color: Color(0xFF303030),
+                                      fontSize: 9,
+                                      height: 1.35,
                                     ),
                                   ),
                                 ),

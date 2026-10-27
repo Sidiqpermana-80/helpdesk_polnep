@@ -158,7 +158,9 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  // =========================================================
   // AUTO SLIDE PENGUMUMAN
+  // =========================================================
 
   void _startAnnouncementAutoSlide() {
     _announcementTimer?.cancel();
@@ -202,8 +204,6 @@ class _HomePageState extends State<HomePage> {
       body: Container(
         width: double.infinity,
         height: double.infinity,
-
-        // Background beranda sebelumnya.
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
@@ -211,7 +211,6 @@ class _HomePageState extends State<HomePage> {
             colors: [Color(0xFFF0F9FF), Color(0xFFD7EEFF), Color(0xFFB9E1FF)],
           ),
         ),
-
         child: SafeArea(
           child: RefreshIndicator(
             onRefresh: _refreshPage,
@@ -235,7 +234,9 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  // =========================================================
   // HEADER
+  // =========================================================
 
   Widget _buildHeader() {
     return Container(
@@ -348,7 +349,9 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  // =========================================================
   // PENGUMUMAN
+  // =========================================================
 
   Widget _buildAnnouncement(BuildContext context) {
     return Container(
@@ -369,7 +372,6 @@ class _HomePageState extends State<HomePage> {
       ),
       child: Column(
         children: [
-          // Judul bagian pengumuman.
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 3),
             child: Row(
@@ -410,7 +412,6 @@ class _HomePageState extends State<HomePage> {
               ],
             ),
           ),
-
           const SizedBox(height: 6),
 
           // Loading.
@@ -611,8 +612,10 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  // =========================================================
   // MENU LAYANAN
-  // Akademik dan ULT sekarang dipilih melalui Antrian Tiket.
+  // Atur pembesaran PNG melalui imageScale.
+  // =========================================================
 
   Widget _buildServiceMenu(BuildContext context) {
     return Padding(
@@ -623,6 +626,9 @@ class _HomePageState extends State<HomePage> {
             title: 'Antrian Tiket',
             description: 'Pilih layanan Akademik atau Unit Layanan Terpadu.',
             icon: Icons.confirmation_number_rounded,
+            imagePath: 'assets/images/tiket.png',
+            imageScale: 3,
+
             onTap: () => Navigator.of(context).push(
               MaterialPageRoute<void>(
                 builder: (_) => const LayananAntrianPage(),
@@ -634,6 +640,9 @@ class _HomePageState extends State<HomePage> {
             title: 'Pengaduan',
             description: 'Laporkan kendala layanan atau fasilitas kampus.',
             icon: Icons.campaign_rounded,
+            imagePath: 'assets/images/toa.png',
+            imageScale: 2.2,
+
             onTap: () => Navigator.of(context).push(
               MaterialPageRoute<void>(builder: (_) => const PengaduanPage()),
             ),
@@ -643,7 +652,9 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  // =========================================================
   // CEK STATUS
+  // =========================================================
 
   Widget _buildQueueStatus(BuildContext context) {
     return Container(
@@ -717,7 +728,9 @@ class _HomePageState extends State<HomePage> {
   }
 }
 
-// Model kartu layanan dari desain beranda sebelumnya.
+// =========================================================
+// KARTU LAYANAN BERANDA
+// =========================================================
 
 class _HomeServiceTile extends StatelessWidget {
   const _HomeServiceTile({
@@ -725,12 +738,17 @@ class _HomeServiceTile extends StatelessWidget {
     required this.description,
     required this.icon,
     required this.onTap,
+    this.imagePath,
+    this.imageScale = 1.0,
   });
 
   final String title;
   final String description;
   final IconData icon;
   final VoidCallback onTap;
+
+  final String? imagePath;
+  final double imageScale;
 
   @override
   Widget build(BuildContext context) {
@@ -754,7 +772,27 @@ class _HomeServiceTile extends StatelessWidget {
                   color: const Color(0xFFEAF7FF),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: Icon(icon, color: const Color(0xFF168DE2), size: 28),
+                child: imagePath == null
+                    ? Icon(icon, color: const Color(0xFF168DE2), size: 28)
+                    : Padding(
+                        padding: const EdgeInsets.all(4),
+                        child: Transform.scale(
+                          scale: imageScale,
+                          child: Image.asset(
+                            imagePath!,
+                            fit: BoxFit.contain,
+                            errorBuilder: (context, error, stackTrace) {
+                              debugPrint('LOGO LAYANAN GAGAL: $error');
+
+                              return const Icon(
+                                Icons.broken_image_outlined,
+                                color: Colors.red,
+                                size: 28,
+                              );
+                            },
+                          ),
+                        ),
+                      ),
               ),
               const SizedBox(width: 14),
               Expanded(

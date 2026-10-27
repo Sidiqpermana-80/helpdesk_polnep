@@ -106,6 +106,7 @@ class PengaduanPage extends StatelessWidget {
                           width: width,
                           title: 'Wi-Fi/Internet',
                           imagePath: 'assets/images/wifi.jpeg',
+                          imageScale: 1.0,
                           fallbackIcon: Icons.wifi_rounded,
                           destination: const WifiInternetPage(),
                         ),
@@ -114,6 +115,7 @@ class PengaduanPage extends StatelessWidget {
                           width: width,
                           title: 'Website',
                           imagePath: 'assets/images/web.jpeg',
+                          imageScale: 1.0,
                           fallbackIcon: Icons.language_rounded,
                           destination: const WebsitePage(),
                         ),
@@ -122,6 +124,7 @@ class PengaduanPage extends StatelessWidget {
                           width: width,
                           title: 'Aplikasi',
                           imagePath: 'assets/images/app.jpeg',
+                          imageScale: 1.0,
                           fallbackIcon: Icons.apps_rounded,
                           destination: const AplikasiPage(),
                         ),
@@ -130,6 +133,7 @@ class PengaduanPage extends StatelessWidget {
                           width: width,
                           title: 'Fasilitas Ruangan',
                           imagePath: 'assets/images/building.jpeg',
+                          imageScale: 1.0,
                           fallbackIcon: Icons.meeting_room_rounded,
                           destination: const FasilitasRuanganPage(),
                         ),
@@ -138,6 +142,7 @@ class PengaduanPage extends StatelessWidget {
                           width: width,
                           title: 'Akademik',
                           imagePath: 'assets/images/mhs.png',
+                          imageScale: 1.3,
                           fallbackIcon: Icons.school_rounded,
                           destination: const PengaduanAkademikPage(),
                         ),
@@ -145,7 +150,8 @@ class PengaduanPage extends StatelessWidget {
                         _ComplaintCard(
                           width: width,
                           title: 'Pungli',
-                          imagePath: 'assets/images/doc.png',
+                          imagePath: 'assets/images/pungli.png',
+                          imageScale: 1.3,
                           fallbackIcon: Icons.report_outlined,
                           destination: const PungliPage(),
                         ),
@@ -153,7 +159,8 @@ class PengaduanPage extends StatelessWidget {
                         _ComplaintCard(
                           width: width,
                           title: 'PPKPT',
-                          imagePath: 'assets/images/mhs.png',
+                          imagePath: 'assets/images/ppkpt.png',
+                          imageScale: 1.4,
                           fallbackIcon: Icons.shield_outlined,
                           destination: const PpkptPage(),
                         ),
@@ -181,6 +188,7 @@ class _ComplaintCard extends StatelessWidget {
     required this.imagePath,
     required this.fallbackIcon,
     required this.destination,
+    this.imageScale = 1.0,
   });
 
   final double width;
@@ -188,6 +196,7 @@ class _ComplaintCard extends StatelessWidget {
   final String imagePath;
   final IconData fallbackIcon;
   final Widget destination;
+  final double imageScale;
 
   @override
   Widget build(BuildContext context) {
@@ -216,23 +225,33 @@ class _ComplaintCard extends StatelessWidget {
 
             child: Column(
               children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(9),
+                // Area tata letak gambar tetap 56 x 56.
+                SizedBox(
+                  width: 56,
+                  height: 56,
 
-                  child: Image.asset(
-                    imagePath,
-                    width: 56,
-                    height: 56,
-                    fit: BoxFit.cover,
+                  child: Transform.scale(
+                    scale: imageScale,
 
-                    // Ikon cadangan jika gambar gagal dimuat.
-                    errorBuilder: (context, error, stackTrace) {
-                      return Icon(
-                        fallbackIcon,
-                        size: 56,
-                        color: const Color(0xFF168DE2),
-                      );
-                    },
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(9),
+
+                      child: Image.asset(
+                        imagePath,
+                        width: 56,
+                        height: 56,
+                        fit: BoxFit.cover,
+
+                        // Ikon cadangan jika gambar gagal dimuat.
+                        errorBuilder: (context, error, stackTrace) {
+                          return Icon(
+                            fallbackIcon,
+                            size: 56,
+                            color: const Color(0xFF168DE2),
+                          );
+                        },
+                      ),
+                    ),
                   ),
                 ),
 

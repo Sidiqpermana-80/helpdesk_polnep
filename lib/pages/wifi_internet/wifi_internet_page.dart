@@ -680,6 +680,7 @@ class _WifiInternetPageState extends State<WifiInternetPage> {
                                   initialValue: _department,
                                   isExpanded: true,
                                   isDense: true,
+                                  dropdownColor: const Color(0xFFF0F7FF),
 
                                   decoration: _decoration(
                                     _loading
@@ -754,6 +755,7 @@ class _WifiInternetPageState extends State<WifiInternetPage> {
                                   initialValue: _building,
                                   isExpanded: true,
                                   isDense: true,
+                                  dropdownColor: const Color(0xFFF0F7FF),
 
                                   decoration: _decoration(
                                     _loading

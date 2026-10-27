@@ -1,7 +1,7 @@
 class ApiConfig {
   ApiConfig._();
 
-  static const String baseUrl = 'http://192.168.201.140:8000/api';
+  static const String baseUrl = 'http://192.168.201.169:8000/api';
 
   static String get units => '$baseUrl/units';
 

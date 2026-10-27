@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../services/akademik_queue_service.dart';
 import '../cek_status/cek_status_page.dart';
@@ -26,13 +27,15 @@ class AkademikSuccessPage extends StatelessWidget {
   final String purpose;
   final String description;
 
-  // WARNA MENGIKUTI HALAMAN SUKSES ULT
+  // =========================================================
+  // WARNA
+  // =========================================================
+
   static const Color _green = Color(0xFF2EAA42);
-  static const Color _darkBlue = Color(0xFF075DBD);
-  static const Color _purpleBackground = Color(0xFFC5BCFF);
-  static const Color _purpleBorder = Color(0xFF8C80E5);
+  static const Color _infoBackground = Color(0xFFF0F7FF);
+  static const Color _infoBorder = Color(0xFF9D8EE7);
   static const Color _summaryBackground = Color(0xFFD8D8D8);
-  static const Color _buttonPurple = Color(0xFF7184F4);
+  static const Color _buttonBlue = Color(0xFF5868FF);
   static const Color _buttonGreen = Color(0xFF59C467);
 
   String get _dateLabel {
@@ -57,10 +60,14 @@ class AkademikSuccessPage extends StatelessWidget {
   }
 
   String get _successSubtitle {
-    return 'Tiket antrian Akademik berhasil dibuat.\n'
+    return 'Tiket antrean Akademik berhasil dibuat.\n'
         'Silakan datang sesuai tanggal dan jam pilihan,\n'
         'lalu pantau giliran Anda melalui Cek Status.';
   }
+
+  // =========================================================
+  // HALAMAN
+  // =========================================================
 
   @override
   Widget build(BuildContext context) {
@@ -94,6 +101,7 @@ class AkademikSuccessPage extends StatelessWidget {
 
                 const Text(
                   'Akademik',
+
                   style: TextStyle(
                     color: Color(0xFF202020),
                     fontSize: 12,
@@ -104,7 +112,8 @@ class AkademikSuccessPage extends StatelessWidget {
                 const SizedBox(height: 6),
 
                 const Text(
-                  'Home / Akademik',
+                  'Home / Antrian Tiket / Akademik',
+
                   style: TextStyle(
                     color: Color(0xFF168DE2),
                     fontSize: 9,
@@ -114,7 +123,6 @@ class AkademikSuccessPage extends StatelessWidget {
 
                 const SizedBox(height: 10),
 
-                // CARD UTAMA
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.fromLTRB(8, 15, 8, 10),
@@ -139,6 +147,7 @@ class AkademikSuccessPage extends StatelessWidget {
 
                   child: Column(
                     children: [
+                      // Lingkaran nomor antrean dipertahankan.
                       _buildQueueNumber(),
 
                       const SizedBox(height: 11),
@@ -146,6 +155,7 @@ class AkademikSuccessPage extends StatelessWidget {
                       const Text(
                         'Tiket Berhasil Dibuat',
                         textAlign: TextAlign.center,
+
                         style: TextStyle(
                           color: Color(0xFF202020),
                           fontSize: 16,
@@ -158,6 +168,7 @@ class AkademikSuccessPage extends StatelessWidget {
                       Text(
                         _successSubtitle,
                         textAlign: TextAlign.center,
+
                         style: const TextStyle(
                           color: Color(0xFF222222),
                           fontSize: 8.2,
@@ -167,14 +178,13 @@ class AkademikSuccessPage extends StatelessWidget {
 
                       const SizedBox(height: 12),
 
-                      // TANGGAL DAN KODE TIKET
                       Row(
                         children: [
                           Expanded(child: _buildQueueDateCard()),
 
                           const SizedBox(width: 10),
 
-                          Expanded(child: _buildTicketCodeCard()),
+                          Expanded(child: _buildTicketCodeCard(context)),
                         ],
                       ),
 
@@ -231,6 +241,7 @@ class AkademikSuccessPage extends StatelessWidget {
 
         const Text(
           'Pengajuan Berhasil',
+
           style: TextStyle(
             color: Color(0xFF111111),
             fontSize: 16,
@@ -242,7 +253,7 @@ class AkademikSuccessPage extends StatelessWidget {
   }
 
   // =========================================================
-  // NOMOR ANTRIAN
+  // LINGKARAN NOMOR ANTRIAN — TETAP
   // =========================================================
 
   Widget _buildQueueNumber() {
@@ -263,6 +274,7 @@ class AkademikSuccessPage extends StatelessWidget {
 
           Text(
             ticket.numberLabel,
+
             style: const TextStyle(
               color: _green,
               fontSize: 29,
@@ -276,6 +288,7 @@ class AkademikSuccessPage extends StatelessWidget {
           const Text(
             'Nomor Antrian Anda',
             textAlign: TextAlign.center,
+
             style: TextStyle(
               color: Color(0xFF315D9D),
               fontSize: 6.8,
@@ -297,9 +310,10 @@ class AkademikSuccessPage extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 8),
 
       decoration: BoxDecoration(
-        color: _purpleBackground,
+        color: _infoBackground,
         borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: _purpleBorder, width: 0.7),
+
+        border: Border.all(color: _infoBorder, width: 0.7),
       ),
 
       child: Row(
@@ -321,6 +335,7 @@ class AkademikSuccessPage extends StatelessWidget {
                   'Tanggal Antrian:',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
+
                   style: TextStyle(color: Color(0xFF333333), fontSize: 7),
                 ),
 
@@ -330,6 +345,7 @@ class AkademikSuccessPage extends StatelessWidget {
                   _dateLabel,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
+
                   style: const TextStyle(
                     color: Color(0xFF315D9D),
                     fontSize: 7.5,
@@ -346,18 +362,19 @@ class AkademikSuccessPage extends StatelessWidget {
   }
 
   // =========================================================
-  // KODE TIKET
+  // KODE TIKET DAN TOMBOL SALIN
   // =========================================================
 
-  Widget _buildTicketCodeCard() {
+  Widget _buildTicketCodeCard(BuildContext context) {
     return Container(
       height: 48,
       padding: const EdgeInsets.symmetric(horizontal: 8),
 
       decoration: BoxDecoration(
-        color: _purpleBackground,
+        color: _infoBackground,
         borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: _purpleBorder, width: 0.7),
+
+        border: Border.all(color: _infoBorder, width: 0.7),
       ),
 
       child: Row(
@@ -377,20 +394,47 @@ class AkademikSuccessPage extends StatelessWidget {
               children: [
                 const Text(
                   'Kode Tiket:',
+
                   style: TextStyle(color: Color(0xFF333333), fontSize: 7),
                 ),
 
-                const SizedBox(height: 2),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        ticket.requestNumber.toUpperCase(),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
 
-                Text(
-                  ticket.requestNumber.toUpperCase(),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Color(0xFF315D9D),
-                    fontSize: 8,
-                    fontWeight: FontWeight.w500,
-                  ),
+                        style: const TextStyle(
+                          color: Color(0xFF315D9D),
+                          fontSize: 8,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+
+                    SizedBox(
+                      width: 24,
+                      height: 24,
+
+                      child: IconButton(
+                        tooltip: 'Salin kode tiket',
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+
+                        icon: const Icon(
+                          Icons.copy_rounded,
+                          size: 14,
+                          color: Color(0xFF315D9D),
+                        ),
+
+                        onPressed: () {
+                          _copyTicket(context);
+                        },
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -398,6 +442,38 @@ class AkademikSuccessPage extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  Future<void> _copyTicket(BuildContext context) async {
+    try {
+      await Clipboard.setData(ClipboardData(text: ticket.requestNumber));
+
+      if (!context.mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          const SnackBar(
+            content: Text('Kode tiket berhasil disalin.'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+    } catch (_) {
+      if (!context.mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          const SnackBar(
+            content: Text('Kode tiket belum berhasil disalin.'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+    }
   }
 
   // =========================================================
@@ -412,6 +488,7 @@ class AkademikSuccessPage extends StatelessWidget {
       decoration: BoxDecoration(
         color: _summaryBackground,
         borderRadius: BorderRadius.circular(5),
+
         border: Border.all(color: const Color(0xFF9A9A9A), width: 0.7),
       ),
 
@@ -422,6 +499,7 @@ class AkademikSuccessPage extends StatelessWidget {
               SizedBox(
                 width: 23,
                 height: 23,
+
                 child: Image.asset(
                   'assets/images/berkas.png',
                   fit: BoxFit.contain,
@@ -432,6 +510,7 @@ class AkademikSuccessPage extends StatelessWidget {
 
               const Text(
                 'Ringkasan Tiket',
+
                 style: TextStyle(
                   color: Color(0xFF315D9D),
                   fontSize: 11.5,
@@ -526,7 +605,9 @@ class AkademikSuccessPage extends StatelessWidget {
           const SizedBox(height: 10),
 
           const Text(
-            'Jam pilihan merupakan perkiraan; giliran mengikuti petugas.',
+            'Jam pilihan merupakan perkiraan; '
+            'giliran mengikuti pemanggilan petugas.',
+
             style: TextStyle(
               color: Color(0xFF666666),
               fontSize: 8,
@@ -561,8 +642,10 @@ class AkademikSuccessPage extends StatelessWidget {
 
         SizedBox(
           width: 76,
+
           child: Text(
             label,
+
             style: const TextStyle(
               color: Color(0xFF303030),
               fontSize: 8.3,
@@ -595,42 +678,41 @@ class AkademikSuccessPage extends StatelessWidget {
   }
 
   // =========================================================
-  // INFORMASI CEK STATUS
+  // INFORMASI CEK STATUS — TANDA SERU PNG
   // =========================================================
 
   Widget _buildStatusInformation() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 9),
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
 
       decoration: BoxDecoration(
-        color: _purpleBackground,
+        color: _infoBackground,
         borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: _purpleBorder, width: 0.7),
+
+        border: Border.all(color: _infoBorder, width: 0.7),
       ),
 
-      child: const Row(
+      child: Row(
         children: [
-          CircleAvatar(
-            radius: 13,
-            backgroundColor: _darkBlue,
-            child: Icon(
-              Icons.priority_high_rounded,
-              color: Colors.white,
-              size: 20,
-            ),
+          SizedBox(
+            width: 31,
+            height: 31,
+
+            child: Image.asset('assets/images/seru.png', fit: BoxFit.contain),
           ),
 
-          SizedBox(width: 10),
+          const SizedBox(width: 10),
 
-          Expanded(
+          const Expanded(
             child: Text(
-              'Gunakan kode tiket untuk mengecek status\n'
-              'antrian di Cek Status.',
+              'Simpan kode tiket untuk memeriksa status antrean.\n'
+              'Pantau Cek Status dan perhatikan pemanggilan petugas.',
+
               style: TextStyle(
-                color: Color(0xFF222222),
-                fontSize: 8,
-                height: 1.25,
+                color: Color(0xFF303030),
+                fontSize: 9,
+                height: 1.35,
               ),
             ),
           ),
@@ -640,7 +722,7 @@ class AkademikSuccessPage extends StatelessWidget {
   }
 
   // =========================================================
-  // INFORMASI NOTIFIKASI HP
+  // INFORMASI EMAIL
   // =========================================================
 
   Widget _buildEmailNotification() {
@@ -648,19 +730,17 @@ class AkademikSuccessPage extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
 
       decoration: BoxDecoration(
-        color: _purpleBackground,
+        color: _infoBackground,
         borderRadius: BorderRadius.circular(6),
 
-        border: Border.all(color: _purpleBorder, width: 0.7),
+        border: Border.all(color: _infoBorder, width: 0.7),
       ),
 
       child: Row(
         children: [
-          // IKON EMAIL
           Container(
             width: 28,
             height: 28,
@@ -679,13 +759,12 @@ class AkademikSuccessPage extends StatelessWidget {
 
           const SizedBox(width: 9),
 
-          // INFORMASI HASIL PENGIRIMAN
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  emailSent ? 'Notifikasi Terkirim' : 'Notifikasi Email',
+                  emailSent ? 'Notifikasi Email Terkirim' : 'Notifikasi Email',
 
                   style: const TextStyle(
                     color: Color(0xFF222222),
@@ -701,10 +780,10 @@ class AkademikSuccessPage extends StatelessWidget {
                     children: [
                       TextSpan(
                         text: emailSent
-                            ? 'Detail tiket dan nomor antrian '
+                            ? 'Informasi tiket antrean Akademik '
                                   'telah dikirim ke\n'
-                            : 'Tiket berhasil dibuat. Email '
-                                  'konfirmasi belum terkirim ke\n',
+                            : 'Tiket berhasil dibuat. Konfirmasi '
+                                  'pengiriman email belum tersedia.\n',
 
                         style: const TextStyle(
                           color: Color(0xFF555555),
@@ -714,7 +793,7 @@ class AkademikSuccessPage extends StatelessWidget {
                       ),
 
                       TextSpan(
-                        text: email,
+                        text: email.trim().isEmpty ? '-' : email,
 
                         style: const TextStyle(
                           color: Color(0xFF2AA545),
@@ -734,7 +813,6 @@ class AkademikSuccessPage extends StatelessWidget {
 
           const SizedBox(width: 5),
 
-          // INDIKATOR EMAIL
           Container(
             width: 20,
             height: 20,
@@ -775,71 +853,76 @@ class AkademikSuccessPage extends StatelessWidget {
   // =========================================================
 
   Widget _buildBottomButtons(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        SizedBox(
-          width: 125,
-          height: 38,
+    return SizedBox(
+      width: double.infinity,
 
-          child: ElevatedButton(
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute<void>(
-                  builder: (_) {
-                    return CekStatusPage(initialKeyword: ticket.requestNumber);
-                  },
-                ),
-              );
-            },
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Flexible(
+            child: _button(
+              label: 'Cek Status',
+              width: 125,
+              color: _buttonBlue,
 
-            style: ElevatedButton.styleFrom(
-              backgroundColor: _buttonPurple,
-              foregroundColor: Colors.white,
-              elevation: 0,
-              padding: EdgeInsets.zero,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(5),
-              ),
-            ),
-
-            child: const Text(
-              'Cek Status',
-              style: TextStyle(fontSize: 8.5, fontWeight: FontWeight.w400),
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) =>
+                        CekStatusPage(initialKeyword: ticket.requestNumber),
+                  ),
+                );
+              },
             ),
           ),
-        ),
 
-        const SizedBox(width: 31),
+          const SizedBox(width: 16),
 
-        SizedBox(
-          width: 137,
-          height: 38,
+          Flexible(
+            child: _button(
+              label: 'Kembali ke Beranda',
+              width: 137,
+              color: _buttonGreen,
 
-          child: ElevatedButton(
-            onPressed: () {
-              Navigator.of(
-                context,
-              ).popUntil((Route<dynamic> route) => route.isFirst);
-            },
-
-            style: ElevatedButton.styleFrom(
-              backgroundColor: _buttonGreen,
-              foregroundColor: Colors.white,
-              elevation: 0,
-              padding: EdgeInsets.zero,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(5),
-              ),
-            ),
-
-            child: const Text(
-              'Kembali ke Beranda',
-              style: TextStyle(fontSize: 8.5, fontWeight: FontWeight.w400),
+              onPressed: () {
+                Navigator.of(context).popUntil((route) => route.isFirst);
+              },
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _button({
+    required String label,
+    required double width,
+    required Color color,
+    required VoidCallback onPressed,
+  }) {
+    return SizedBox(
+      width: width,
+      height: 38,
+
+      child: ElevatedButton(
+        onPressed: onPressed,
+
+        style: ElevatedButton.styleFrom(
+          backgroundColor: color,
+          foregroundColor: Colors.white,
+          elevation: 0,
+          padding: EdgeInsets.zero,
+
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
         ),
-      ],
+
+        child: Text(
+          label,
+          textAlign: TextAlign.center,
+
+          style: const TextStyle(fontSize: 8.5, fontWeight: FontWeight.w400),
+        ),
+      ),
     );
   }
 }
