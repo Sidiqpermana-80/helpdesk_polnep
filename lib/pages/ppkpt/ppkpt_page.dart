@@ -815,7 +815,7 @@ class _PpkptPageState extends State<PpkptPage> {
             onPressed: _busy ? null : _submit,
 
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF8C99F2),
+              backgroundColor: const Color(0xFF5868FF),
               disabledBackgroundColor: const Color(0xFFADB5F5),
               foregroundColor: Colors.white,
               elevation: 0,
