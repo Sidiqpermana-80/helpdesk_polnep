@@ -1,7 +1,8 @@
 class ApiConfig {
   ApiConfig._();
 
-  static const String baseUrl = 'http://192.168.201.169:8000/api';
+  static const String baseUrl =
+      'https://emporium-sloppily-undated.ngrok-free.dev/api';
 
   static String get units => '$baseUrl/units';
 

@@ -112,7 +112,7 @@ class AkademikSuccessPage extends StatelessWidget {
                 const SizedBox(height: 6),
 
                 const Text(
-                  'Home / Antrian Tiket / Akademik',
+                  'Home / Antrean Tiket / Akademik',
 
                   style: TextStyle(
                     color: Color(0xFF168DE2),
@@ -147,7 +147,6 @@ class AkademikSuccessPage extends StatelessWidget {
 
                   child: Column(
                     children: [
-                      // Lingkaran nomor antrean dipertahankan.
                       _buildQueueNumber(),
 
                       const SizedBox(height: 11),
@@ -286,7 +285,7 @@ class AkademikSuccessPage extends StatelessWidget {
           const SizedBox(height: 5),
 
           const Text(
-            'Nomor Antrian Anda',
+            'Nomor Antrean Anda',
             textAlign: TextAlign.center,
 
             style: TextStyle(
@@ -332,7 +331,7 @@ class AkademikSuccessPage extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  'Tanggal Antrian:',
+                  'Tanggal Antrean:',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
 
@@ -597,7 +596,7 @@ class AkademikSuccessPage extends StatelessWidget {
 
           _summaryRow(
             icon: Icons.fact_check_outlined,
-            label: 'Status Antrian',
+            label: 'Status Antrean',
             value: ticket.statusLabel,
             iconColor: const Color(0xFF168DE2),
           ),

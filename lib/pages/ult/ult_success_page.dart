@@ -146,7 +146,7 @@ class UltSuccessPage extends StatelessWidget {
                 const SizedBox(height: 6),
 
                 const Text(
-                  'Home / Antrian Tiket / ULT',
+                  'Home / Antrean Tiket / ULT',
 
                   style: TextStyle(
                     color: Color(0xFF168DE2),
@@ -321,7 +321,7 @@ class UltSuccessPage extends StatelessWidget {
           const SizedBox(height: 5),
 
           const Text(
-            'Nomor Antrian Anda',
+            'Nomor Antrean Anda',
             textAlign: TextAlign.center,
 
             style: TextStyle(
@@ -367,7 +367,7 @@ class UltSuccessPage extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  'Tanggal Antrian:',
+                  'Tanggal Antrean:',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
 
@@ -628,7 +628,7 @@ class UltSuccessPage extends StatelessWidget {
 
           _summaryRow(
             icon: Icons.event_available_rounded,
-            label: 'Jenis Antrian',
+            label: 'Jenis Antrean',
             value: _queueTypeDisplay,
             iconColor: const Color(0xFF168DE2),
           ),

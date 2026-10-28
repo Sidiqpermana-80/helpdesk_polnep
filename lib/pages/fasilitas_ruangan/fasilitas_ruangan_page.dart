@@ -920,8 +920,9 @@ class _FasilitasRuanganPageState extends State<FasilitasRuanganPage> {
 
                                 const Expanded(
                                   child: Text(
-                                    'Pastikan Data yang Anda isi sudah benar.\n'
-                                    'Tim Helpdesk akan menindaklanjuti laporan Anda.',
+                                    'Pastikan data yang Anda isi sudah benar.\n'
+                                    'Jelaskan kendala secara rinci agar petugas dapat '
+                                    'menindaklanjuti laporan Anda.',
 
                                     style: TextStyle(
                                       color: Color(0xFF303030),

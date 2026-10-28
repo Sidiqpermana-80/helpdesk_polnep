@@ -167,7 +167,7 @@ class _UltQueueTimeFieldState extends State<UltQueueTimeField> {
           category != widget.category.trim().toLowerCase()) {
         _message(
           'Tanggal atau kategori berubah. '
-          'Silakan pilih ulang jam antrian.',
+          'Silakan pilih ulang jam antrean.',
         );
         return;
       }
@@ -223,7 +223,7 @@ class _UltQueueTimeFieldState extends State<UltQueueTimeField> {
                     child: Text(
                       minute != null
                           ? '${UltQueueSchedule.formatMinute(minute)} WIB'
-                          : 'Pilih jam antrian',
+                          : 'Pilih jam antrean',
                       style: TextStyle(
                         color: minute != null
                             ? const Color(0xFF202020)
@@ -375,7 +375,7 @@ class _UltSlotPickerState extends State<_UltSlotPicker>
           _failed
               ? 'Tidak dapat mengambil jadwal. '
                     'Periksa koneksi ke server.'
-              : 'Memuat jam antrian…',
+              : 'Memuat jam antrean…',
           textAlign: TextAlign.center,
         ),
       );
@@ -405,7 +405,7 @@ class _UltSlotPickerState extends State<_UltSlotPicker>
         child: Padding(
           padding: EdgeInsets.all(20),
           child: Text(
-            'Tidak ada jam antrian yang tersisa pada tanggal ini. '
+            'Tidak ada jam antrean yang tersisa pada tanggal ini. '
             'Silakan pilih tanggal layanan berikutnya.',
             textAlign: TextAlign.center,
           ),
@@ -486,7 +486,7 @@ class _UltSlotPickerState extends State<_UltSlotPicker>
               children: [
                 const Expanded(
                   child: Text(
-                    'Pilih Jam Antrian',
+                    'Pilih Jam Antrean',
                     style: TextStyle(
                       color: Color(0xFF202020),
                       fontSize: 17,
@@ -512,7 +512,7 @@ class _UltSlotPickerState extends State<_UltSlotPicker>
           const Padding(
             padding: EdgeInsets.fromLTRB(16, 0, 16, 12),
             child: Text(
-              'Estimasi 5 menit per antrian. '
+              'Estimasi 5 menit per antrean. '
               'Istirahat 12.00–13.00 WIB. '
               'Jam bertanda Dipesan sudah digunakan '
               'pada tanggal dan kategori yang sama.',

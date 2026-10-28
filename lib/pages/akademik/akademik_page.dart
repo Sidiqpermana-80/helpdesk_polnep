@@ -182,7 +182,7 @@ class _AkademikPageState extends State<AkademikPage> {
         lastDate: last,
         selectableDayPredicate: calendar.isOpen,
         initialEntryMode: DatePickerEntryMode.calendar,
-        helpText: 'Pilih Tanggal Antrian',
+        helpText: 'Pilih Tanggal Antrean',
         cancelText: 'Batal',
         confirmText: 'Pilih',
       );
@@ -284,7 +284,7 @@ class _AkademikPageState extends State<AkademikPage> {
     final minute = _selectedQueueMinute;
 
     if (minute == null || !AkademikQueueSchedule.isSelectable(date, minute)) {
-      _message('Silakan pilih tanggal dan jam antrian yang belum lewat.');
+      _message('Silakan pilih tanggal dan jam antrean yang belum lewat.');
       return;
     }
 
@@ -577,8 +577,8 @@ class _AkademikPageState extends State<AkademikPage> {
           SizedBox(width: 9),
           Expanded(
             child: Text(
-              'Tekan kalender untuk memilih tanggal kedatangan. '
-              'Sabtu, Minggu, dan libur nasional tidak melayani antrian.',
+              'Layanan di buka pada jam kerja di hari Senin-Jumat. '
+              'Sabtu, Minggu, dan libur nasional tidak melayani antrean.',
               style: TextStyle(
                 color: Color(0xFF303030),
                 fontSize: 9.5,
@@ -738,7 +738,7 @@ class _AkademikPageState extends State<AkademikPage> {
                                 'Isi form dibawah\n'
                                 'untuk\n'
                                 'mendapatkan\n'
-                                'nomor antrian tiket',
+                                'nomor antrean tiket',
                                 style: TextStyle(
                                   color: Color(0xFF111111),
                                   fontSize: 20.5,
@@ -786,10 +786,10 @@ class _AkademikPageState extends State<AkademikPage> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _field('Tanggal Antrian', _dateField()),
+                            _field('Tanggal Antrean', _dateField()),
 
                             _field(
-                              'Jam Antrian',
+                              'Jam Antrean',
                               AkademikQueueTimeField(
                                 key: ValueKey(
                                   akademikDateKey(_selectedQueueDate),

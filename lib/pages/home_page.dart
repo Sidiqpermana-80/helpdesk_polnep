@@ -298,7 +298,7 @@ class _HomePageState extends State<HomePage> {
                   child: Padding(
                     padding: EdgeInsets.only(top: 18),
                     child: Text(
-                      'Aplikasi untuk merespons permintaan '
+                      'Aplikasi untuk mengambil antrian '
                       'dan keluhan terhadap layanan di Politeknik Negeri '
                       'Pontianak.',
                       style: TextStyle(

@@ -60,7 +60,7 @@ class LayananAntrianPage extends StatelessWidget {
         titleSpacing: 0,
 
         title: const Text(
-          'Antrian Tiket',
+          'Antrean Tiket',
 
           style: TextStyle(
             color: _ink,

@@ -148,7 +148,7 @@ class _AkademikQueueTimeFieldState extends State<AkademikQueueTimeField> {
       if (!mounted || selected == null || !widget.enabled) return;
 
       if (!DateUtils.isSameDay(date, widget.date)) {
-        _message('Tanggal berubah. Silakan pilih ulang jam antrian.');
+        _message('Tanggal berubah. Silakan pilih ulang jam antrean.');
         return;
       }
 
@@ -196,7 +196,7 @@ class _AkademikQueueTimeFieldState extends State<AkademikQueueTimeField> {
                     child: Text(
                       minute != null
                           ? '${AkademikQueueSchedule.formatMinute(minute)} WIB'
-                          : 'Pilih jam antrian',
+                          : 'Pilih jam antrean',
                       style: TextStyle(
                         color: minute != null
                             ? const Color(0xFF202020)
@@ -218,8 +218,7 @@ class _AkademikQueueTimeFieldState extends State<AkademikQueueTimeField> {
         const SizedBox(height: 6),
         const Text(
           'Jam layanan 08.00–16.00 WIB. '
-          'Istirahat 12.00–13.00 WIB. '
-          'Jam abu-abu tidak dapat dipilih.',
+          'Istirahat 12.00–13.00 WIB. ',
           style: TextStyle(
             color: Color(0xFF666666),
             fontSize: 9.5,
@@ -323,7 +322,7 @@ class _AkademikSlotPickerState extends State<_AkademikSlotPicker>
             _failed
                 ? 'Tidak dapat mengambil jadwal Akademik. '
                       'Periksa koneksi dan ketersediaan API.'
-                : 'Memuat jam antrian...',
+                : 'Memuat jam antrean...',
             textAlign: TextAlign.center,
           ),
         ),
@@ -351,7 +350,7 @@ class _AkademikSlotPickerState extends State<_AkademikSlotPicker>
         child: Padding(
           padding: EdgeInsets.all(20),
           child: Text(
-            'Tidak ada jam antrian yang tersisa pada tanggal ini. '
+            'Tidak ada jam antrean yang tersisa pada tanggal ini. '
             'Silakan pilih tanggal layanan berikutnya.',
             textAlign: TextAlign.center,
           ),
@@ -429,7 +428,7 @@ class _AkademikSlotPickerState extends State<_AkademikSlotPicker>
               children: [
                 const Expanded(
                   child: Text(
-                    'Pilih Jam Antrian',
+                    'Pilih Jam Antrean',
                     style: TextStyle(
                       color: Color(0xFF202020),
                       fontSize: 17,
@@ -453,7 +452,7 @@ class _AkademikSlotPickerState extends State<_AkademikSlotPicker>
           const Padding(
             padding: EdgeInsets.fromLTRB(16, 0, 16, 12),
             child: Text(
-              'Estimasi 5 menit per antrian. '
+              'Estimasi 5 menit per antrean. '
               'Istirahat 12.00–13.00 WIB. '
               'Jam bertanda Dipesan sudah digunakan '
               'pada tanggal yang sama di layanan Akademik.',

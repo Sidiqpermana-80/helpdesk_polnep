@@ -120,9 +120,6 @@ class _UltPageState extends State<UltPage> {
     return notification;
   }
 
-  // Mengikuti aturan layanan sebelumnya:
-  // layanan mahasiswa dengan pemberitahuan admin
-  // tidak dapat mengambil antrean hari ini.
   bool get _isDirectQueueDisabled {
     return _selectedCategory == 'Mahasiswa' &&
         _selectedStudentServiceNotification != null;
@@ -471,7 +468,7 @@ class _UltPageState extends State<UltPage> {
                               'Isi form dibawah\n'
                               'untuk\n'
                               'mendapatkan\n'
-                              'nomor antrian tiket',
+                              'nomor antrean tiket',
                               style: TextStyle(
                                 color: Color(0xFF111111),
                                 fontSize: 20.5,
@@ -563,13 +560,13 @@ class _UltPageState extends State<UltPage> {
                             const SizedBox(height: 12),
 
                             // TANGGAL ANTRIAN
-                            _fieldTitle('Tanggal Antrian'),
+                            _fieldTitle('Tanggal Antrean'),
                             _queueDateField(),
 
                             const SizedBox(height: 13),
 
                             // JAM ANTRIAN
-                            _fieldTitle('Jam Antrian'),
+                            _fieldTitle('Jam Antrean'),
                             UltQueueTimeField(
                               key: ValueKey(
                                 '${ultDateKey(_selectedQueueDate)}_$_selectedCategory',
@@ -965,7 +962,7 @@ class _UltPageState extends State<UltPage> {
                                         if (dateAdjusted) {
                                           _showMessage(
                                             'Layanan ini tidak tersedia hari ini. '
-                                            'Tanggal antrian disesuaikan ke besok; '
+                                            'Tanggal antrean disesuaikan ke besok; '
                                             'Anda dapat memilih tanggal lain di kalender.',
                                           );
                                         }
@@ -1498,7 +1495,7 @@ class _UltPageState extends State<UltPage> {
         lastDate: lastDate,
         selectableDayPredicate: calendar.isOpen,
         initialEntryMode: DatePickerEntryMode.calendar,
-        helpText: 'Pilih Tanggal Antrian',
+        helpText: 'Pilih Tanggal Antrean',
         cancelText: 'Batal',
         confirmText: 'Pilih',
       );
@@ -1648,7 +1645,7 @@ class _UltPageState extends State<UltPage> {
 
     if (queueDate.isBefore(today)) {
       _showMessage(
-        'Tanggal antrian sudah lewat. '
+        'Tanggal antrean sudah lewat. '
         'Silakan pilih ulang di kalender.',
       );
 
@@ -1657,7 +1654,7 @@ class _UltPageState extends State<UltPage> {
 
     if (queueDate.isAfter(DateTime(today.year + 1, 12, 31))) {
       _showMessage(
-        'Tanggal antrian melewati batas kalender. '
+        'Tanggal antrean melewati batas kalender. '
         'Silakan pilih ulang.',
       );
 
@@ -1680,14 +1677,14 @@ class _UltPageState extends State<UltPage> {
     final int? queueMinute = _selectedQueueMinute;
 
     if (queueMinute == null) {
-      _showMessage('Silakan pilih jam antrian.');
+      _showMessage('Silakan pilih jam antrean.');
 
       return;
     }
 
     if (!UltQueueSchedule.isSelectable(queueDate, queueMinute)) {
       _showMessage(
-        'Jam antrian sudah lewat atau di luar jam layanan. '
+        'Jam antrean sudah lewat atau di luar jam layanan. '
         'Silakan pilih ulang tanggal dan jam.',
       );
 
@@ -1719,8 +1716,8 @@ class _UltPageState extends State<UltPage> {
       // Periksa kembali agar jam yang lewat tidak terkirim.
       if (!UltQueueSchedule.isSelectable(queueDate, queueMinute)) {
         _showMessage(
-          'Jam antrian sudah lewat. '
-          'Silakan pilih ulang jam antrian.',
+          'Jam antrean sudah lewat. '
+          'Silakan pilih ulang jam antrean.',
         );
 
         return;
@@ -1956,7 +1953,7 @@ class _UltPageState extends State<UltPage> {
       }
 
       final String message =
-          jsonResponse['message']?.toString() ?? 'Tiket antrian gagal dibuat.';
+          jsonResponse['message']?.toString() ?? 'Tiket antrean gagal dibuat.';
 
       _showMessage(message);
     } catch (e, stackTrace) {
