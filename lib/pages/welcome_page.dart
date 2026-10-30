@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-
 import 'home_page.dart';
 
 class WelcomePage extends StatelessWidget {
@@ -25,7 +24,6 @@ class WelcomePage extends StatelessWidget {
             child: Column(
               children: [
                 SizedBox(height: screenSize.height * 0.14),
-
                 Image.asset(
                   'assets/images/logopolnep-BESAR.png',
                   width: screenSize.width * 0.44,
@@ -34,7 +32,6 @@ class WelcomePage extends StatelessWidget {
 
                 const Spacer(),
 
-                // Tombol lanjutkan.
                 ContinueButton(
                   onPressed: () {
                     Navigator.of(context).pushReplacement(

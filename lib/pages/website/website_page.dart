@@ -1,9 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-
 import '../../config/api_config.dart';
 import 'website_form_page.dart';
 
@@ -28,10 +26,6 @@ class _WebsitePageState extends State<WebsitePage> {
 
     _loadWebsites();
   }
-
-  // =========================================================
-  // MEMUAT DAFTAR WEBSITE
-  // =========================================================
 
   Future<void> _loadWebsites() async {
     if (mounted) {
@@ -108,10 +102,6 @@ class _WebsitePageState extends State<WebsitePage> {
     }
   }
 
-  // =========================================================
-  // HALAMAN
-  // =========================================================
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -129,7 +119,6 @@ class _WebsitePageState extends State<WebsitePage> {
           ),
           child: Column(
             children: [
-              // HEADER
               Padding(
                 padding: const EdgeInsets.fromLTRB(18, 15, 18, 5),
                 child: Column(
@@ -164,7 +153,6 @@ class _WebsitePageState extends State<WebsitePage> {
 
                     const SizedBox(height: 21),
 
-                    // TEKS DAN GAMBAR
                     SizedBox(
                       width: double.infinity,
                       height: 112,
@@ -220,7 +208,6 @@ class _WebsitePageState extends State<WebsitePage> {
                 ),
               ),
 
-              // DAFTAR WEBSITE
               Expanded(child: _buildWebsiteContent()),
             ],
           ),
@@ -228,10 +215,6 @@ class _WebsitePageState extends State<WebsitePage> {
       ),
     );
   }
-
-  // =========================================================
-  // ISI DAFTAR WEBSITE
-  // =========================================================
 
   Widget _buildWebsiteContent() {
     if (_isLoadingWebsites) {
@@ -243,7 +226,6 @@ class _WebsitePageState extends State<WebsitePage> {
       );
     }
 
-    // GAGAL MEMUAT DATA
     if (_hasWebsiteLoadError) {
       return Center(
         child: Padding(
@@ -312,7 +294,6 @@ class _WebsitePageState extends State<WebsitePage> {
       );
     }
 
-    // DATA KOSONG
     if (_websites.isEmpty) {
       return const Center(
         child: Padding(
@@ -333,7 +314,6 @@ class _WebsitePageState extends State<WebsitePage> {
       );
     }
 
-    // LIST WEBSITE
     return RefreshIndicator(
       onRefresh: _loadWebsites,
       child: ListView.separated(
@@ -368,10 +348,6 @@ class _WebsitePageState extends State<WebsitePage> {
       ),
     );
   }
-
-  // =========================================================
-  // ITEM WEBSITE
-  // =========================================================
 
   Widget _buildWebsiteItem({
     required String website,

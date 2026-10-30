@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-
 import '../cek_status/cek_status_page.dart';
 
 class WebsiteSuccessPage extends StatelessWidget {
@@ -26,6 +25,7 @@ class WebsiteSuccessPage extends StatelessWidget {
   final String identifierValue;
   final String websiteName;
   final String issueType;
+
   final DateTime submittedAt;
 
   final String issueLabel;
@@ -37,13 +37,10 @@ class WebsiteSuccessPage extends StatelessWidget {
 
   final bool emailSent;
 
-  // Mengikuti warna halaman sukses Wi-Fi.
   static const Color _green = Color(0xFF2EAA42);
   static const Color _darkBlue = Color(0xFF075DBD);
-
   static const Color _infoBackground = Color(0xFFF0F7FF);
   static const Color _infoBorder = Color(0xFF9D8EE7);
-
   static const Color _summaryBackground = Color(0xFFD8D8D8);
   static const Color _buttonBlue = Color(0xFF5868FF);
   static const Color _buttonGreen = Color(0xFF59C467);
@@ -98,7 +95,6 @@ class WebsiteSuccessPage extends StatelessWidget {
 
   String get _successSubtitle {
     return 'Laporan kendala website berhasil dikirim.\n'
-        'Tim Helpdesk akan menindaklanjuti laporan Anda.\n'
         'Pantau perkembangannya melalui Cek Status.';
   }
 
@@ -145,7 +141,6 @@ class WebsiteSuccessPage extends StatelessWidget {
                 ),
                 const SizedBox(height: 10),
 
-                // KARTU UTAMA
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.fromLTRB(8, 15, 8, 10),
@@ -169,7 +164,7 @@ class WebsiteSuccessPage extends StatelessWidget {
                       _buildSuccessIcon(),
                       const SizedBox(height: 11),
                       const Text(
-                        'Pengajuan Berhasil Dikirim',
+                        'Pengaduan Berhasil Dikirim',
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           color: Color(0xFF202020),
@@ -189,7 +184,6 @@ class WebsiteSuccessPage extends StatelessWidget {
                       ),
                       const SizedBox(height: 12),
 
-                      // TANGGAL DAN KODE TIKET
                       Row(
                         children: [
                           Expanded(child: _buildSubmissionDateCard()),
@@ -220,10 +214,6 @@ class WebsiteSuccessPage extends StatelessWidget {
     );
   }
 
-  // =========================================================
-  // HEADER
-  // =========================================================
-
   Widget _buildHeader(BuildContext context) {
     return Row(
       children: [
@@ -242,7 +232,7 @@ class WebsiteSuccessPage extends StatelessWidget {
         ),
         const SizedBox(width: 11),
         const Text(
-          'Pengajuan Berhasil',
+          'Pengaduan Berhasil',
           style: TextStyle(
             color: Color(0xFF111111),
             fontSize: 16,
@@ -252,10 +242,6 @@ class WebsiteSuccessPage extends StatelessWidget {
       ],
     );
   }
-
-  // =========================================================
-  // IKON BERHASIL
-  // =========================================================
 
   Widget _buildSuccessIcon() {
     return Container(
@@ -269,10 +255,6 @@ class WebsiteSuccessPage extends StatelessWidget {
       child: const Icon(Icons.check_rounded, color: _green, size: 58),
     );
   }
-
-  // =========================================================
-  // TANGGAL PENGAJUAN
-  // =========================================================
 
   Widget _buildSubmissionDateCard() {
     return Container(
@@ -297,7 +279,7 @@ class WebsiteSuccessPage extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  'Tanggal Pengajuan:',
+                  'Tanggal Pengaduan:',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(color: Color(0xFF333333), fontSize: 7),
@@ -321,10 +303,6 @@ class WebsiteSuccessPage extends StatelessWidget {
       ),
     );
   }
-
-  // =========================================================
-  // KODE TIKET DAN TOMBOL SALIN
-  // =========================================================
 
   Widget _buildTicketCodeCard(BuildContext context) {
     return Container(
@@ -425,10 +403,6 @@ class WebsiteSuccessPage extends StatelessWidget {
     }
   }
 
-  // =========================================================
-  // RINGKASAN PENGAJUAN
-  // =========================================================
-
   Widget _buildSummaryCard() {
     final rows = <Widget>[
       _summaryRow(
@@ -484,7 +458,7 @@ class WebsiteSuccessPage extends StatelessWidget {
       ),
       _summaryRow(
         icon: Icons.fact_check_outlined,
-        label: 'Status Pengajuan',
+        label: 'Status Pengaduan',
         value: _statusLabel,
         iconColor: const Color(0xFF168DE2),
       ),
@@ -525,7 +499,7 @@ class WebsiteSuccessPage extends StatelessWidget {
               ),
               const SizedBox(width: 7),
               const Text(
-                'Ringkasan Pengajuan',
+                'Ringkasan Pengaduan',
                 style: TextStyle(
                   color: Color(0xFF315D9D),
                   fontSize: 11.5,
@@ -589,10 +563,6 @@ class WebsiteSuccessPage extends StatelessWidget {
     );
   }
 
-  // =========================================================
-  // INFORMASI CEK STATUS
-  // =========================================================
-
   Widget _buildStatusInformation() {
     return Container(
       width: double.infinity,
@@ -617,7 +587,7 @@ class WebsiteSuccessPage extends StatelessWidget {
           Expanded(
             child: Text(
               'Gunakan kode tiket untuk mengecek status\n'
-              'pengajuan di Cek Status.',
+              'pengaduan di Cek Status.',
               style: TextStyle(
                 color: Color(0xFF222222),
                 fontSize: 8,
@@ -629,10 +599,6 @@ class WebsiteSuccessPage extends StatelessWidget {
       ),
     );
   }
-
-  // =========================================================
-  // INFORMASI EMAIL
-  // =========================================================
 
   Widget _buildEmailNotification() {
     return Container(
@@ -677,7 +643,7 @@ class WebsiteSuccessPage extends StatelessWidget {
                     children: [
                       TextSpan(
                         text: emailSent
-                            ? 'Informasi tiket pengajuan telah dikirim ke\n'
+                            ? 'Informasi tiket pengaduan telah dikirim ke\n'
                             : 'Konfirmasi pengiriman email belum tersedia.\n',
                         style: const TextStyle(
                           color: Color(0xFF555555),
@@ -729,10 +695,6 @@ class WebsiteSuccessPage extends StatelessWidget {
       ),
     );
   }
-
-  // =========================================================
-  // TOMBOL BAWAH
-  // =========================================================
 
   Widget _buildBottomButtons(BuildContext context) {
     return SizedBox(

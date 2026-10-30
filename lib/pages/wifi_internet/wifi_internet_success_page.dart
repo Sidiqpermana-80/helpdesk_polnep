@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-
 import '../cek_status/cek_status_page.dart';
 
 class WifiInternetSuccessPage extends StatelessWidget {
@@ -41,14 +40,10 @@ class WifiInternetSuccessPage extends StatelessWidget {
 
   final bool emailSent;
 
-  // WARNA
   static const Color _green = Color(0xFF2EAA42);
   static const Color _darkBlue = Color(0xFF075DBD);
-
-  // Mengikuti kotak informasi pada form Wi-Fi.
   static const Color _infoBackground = Color(0xFFF0F7FF);
   static const Color _infoBorder = Color(0xFF9D8EE7);
-
   static const Color _summaryBackground = Color(0xFFD8D8D8);
   static const Color _buttonBlue = Color(0xFF5868FF);
   static const Color _buttonGreen = Color(0xFF59C467);
@@ -92,16 +87,10 @@ class WifiInternetSuccessPage extends StatelessWidget {
   String get _successSubtitle {
     return isAccess
         ? 'Permohonan akses login/Wi-Fi berhasil dikirim.\n'
-              'Tim Helpdesk akan menindaklanjuti pengajuan Anda.\n'
               'Pantau perkembangannya melalui Cek Status.'
         : 'Laporan gangguan jaringan berhasil dikirim.\n'
-              'Tim Helpdesk akan menindaklanjuti laporan Anda.\n'
               'Pantau perkembangannya melalui Cek Status.';
   }
-
-  // =========================================================
-  // HALAMAN
-  // =========================================================
 
   @override
   Widget build(BuildContext context) {
@@ -151,7 +140,6 @@ class WifiInternetSuccessPage extends StatelessWidget {
 
                 const SizedBox(height: 10),
 
-                // CARD UTAMA
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.fromLTRB(8, 15, 8, 10),
@@ -177,7 +165,7 @@ class WifiInternetSuccessPage extends StatelessWidget {
                       const SizedBox(height: 11),
 
                       const Text(
-                        'Pengajuan Berhasil Dikirim',
+                        'Pengaduan Berhasil Dikirim',
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           color: Color(0xFF202020),
@@ -200,7 +188,6 @@ class WifiInternetSuccessPage extends StatelessWidget {
 
                       const SizedBox(height: 12),
 
-                      // TANGGAL DAN KODE TIKET
                       Row(
                         children: [
                           Expanded(child: _buildSubmissionDateCard()),
@@ -235,10 +222,6 @@ class WifiInternetSuccessPage extends StatelessWidget {
     );
   }
 
-  // =========================================================
-  // HEADER
-  // =========================================================
-
   Widget _buildHeader(BuildContext context) {
     return Row(
       children: [
@@ -257,7 +240,7 @@ class WifiInternetSuccessPage extends StatelessWidget {
         ),
         const SizedBox(width: 11),
         const Text(
-          'Pengajuan Berhasil',
+          'Pengaduan Berhasil',
           style: TextStyle(
             color: Color(0xFF111111),
             fontSize: 16,
@@ -267,10 +250,6 @@ class WifiInternetSuccessPage extends StatelessWidget {
       ],
     );
   }
-
-  // =========================================================
-  // IKON BERHASIL
-  // =========================================================
 
   Widget _buildSuccessIcon() {
     return Container(
@@ -284,10 +263,6 @@ class WifiInternetSuccessPage extends StatelessWidget {
       child: const Icon(Icons.check_rounded, color: _green, size: 58),
     );
   }
-
-  // =========================================================
-  // TANGGAL PENGAJUAN
-  // =========================================================
 
   Widget _buildSubmissionDateCard() {
     return Container(
@@ -336,10 +311,6 @@ class WifiInternetSuccessPage extends StatelessWidget {
       ),
     );
   }
-
-  // =========================================================
-  // KODE TIKET DAN TOMBOL SALIN
-  // =========================================================
 
   Widget _buildTicketCodeCard(BuildContext context) {
     return Container(
@@ -440,10 +411,6 @@ class WifiInternetSuccessPage extends StatelessWidget {
     }
   }
 
-  // =========================================================
-  // RINGKASAN PENGAJUAN
-  // =========================================================
-
   Widget _buildSummaryCard() {
     final rows = <Widget>[
       _summaryRow(
@@ -514,7 +481,7 @@ class WifiInternetSuccessPage extends StatelessWidget {
 
       _summaryRow(
         icon: Icons.fact_check_outlined,
-        label: 'Status Pengajuan',
+        label: 'Status Pengaduan',
         value: _statusLabel,
         iconColor: const Color(0xFF168DE2),
       ),
@@ -556,7 +523,7 @@ class WifiInternetSuccessPage extends StatelessWidget {
               ),
               const SizedBox(width: 7),
               const Text(
-                'Ringkasan Pengajuan',
+                'Ringkasan Pengaduan',
                 style: TextStyle(
                   color: Color(0xFF315D9D),
                   fontSize: 11.5,
@@ -622,10 +589,6 @@ class WifiInternetSuccessPage extends StatelessWidget {
     );
   }
 
-  // =========================================================
-  // INFORMASI CEK STATUS
-  // =========================================================
-
   Widget _buildStatusInformation() {
     return Container(
       width: double.infinity,
@@ -650,7 +613,7 @@ class WifiInternetSuccessPage extends StatelessWidget {
           Expanded(
             child: Text(
               'Gunakan kode tiket untuk mengecek status\n'
-              'pengajuan di Cek Status.',
+              'pengaduan di Cek Status.',
               style: TextStyle(
                 color: Color(0xFF222222),
                 fontSize: 8,
@@ -662,10 +625,6 @@ class WifiInternetSuccessPage extends StatelessWidget {
       ),
     );
   }
-
-  // =========================================================
-  // INFORMASI EMAIL
-  // =========================================================
 
   Widget _buildEmailNotification() {
     return Container(
@@ -714,7 +673,7 @@ class WifiInternetSuccessPage extends StatelessWidget {
                     children: [
                       TextSpan(
                         text: emailSent
-                            ? 'Informasi tiket pengajuan telah dikirim ke\n'
+                            ? 'Informasi tiket pengaduan telah dikirim ke\n'
                             : 'Konfirmasi pengiriman email belum tersedia.\n',
                         style: const TextStyle(
                           color: Color(0xFF555555),
@@ -768,10 +727,6 @@ class WifiInternetSuccessPage extends StatelessWidget {
       ),
     );
   }
-
-  // =========================================================
-  // TOMBOL BAWAH
-  // =========================================================
 
   Widget _buildBottomButtons(BuildContext context) {
     return SizedBox(

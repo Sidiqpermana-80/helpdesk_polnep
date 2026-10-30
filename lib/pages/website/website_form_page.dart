@@ -1,14 +1,11 @@
 import 'dart:async';
 import 'dart:convert';
-
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
-
 import '../../config/api_config.dart';
 import 'website_success_page.dart';
-
 import '../../services/queue_notification_service.dart';
 import '../../services/website_device_sync_service.dart';
 
@@ -23,13 +20,9 @@ class WebsiteFormPage extends StatefulWidget {
 
 class _WebsiteFormPageState extends State<WebsiteFormPage> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-
   final TextEditingController _nameController = TextEditingController();
-
   final TextEditingController _identifierController = TextEditingController();
-
   final TextEditingController _emailController = TextEditingController();
-
   final TextEditingController _descriptionController = TextEditingController();
 
   String? _selectedIssue;
@@ -64,10 +57,6 @@ class _WebsiteFormPageState extends State<WebsiteFormPage> {
     super.dispose();
   }
 
-  // =========================================================
-  // NILAI JENIS KENDALA UNTUK API
-  // =========================================================
-
   String _apiIssueType() {
     final String issue = _selectedIssue?.trim() ?? '';
 
@@ -80,10 +69,6 @@ class _WebsiteFormPageState extends State<WebsiteFormPage> {
         .replaceAll(RegExp(r'[^a-z0-9]+'), '_')
         .replaceAll(RegExp(r'^_+|_+$'), '');
   }
-
-  // =========================================================
-  // MEMUAT JENIS KENDALA DARI ADMIN
-  // =========================================================
 
   Future<void> _loadIssueOptions() async {
     if (mounted) {
@@ -165,10 +150,6 @@ class _WebsiteFormPageState extends State<WebsiteFormPage> {
     }
   }
 
-  // =========================================================
-  // PILIH FILE PENDUKUNG
-  // =========================================================
-
   Future<void> _pickSupportFile() async {
     try {
       const XTypeGroup group = XTypeGroup(
@@ -211,10 +192,6 @@ class _WebsiteFormPageState extends State<WebsiteFormPage> {
     }
   }
 
-  // =========================================================
-  // DEKORASI FIELD
-  // =========================================================
-
   InputDecoration _decoration({String? hintText}) {
     return InputDecoration(
       hintText: hintText,
@@ -247,10 +224,6 @@ class _WebsiteFormPageState extends State<WebsiteFormPage> {
     );
   }
 
-  // =========================================================
-  // HALAMAN
-  // =========================================================
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -277,7 +250,6 @@ class _WebsiteFormPageState extends State<WebsiteFormPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // HEADER
                   Row(
                     children: [
                       IconButton(
@@ -307,7 +279,6 @@ class _WebsiteFormPageState extends State<WebsiteFormPage> {
 
                   const SizedBox(height: 30),
 
-                  // FORM CARD
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.fromLTRB(10, 11, 10, 16),
@@ -352,9 +323,7 @@ class _WebsiteFormPageState extends State<WebsiteFormPage> {
 
                           const SizedBox(height: 19),
 
-                          // NAMA
                           _title('Nama Lengkap'),
-
                           TextFormField(
                             controller: _nameController,
                             style: const TextStyle(
@@ -368,16 +337,13 @@ class _WebsiteFormPageState extends State<WebsiteFormPage> {
                               if (value == null || value.trim().isEmpty) {
                                 return 'Nama lengkap wajib diisi';
                               }
-
                               return null;
                             },
                           ),
 
                           const SizedBox(height: 13),
 
-                          // NIM / NIP
                           _title('NIM / NIP'),
-
                           TextFormField(
                             controller: _identifierController,
                             style: const TextStyle(
@@ -395,16 +361,13 @@ class _WebsiteFormPageState extends State<WebsiteFormPage> {
                               if (value == null || value.trim().isEmpty) {
                                 return 'NIM/NIP wajib diisi';
                               }
-
                               return null;
                             },
                           ),
 
                           const SizedBox(height: 13),
 
-                          // EMAIL
                           _title('Email'),
-
                           TextFormField(
                             controller: _emailController,
                             keyboardType: TextInputType.emailAddress,
@@ -427,23 +390,19 @@ class _WebsiteFormPageState extends State<WebsiteFormPage> {
                               if (!emailRegex.hasMatch(email)) {
                                 return 'Format email tidak valid';
                               }
-
                               return null;
                             },
                           ),
 
                           const SizedBox(height: 13),
 
-                          // WEBSITE TERPILIH
                           _title('Pilihan Website'),
 
                           _lockedWebsite(),
 
                           const SizedBox(height: 13),
 
-                          // JENIS KENDALA
                           _title('Jenis Kendala'),
-
                           DropdownButtonFormField<String>(
                             key: ValueKey('issue-$_formVersion'),
                             initialValue: _selectedIssue,
@@ -502,7 +461,6 @@ class _WebsiteFormPageState extends State<WebsiteFormPage> {
                               if (value == null || value.isEmpty) {
                                 return 'Jenis kendala wajib dipilih';
                               }
-
                               return null;
                             },
                           ),
@@ -535,9 +493,7 @@ class _WebsiteFormPageState extends State<WebsiteFormPage> {
 
                           const SizedBox(height: 13),
 
-                          // DESKRIPSI
                           _title('Deskripsikan Permasalahan Anda'),
-
                           SizedBox(
                             height: 115,
                             child: TextFormField(
@@ -557,7 +513,6 @@ class _WebsiteFormPageState extends State<WebsiteFormPage> {
                                 if (value == null || value.trim().isEmpty) {
                                   return 'Deskripsi permasalahan wajib diisi';
                                 }
-
                                 return null;
                               },
                             ),
@@ -565,7 +520,6 @@ class _WebsiteFormPageState extends State<WebsiteFormPage> {
 
                           const SizedBox(height: 13),
 
-                          // FILE PENDUKUNG
                           _title('Upload File Pendukung'),
 
                           _fileInput(),
@@ -593,15 +547,12 @@ class _WebsiteFormPageState extends State<WebsiteFormPage> {
 
                           const SizedBox(height: 18),
 
-                          // INFORMASI
                           Container(
                             width: double.infinity,
                             padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
-
                             decoration: BoxDecoration(
                               color: const Color(0xFFF0F7FF),
                               borderRadius: BorderRadius.circular(8),
-
                               border: Border.all(
                                 color: const Color(0xFF9D8EE7),
                                 width: 0.6,
@@ -613,7 +564,6 @@ class _WebsiteFormPageState extends State<WebsiteFormPage> {
                                 SizedBox(
                                   width: 31,
                                   height: 31,
-
                                   child: Image.asset(
                                     'assets/images/seru.png',
                                     fit: BoxFit.contain,
@@ -641,7 +591,6 @@ class _WebsiteFormPageState extends State<WebsiteFormPage> {
 
                           const SizedBox(height: 25),
 
-                          // TOMBOL
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
@@ -723,10 +672,6 @@ class _WebsiteFormPageState extends State<WebsiteFormPage> {
     );
   }
 
-  // =========================================================
-  // LABEL FIELD
-  // =========================================================
-
   Widget _title(String text) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 5),
@@ -740,10 +685,6 @@ class _WebsiteFormPageState extends State<WebsiteFormPage> {
       ),
     );
   }
-
-  // =========================================================
-  // WEBSITE TERKUNCI
-  // =========================================================
 
   Widget _lockedWebsite() {
     return Container(
@@ -779,10 +720,6 @@ class _WebsiteFormPageState extends State<WebsiteFormPage> {
       ),
     );
   }
-
-  // =========================================================
-  // FILE INPUT
-  // =========================================================
 
   Widget _fileInput() {
     final bool hasFile = _supportFile != null;
@@ -859,10 +796,6 @@ class _WebsiteFormPageState extends State<WebsiteFormPage> {
     );
   }
 
-  // =========================================================
-  // SUBMIT KE LARAVEL
-  // =========================================================
-
   Future<void> _submit() async {
     if (_isSubmitting) {
       return;
@@ -881,7 +814,6 @@ class _WebsiteFormPageState extends State<WebsiteFormPage> {
       return;
     }
 
-    // Simpan nilai sebelum proses asynchronous.
     final fullName = _nameController.text.trim();
     final identifier = _identifierController.text.trim();
     final email = _emailController.text.trim().toLowerCase();
@@ -1002,7 +934,6 @@ class _WebsiteFormPageState extends State<WebsiteFormPage> {
           )?.toLocal() ??
           DateTime.now();
 
-      // Digunakan setelah Laravel menyediakan kunci sinkronisasi.
       final syncKey = rawData['device_sync_key']?.toString() ?? '';
 
       if (syncKey.isNotEmpty) {
@@ -1016,7 +947,6 @@ class _WebsiteFormPageState extends State<WebsiteFormPage> {
         }
       }
 
-      // Konfirmasi lokal setelah pengajuan benar-benar berhasil.
       unawaited(
         QueueNotificationService.instance.showWebsiteTicketCreated(
           ticketId: id,
@@ -1037,20 +967,14 @@ class _WebsiteFormPageState extends State<WebsiteFormPage> {
             fullName: fullName,
             identifierValue: identifier,
             websiteName: websiteName,
-
             issueType: issue,
             issueLabel: issueLabel,
-
             submittedAt: submittedAt,
-
             email: email,
             description: description,
             supportFileName: supportFileName,
-
             status: rawData['status']?.toString() ?? 'menunggu_verifikasi',
-
             estimatedResponse: rawData['estimated_response']?.toString() ?? '',
-
             emailSent: rawData['email_sent'] == true,
           ),
         ),
@@ -1073,10 +997,6 @@ class _WebsiteFormPageState extends State<WebsiteFormPage> {
     }
   }
 
-  // =========================================================
-  // CLEAR
-  // =========================================================
-
   void _clear() {
     _nameController.clear();
     _identifierController.clear();
@@ -1092,10 +1012,6 @@ class _WebsiteFormPageState extends State<WebsiteFormPage> {
     _formKey.currentState?.reset();
   }
 
-  // =========================================================
-  // RESET
-  // =========================================================
-
   void _reset() {
     FocusScope.of(context).unfocus();
 
@@ -1103,10 +1019,6 @@ class _WebsiteFormPageState extends State<WebsiteFormPage> {
 
     _message('Form berhasil dikosongkan.');
   }
-
-  // =========================================================
-  // MESSAGE
-  // =========================================================
 
   void _message(String message) {
     ScaffoldMessenger.of(context)

@@ -1,10 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_widget_from_html_core/flutter_widget_from_html_core.dart';
-
 import '../config/api_config.dart';
 import 'antrian_tiket/layanan_antrian_page.dart';
 import 'pengaduan/pengaduan_page.dart';
@@ -56,15 +54,8 @@ class _HomePageState extends State<HomePage> {
           )
           .timeout(const Duration(seconds: 20));
 
-      debugPrint(
-        'HOME ANNOUNCEMENT STATUS: '
-        '${response.statusCode}',
-      );
-
-      debugPrint(
-        'HOME ANNOUNCEMENT RESPONSE: '
-        '${response.body}',
-      );
+      debugPrint('HOME ANNOUNCEMENT STATUS: ${response.statusCode}');
+      debugPrint('HOME ANNOUNCEMENT RESPONSE: ${response.body}');
 
       final dynamic decoded = jsonDecode(response.body);
 
@@ -158,10 +149,6 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  // =========================================================
-  // AUTO SLIDE PENGUMUMAN
-  // =========================================================
-
   void _startAnnouncementAutoSlide() {
     _announcementTimer?.cancel();
 
@@ -234,10 +221,6 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // =========================================================
-  // HEADER
-  // =========================================================
-
   Widget _buildHeader() {
     return Container(
       height: 165,
@@ -277,7 +260,6 @@ class _HomePageState extends State<HomePage> {
             ),
           ),
 
-          // Logo dan deskripsi.
           Positioned(
             top: 15,
             left: 14,
@@ -298,7 +280,7 @@ class _HomePageState extends State<HomePage> {
                   child: Padding(
                     padding: EdgeInsets.only(top: 18),
                     child: Text(
-                      'Aplikasi untuk mengambil antrian '
+                      'Aplikasi untuk mengambil antrean '
                       'dan keluhan terhadap layanan di Politeknik Negeri '
                       'Pontianak.',
                       style: TextStyle(
@@ -317,7 +299,6 @@ class _HomePageState extends State<HomePage> {
             ),
           ),
 
-          // Nomor telepon dan email.
           const Positioned(
             left: 15,
             bottom: 12,
@@ -348,10 +329,6 @@ class _HomePageState extends State<HomePage> {
       ),
     );
   }
-
-  // =========================================================
-  // PENGUMUMAN
-  // =========================================================
 
   Widget _buildAnnouncement(BuildContext context) {
     return Container(
@@ -414,7 +391,6 @@ class _HomePageState extends State<HomePage> {
           ),
           const SizedBox(height: 6),
 
-          // Loading.
           if (_isLoadingAnnouncement)
             Container(
               width: double.infinity,
@@ -432,7 +408,6 @@ class _HomePageState extends State<HomePage> {
                 child: CircularProgressIndicator(strokeWidth: 2),
               ),
             )
-          // Gagal memuat.
           else if (_announcementLoadError)
             Container(
               width: double.infinity,
@@ -453,7 +428,6 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
             )
-          // Belum ada pengumuman.
           else if (_announcements.isEmpty)
             Container(
               width: double.infinity,
@@ -469,7 +443,6 @@ class _HomePageState extends State<HomePage> {
                 style: TextStyle(color: Color(0xFF555555), fontSize: 10.5),
               ),
             )
-          // Carousel pengumuman.
           else
             Column(
               children: [
@@ -582,7 +555,6 @@ class _HomePageState extends State<HomePage> {
                   ),
                 ),
 
-                // Indikator halaman pengumuman.
                 if (_announcements.length > 1) ...[
                   const SizedBox(height: 8),
                   Row(
@@ -612,18 +584,13 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // =========================================================
-  // MENU LAYANAN
-  // Atur pembesaran PNG melalui imageScale.
-  // =========================================================
-
   Widget _buildServiceMenu(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(8, 12, 8, 0),
       child: Column(
         children: [
           _HomeServiceTile(
-            title: 'Antrian Tiket',
+            title: 'Antrean Tiket',
             description: 'Pilih layanan Akademik atau Unit Layanan Terpadu.',
             icon: Icons.confirmation_number_rounded,
             imagePath: 'assets/images/tiket.png',
@@ -651,10 +618,6 @@ class _HomePageState extends State<HomePage> {
       ),
     );
   }
-
-  // =========================================================
-  // CEK STATUS
-  // =========================================================
 
   Widget _buildQueueStatus(BuildContext context) {
     return Container(
@@ -728,10 +691,6 @@ class _HomePageState extends State<HomePage> {
   }
 }
 
-// =========================================================
-// KARTU LAYANAN BERANDA
-// =========================================================
-
 class _HomeServiceTile extends StatelessWidget {
   const _HomeServiceTile({
     required this.title,
@@ -746,7 +705,6 @@ class _HomeServiceTile extends StatelessWidget {
   final String description;
   final IconData icon;
   final VoidCallback onTap;
-
   final String? imagePath;
   final double imageScale;
 
